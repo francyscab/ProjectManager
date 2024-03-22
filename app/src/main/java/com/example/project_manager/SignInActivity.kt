@@ -78,7 +78,7 @@ class SignInActivity : AppCompatActivity() {
                 err_pw2.setText("not matching")
             }
 
-            if(check_campi){
+            if(check_campi) {
                 err_name.setText("")
                 err_role.setText("")
                 err_email.setText("")
@@ -88,38 +88,48 @@ class SignInActivity : AppCompatActivity() {
                 auth.createUserWithEmailAndPassword(email, pw1)
                     .addOnCompleteListener(this) { task ->
                         if (task.isSuccessful) {
-                            Toast.makeText(baseContext, "User creted. Log in to enter in the restricted area.",
-                                Toast.LENGTH_SHORT).show()
-                            startActivity(Intent(this,LoginActivity::class.java))
-                            finish()
-
-                            val user= HashMap<String,Any>()
-                                user["name"]=name
-                                //user["role"]=role;
+                            Toast.makeText(
+                                baseContext,
+                                "User created. Log in to enter the restricted area.",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            //startActivity(Intent(this, LoginActivity::class.java))
+                            //finish()
 
                             val currentUser = auth.currentUser
+
+                            Log.d(TAG, "currentuser= $currentUser")
                             if (currentUser != null) {
-                                // Add a new document with a generated ID
+                                val user = HashMap<String, Any>()
+                                user["name"] = name
+                                user["role"] = role.selectedItem.toString() // converti l'elemento selezionato in una stringa
+                                user["email"] = email
+
+                                Log.d(TAG, "user= $user")
+
+                                // Aggiungi un nuovo documento con un ID generato
                                 db.collection("utenti")
                                     .add(user)
                                     .addOnSuccessListener { documentReference ->
-                                        Log.d(TAG, "DocumentSnapshot added with ID: ${documentReference.id}")
+                                        Log.d(TAG,  "DocumentSnapshot added with ID: ${documentReference.id}"
+                                        )
                                     }
                                     .addOnFailureListener { e ->
                                         Log.w(TAG, "Error adding document", e)
                                     }
+                                startActivity(Intent(this, LoginActivity::class.java))
                             }
-
-
-
                         } else {
-                            Toast.makeText(baseContext, "Sign Up failed. Try again after some time.",
-                                Toast.LENGTH_SHORT).show()
-                            Log.e(TAG,"Error creating user:${task.exception}")
+                            Toast.makeText(
+                                baseContext,
+                                "Sign Up failed. Try again after some time.",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            Log.e(TAG, "Error creating user: ${task.exception}")
                         }
-                        // ...
-                    }.addOnFailureListener (this){ e->
-                        Log.e(TAG,"error creating user",e)
+                    }
+                    .addOnFailureListener(this) { e ->
+                        Log.e(TAG, "error creating user", e)
                     }
             }
             else{

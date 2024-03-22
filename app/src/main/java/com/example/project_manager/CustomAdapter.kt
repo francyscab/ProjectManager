@@ -1,5 +1,7 @@
 package com.example.project_manager
 
+import android.content.ContentValues
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -22,6 +24,7 @@ class CustomAdapter(private val mList: List<ItemsViewModel>) : RecyclerView.Adap
 
         val ItemsViewModel = mList[position]
 
+        Log.d(ContentValues.TAG,"ITEMVIEWMODEL: $ItemsViewModel")
 
         // sets the text to the textview from our itemHolder class
         holder.textView.text = ItemsViewModel.text
@@ -32,7 +35,7 @@ class CustomAdapter(private val mList: List<ItemsViewModel>) : RecyclerView.Adap
         return mList.size
     }
 
-    // Holds the views for adding it to image and text
+    // Holds the views for adding it to text
     class ViewHolder(ItemView: View) : RecyclerView.ViewHolder(ItemView) {
         val textView: TextView = itemView.findViewById(R.id.titolo)
     }
