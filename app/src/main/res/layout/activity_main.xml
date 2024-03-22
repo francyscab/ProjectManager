@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity"
+    android:orientation="vertical">
+
+    <Button
+        android:layout_width="230dp"
+        android:layout_height="60dp"
+        android:backgroundTint="@color/black"
+        android:text="Login"
+        android:textColor="@color/white" />
+
+    <Button
+        android:layout_width="230dp"
+        android:layout_height="60dp"
+        android:backgroundTint="@color/black"
+        android:textColor="@color/white"
+        android:text="Sign in" />
+
+</LinearLayout>

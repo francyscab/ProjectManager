@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".SignInActivity"
+    android:orientation="vertical">
+
+    <TextView
+        android:layout_marginTop="40dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Welcome to"
+        android:textSize="50dp"
+        android:layout_marginLeft="20dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="20dp"
+        android:text="Project Manager!"
+        android:textSize="50dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="40dp"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="50dp"
+            android:layout_height="53dp"
+            android:layout_marginLeft="50dp"
+            android:src="@drawable/name" />
+
+        <EditText
+            android:id="@+id/name_signin_field"
+            android:layout_width="236dp"
+            android:layout_height="wrap_content"
+            android:hint="Full Name"
+            android:inputType="text"
+            android:textSize="30dp" />
+
+    </LinearLayout>
+    <TextView
+        android:id="@+id/errore_nome"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="@color/red"
+        android:layout_marginLeft="120dp"
+        android:textSize="15dp"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="50dp"
+            android:layout_height="53dp"
+            android:layout_marginLeft="50dp"
+            android:src="@drawable/role" />
+
+        <Spinner
+            android:id="@+id/role_signin_field"
+            android:layout_width="240dp"
+            android:layout_height="match_parent"
+            android:entries="@array/role"
+            android:spinnerMode="dropdown"
+            android:textSize="30dp" />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/errore_role"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="@color/red"
+        android:layout_marginLeft="120dp"
+        android:textSize="15dp"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="50dp"
+            android:layout_height="53dp"
+            android:layout_marginLeft="50dp"
+            android:src="@drawable/mail" />
+
+        <EditText
+            android:id="@+id/email_signin_field"
+            android:layout_width="240dp"
+            android:layout_height="wrap_content"
+            android:hint="Email"
+            android:inputType="textEmailAddress"
+            android:textSize="30dp" />
+
+    </LinearLayout>
+    <TextView
+        android:id="@+id/errore_email"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="@color/red"
+        android:layout_marginLeft="120dp"/>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="10dp">
+
+        <ImageView
+            android:layout_width="50dp"
+            android:layout_height="53dp"
+            android:src="@drawable/password"
+            android:layout_marginLeft="50dp"/>
+
+        <EditText
+            android:id="@+id/password_signin_field"
+            android:layout_width="246dp"
+            android:layout_height="wrap_content"
+            android:hint="Password"
+            android:inputType="textPassword"
+            android:textSize="30dp" />
+
+    </LinearLayout>
+    <TextView
+        android:id="@+id/errore_pw1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="@color/red"
+        android:layout_marginLeft="120dp"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="10dp">
+
+        <ImageView
+            android:layout_width="50dp"
+            android:layout_height="53dp"
+            android:src="@drawable/password"
+            android:layout_marginLeft="50dp"/>
+
+        <EditText
+            android:id="@+id/password_conf_signin_field"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:hint="Confirm Password"
+            android:inputType="textPassword"
+            android:textSize="30dp" />
+    </LinearLayout>
+    <TextView
+        android:id="@+id/errore_pw2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="@color/red"
+        android:layout_marginLeft="120dp"/>
+    <Button
+        android:id="@+id/button_signin_signup"
+        android:layout_width="230dp"
+        android:layout_height="60dp"
+        android:layout_marginLeft="85dp"
+        android:layout_marginTop="20dp"
+        android:backgroundTint="@color/black"
+        android:text="Sign up"
+        android:textColor="@color/white" />
+
+</LinearLayout>

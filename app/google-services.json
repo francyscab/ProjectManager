@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "221628384994",
+    "project_id": "autenticazione-edf73",
+    "storage_bucket": "autenticazione-edf73.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:221628384994:android:275bc8a155c1b4fdc9c0bb",
+        "android_client_info": {
+          "package_name": "com.example.project_manager"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAHIwI_xMjkmnZDwAYpAv-tBLAxoyfLROA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
