@@ -43,14 +43,6 @@
 
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/errore_email_login"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text=""
-        android:textColor="@color/red"
-        android:layout_marginLeft="120dp"/>
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -74,7 +66,7 @@
     </LinearLayout>
 
     <TextView
-        android:id="@+id/errore_password_login"
+        android:id="@+id/errore_credenziali_login"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text=""
