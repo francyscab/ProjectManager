@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".SignInActivity"
+    android:orientation="vertical">
+
+    <TextView
+        android:layout_marginTop="40dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Add new project"
+        android:textSize="50dp"
+        android:layout_marginLeft="20dp"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="40dp"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="50dp"
+            android:layout_height="53dp"
+            android:layout_marginLeft="50dp"
+            android:src="@drawable/title" />
+
+        <EditText
+            android:id="@+id/titleNewProject"
+            android:layout_width="236dp"
+            android:layout_height="wrap_content"
+            android:hint="Title"
+            android:inputType="text"
+            android:textSize="30dp" />
+
+    </LinearLayout>
+    <TextView
+        android:id="@+id/errore_nome"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="@color/red"
+        android:layout_marginLeft="120dp"
+        android:textSize="15dp"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="50dp"
+            android:layout_height="53dp"
+            android:layout_marginLeft="50dp"
+            android:src="@drawable/person" />
+
+        <Spinner
+            android:id="@+id/projectLeaderSpinner"
+            android:layout_width="240dp"
+            android:layout_height="match_parent"
+            android:entries="@array/role"
+            android:spinnerMode="dropdown"
+            android:textSize="30dp" />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/errore_role"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="@color/red"
+        android:layout_marginLeft="120dp"
+        android:textSize="15dp"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="50dp"
+            android:layout_height="53dp"
+            android:layout_marginLeft="50dp"
+            android:src="@drawable/scadenza" />
+
+        <Button
+            android:id="@+id/pickDate"
+            android:layout_width="240dp"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:gravity="start"
+            android:background="?android:attr/selectableItemBackground"
+            android:textColor="@color/black"
+            />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/errore_email"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="@color/red"
+        android:layout_marginLeft="120dp"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="10dp">
+
+        <ImageView
+            android:layout_width="50dp"
+            android:layout_height="53dp"
+            android:src="@drawable/task"
+            android:layout_marginLeft="50dp"/>
+
+        <LinearLayout
+            android:id="@+id/linearLayout"
+            android:layout_width="243dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="vertical">
+
+            <EditText
+                android:layout_width="244dp"
+                android:layout_height="wrap_content"
+                android:hint="Nome del sotto-task" />
+
+            <Button
+                android:id="@+id/buttonAdd"
+                android:layout_width="70dp"
+                android:layout_height="wrap_content"
+                android:text=" +" />
+
+        </LinearLayout>
+    </LinearLayout>
+
+
+    <TextView
+        android:id="@+id/errore_pw1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="@color/red"
+        android:layout_marginLeft="120dp"/>
+
+</LinearLayout>

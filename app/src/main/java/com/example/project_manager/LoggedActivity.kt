@@ -2,9 +2,11 @@ package com.example.project_manager
 
 import android.content.ContentValues
 import android.content.ContentValues.TAG
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.widget.Button
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.firestore.FirebaseFirestore
@@ -18,6 +20,13 @@ class LoggedActivity : AppCompatActivity() {
 
         // ArrayList of class ItemsViewModel
         val data = ArrayList<ItemsViewModel>()
+
+        val newProject=findViewById<Button>(R.id.newProject)
+        newProject.setOnClickListener {
+            startActivity(Intent(this, NewProjectActivity::class.java))
+            //aprire nuova schermata per fare aggiungere nuovo taskchiedere subito a chi assegnarlo!!!!
+
+        }
 
         db.collection("progetti")
             .get()
