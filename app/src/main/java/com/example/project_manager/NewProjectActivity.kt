@@ -1,16 +1,24 @@
 package com.example.project_manager
 
+import android.content.ContentValues
 import android.os.Bundle
+import android.util.Log
+import android.widget.AdapterView
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.Spinner
+import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.firestore.FirebaseFirestore
 
 class NewProjectActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_new_project_form)
+
+        val db = FirebaseFirestore.getInstance()
 
         findViewById<Button>(R.id.pickDate).setOnClickListener {
             val newFragment = DatePickerFragment()
@@ -32,18 +40,69 @@ class NewProjectActivity : AppCompatActivity() {
         }
 
         buttonSave.setOnClickListener {
-            val title=findViewById<EditText>(R.id.titleNewProject)
+            val title=findViewById<EditText>(R.id.titleNewProject).text.toString()
             val leader=findViewById<Spinner>(R.id.projectLeaderSpinner)
-            val scadenza=findViewById<Button>(R.id.pickDate)
+            val scadenza=findViewById<Button>(R.id.pickDate).text.toString()
             val subTask=ArrayList<String>()
+
+            val err_title=findViewById<TextView>(R.id.errore_titolo)
+            val err_date=findViewById<TextView>(R.id.errore_date)
+            val err_leader=findViewById<TextView>(R.id.errore_projectLeader)
+
+            var check_campi=true;
+
+            if(title==""){
+                err_title.setText("missing title")
+                check_campi=false;
+            }
+            if(scadenza==""){
+                err_date.setText("missing date")
+                check_campi=false;
+            }
+            if(leader.selectedItemPosition== AdapterView.INVALID_POSITION){
+                err_leader.setText("select the leader of this project")
+                check_campi=false;
+            }
             for(i in 0 until linearLayout.childCount -1){
                 val editText=linearLayout.getChildAt(i) as EditText
                 val subTaskName=editText.text.toString()
                 if(subTaskName.isNotEmpty()){
                     subTask.add(subTaskName)
                 }
+                else{
+                    Toast.makeText(baseContext, "aggiungi almeno un sottotask", Toast.LENGTH_SHORT).show()
+                    check_campi=false;
+                }
             }
 
+            if(check_campi) {
+                err_title.setText("")
+                err_leader.setText("")
+                err_date.setText("")
+
+                val nuovoProgetto= hashMapOf(
+                    "titolo" to title,
+                    "leader" to leader,
+                    "scadenza" to scadenza
+                )
+
+                db.collection("progetti")
+                    .add(nuovoProgetto)
+                    .addOnSuccessListener{ documentReference ->
+                        //val progettoId= documentReference.id
+                        //val batch=db.batch()
+                        //for(sottoTask in subTask){
+                            //val sottoTaskDoc=db.collection("progetti").document(progettoId).collection("sottotask").document()
+                            //batch.set(sottoTaskDoc, hashMapOf("nome" to sottoTask))
+                        //}
+                        //batch.commit().addOnSuccessListener{
+                            Toast.makeText(baseContext, "progetto e sottotask creati con successo", Toast.LENGTH_SHORT).show()
+                        }.addOnFailureListener { exception ->
+                            Log.w(ContentValues.TAG, "Error adding document", exception)
+                        }
+                    //}
+
+            }
         }
 
     }

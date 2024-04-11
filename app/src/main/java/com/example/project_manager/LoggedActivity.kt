@@ -15,7 +15,7 @@ class LoggedActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_logged)
-        Log.d(ContentValues.TAG, "QUI3")
+
         val db = FirebaseFirestore.getInstance()
 
         // ArrayList of class ItemsViewModel

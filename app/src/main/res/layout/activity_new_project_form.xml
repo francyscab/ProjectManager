@@ -36,7 +36,7 @@
 
     </LinearLayout>
     <TextView
-        android:id="@+id/errore_nome"
+        android:id="@+id/errore_titolo"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text=""
@@ -67,7 +67,7 @@
     </LinearLayout>
 
     <TextView
-        android:id="@+id/errore_role"
+        android:id="@+id/errore_projectLeader"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text=""
@@ -100,7 +100,7 @@
     </LinearLayout>
 
     <TextView
-        android:id="@+id/errore_email"
+        android:id="@+id/errore_date"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text=""
