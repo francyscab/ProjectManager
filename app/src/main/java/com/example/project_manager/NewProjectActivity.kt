@@ -1,6 +1,7 @@
 package com.example.project_manager
 
 import android.content.ContentValues
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.AdapterView
@@ -98,6 +99,15 @@ class NewProjectActivity : AppCompatActivity() {
                         }
                         batch.commit().addOnSuccessListener{
                             Toast.makeText(baseContext, "progetto e sottotask creati con successo", Toast.LENGTH_SHORT).show()
+
+
+                            //chimata da aggiustare
+                            val intent = Intent(this, ProjectDetailsActivity::class.java)
+                            intent.putExtra("projectId", projectId) // "projectId" è il nome dell'extra, projectId è l'ID del progetto
+                            startActivity(intent)
+
+
+                            startActivity(Intent(this, LoggedActivity::class.java))
                         }.addOnFailureListener { exception ->
                             Log.w(ContentValues.TAG, "Error adding document", exception)
                         }
