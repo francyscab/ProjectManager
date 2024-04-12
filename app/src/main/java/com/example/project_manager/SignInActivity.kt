@@ -93,8 +93,7 @@ class SignInActivity : AppCompatActivity() {
                                 "User created. Log in to enter the restricted area.",
                                 Toast.LENGTH_SHORT
                             ).show()
-                            //startActivity(Intent(this, LoginActivity::class.java))
-                            //finish()
+
 
                             val currentUser = auth.currentUser
 
@@ -111,13 +110,15 @@ class SignInActivity : AppCompatActivity() {
                                 db.collection("utenti")
                                     .add(user)
                                     .addOnSuccessListener { documentReference ->
-                                        Log.d(TAG,  "DocumentSnapshot added with ID: ${documentReference.id}"
+                                        Log.d(
+                                            TAG,
+                                            "DocumentSnapshot added with ID: ${documentReference.id}"
                                         )
+                                        startActivity(Intent(this, LoginActivity::class.java))
                                     }
                                     .addOnFailureListener { e ->
                                         Log.w(TAG, "Error adding document", e)
                                     }
-                                startActivity(Intent(this, LoginActivity::class.java))
                             }
                         } else {
                             Toast.makeText(

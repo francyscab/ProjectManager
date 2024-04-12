@@ -82,25 +82,26 @@ class NewProjectActivity : AppCompatActivity() {
 
                 val nuovoProgetto= hashMapOf(
                     "titolo" to title,
-                    "leader" to leader,
+                    "leader" to leader.selectedItem.toString(),
                     "scadenza" to scadenza
                 )
 
+                Log.d(ContentValues.TAG, "nuovoProgetto= $nuovoProgetto")
                 db.collection("progetti")
                     .add(nuovoProgetto)
                     .addOnSuccessListener{ documentReference ->
-                        //val progettoId= documentReference.id
-                        //val batch=db.batch()
-                        //for(sottoTask in subTask){
-                            //val sottoTaskDoc=db.collection("progetti").document(progettoId).collection("sottotask").document()
-                            //batch.set(sottoTaskDoc, hashMapOf("nome" to sottoTask))
-                        //}
-                        //batch.commit().addOnSuccessListener{
+                        val progettoId= documentReference.id
+                        val batch=db.batch()
+                        for(sottoTask in subTask){
+                            val sottoTaskDoc=db.collection("progetti").document(progettoId).collection("sottotask").document()
+                            batch.set(sottoTaskDoc, hashMapOf("nome" to sottoTask))
+                        }
+                        batch.commit().addOnSuccessListener{
                             Toast.makeText(baseContext, "progetto e sottotask creati con successo", Toast.LENGTH_SHORT).show()
                         }.addOnFailureListener { exception ->
                             Log.w(ContentValues.TAG, "Error adding document", exception)
                         }
-                    //}
+                    }
 
             }
         }
