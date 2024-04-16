@@ -89,12 +89,12 @@ class NewProjectActivity : AppCompatActivity() {
 
                 Log.d(ContentValues.TAG, "nuovoProgetto= $nuovoProgetto")
                 db.collection("progetti")
-                    .add(nuovoProgetto)
+                    .document(title)
+                    .set(nuovoProgetto)
                     .addOnSuccessListener{ documentReference ->
-                        val progettoId= documentReference.id
                         val batch=db.batch()
                         for(sottoTask in subTask){
-                            val sottoTaskDoc=db.collection("progetti").document(progettoId).collection("sottotask").document()
+                            val sottoTaskDoc=db.collection("progetti").document(title).collection("sottotask").document()
                             batch.set(sottoTaskDoc, hashMapOf("nome" to sottoTask))
                         }
                         batch.commit().addOnSuccessListener{
@@ -103,7 +103,7 @@ class NewProjectActivity : AppCompatActivity() {
 
                             //chimata da aggiustare
                             val intent = Intent(this, ProjectActivity::class.java)
-                            intent.putExtra("projectId", progettoId) // "projectId" è il nome dell'extra, projectId è l'ID del progetto
+                            intent.putExtra("projectId", title) // "projectId" è il nome dell'extra, projectId è l'ID del progetto
                             startActivity(intent)
 
 
