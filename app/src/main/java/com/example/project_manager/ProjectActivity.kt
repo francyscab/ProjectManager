@@ -9,7 +9,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.firestore.FirebaseFirestore
 
-class ProjectDetailsActivity : AppCompatActivity() {
+class ProjectActivity : AppCompatActivity() {
 
     private lateinit var projectId: String
     private lateinit var projectNameTextView: TextView

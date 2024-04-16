@@ -16,6 +16,9 @@
             android:name=".LoggedActivity"
             android:exported="false" />
         <activity
+            android:name=".ProjectActivity"
+            android:exported="false" />
+        <activity
             android:name=".SignInActivity"
             android:exported="false" />
         <activity

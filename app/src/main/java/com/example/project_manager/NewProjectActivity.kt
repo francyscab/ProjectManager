@@ -102,12 +102,12 @@ class NewProjectActivity : AppCompatActivity() {
 
 
                             //chimata da aggiustare
-                            val intent = Intent(this, ProjectDetailsActivity::class.java)
-                            intent.putExtra("projectId", projectId) // "projectId" è il nome dell'extra, projectId è l'ID del progetto
+                            val intent = Intent(this, ProjectActivity::class.java)
+                            intent.putExtra("projectId", progettoId) // "projectId" è il nome dell'extra, projectId è l'ID del progetto
                             startActivity(intent)
 
 
-                            startActivity(Intent(this, LoggedActivity::class.java))
+                            //startActivity(Intent(this, LoggedActivity::class.java))
                         }.addOnFailureListener { exception ->
                             Log.w(ContentValues.TAG, "Error adding document", exception)
                         }
