@@ -59,7 +59,7 @@ class LoggedActivity : AppCompatActivity() {
                             Toast.LENGTH_LONG).show()
 
                         val intent = Intent(this@LoggedActivity,ProjectActivity::class.java)
-                        intent.putExtra("projectId", title) // "projectId" è il nome dell'extra, projectId è l'ID del progetto
+                        intent.putExtra("projectId", clickedItemTitle) // "projectId" è il nome dell'extra, projectId è l'ID del progetto
                         startActivity(intent)
                     }
                 })
