@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -26,6 +27,23 @@ class NewProjectActivity : AppCompatActivity() {
             newFragment.show(supportFragmentManager, "datePicker")
         }
 
+        val leaderNames = ArrayList<String>()
+        db.collection("utenti") .get() .addOnSuccessListener { documents ->
+            for (document in documents) {
+                val role = document.getString("role")
+                if (role == "Leader") {
+                    val name = document.getString("name") .toString()
+                    leaderNames.add(name)
+
+                }
+            }
+        } .addOnFailureListener { exception -> Log.w(ContentValues.TAG, "Error getting documents: ", exception) }
+
+       val leader = findViewById<Spinner>(R.id.projectLeaderSpinner)
+       val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, leaderNames)
+       adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+       leader.adapter = adapter
+
         val linearLayout = findViewById<LinearLayout>(R.id.linearLayout)
         val buttonAdd = findViewById<Button>(R.id.buttonAdd)
         val buttonSave=findViewById<Button>(R.id.buttonSave)
@@ -42,7 +60,6 @@ class NewProjectActivity : AppCompatActivity() {
 
         buttonSave.setOnClickListener {
             val title=findViewById<EditText>(R.id.titleNewProject).text.toString()
-            val leader=findViewById<Spinner>(R.id.projectLeaderSpinner)
             val scadenza=findViewById<Button>(R.id.pickDate).text.toString()
             val subTask=ArrayList<String>()
 

@@ -60,7 +60,6 @@
             android:id="@+id/projectLeaderSpinner"
             android:layout_width="240dp"
             android:layout_height="match_parent"
-            android:entries="@array/role"
             android:spinnerMode="dropdown"
             android:textSize="30dp" />
 
