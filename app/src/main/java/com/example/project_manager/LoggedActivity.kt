@@ -6,10 +6,12 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.Button
 import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
 class LoggedActivity : AppCompatActivity() {
@@ -21,13 +23,49 @@ class LoggedActivity : AppCompatActivity() {
 
         // ArrayList of class ItemsViewModel
         val data = ArrayList<ItemsViewModel>()
-
         val newProject=findViewById<Button>(R.id.newProject)
-        newProject.setOnClickListener {
-            startActivity(Intent(this, NewProjectActivity::class.java))
-            //aprire nuova schermata per fare aggiungere nuovo taskchiedere subito a chi assegnarlo!!!!
 
+        //NON TROVA L'UTENTE LOGGATO!!!!!!
+        var userName: String?=null;
+        val user = FirebaseAuth.getInstance().currentUser
+        if (user != null) {
+            userName = user.displayName
+        } else {
+            Log.w(ContentValues.TAG, "Error current user")
         }
+
+        Log.d(TAG, "username: $user")
+        db.collection("utenti")
+            .get()
+            .addOnSuccessListener{ result->
+                for(document in result){
+                    val name=document.getString("name")
+                    val role=document.getString("role")
+                    Log.d(TAG, "doppooooooo:")
+                    Log.d(TAG, "nome utente: $name")
+                    Log.d(TAG, "nome mio: $userName")
+                    if(name==userName){
+                        if(role=="Manager"){
+                            Log.d(TAG, "MANAGER:")
+                            newProject.setOnClickListener {
+                                startActivity(Intent(this, NewProjectActivity::class.java))
+
+                            }
+                        }
+                        else if(role=="Leader"){
+                            Log.d(TAG, "LEADER:")
+                            newProject.visibility= View.INVISIBLE
+                            //togliere bottone per creare nuovo progetto
+                        }
+                        else{
+                            //role=Developer
+                        }
+                    }
+                }
+            }
+
+
+
 
         db.collection("progetti")
             .get()

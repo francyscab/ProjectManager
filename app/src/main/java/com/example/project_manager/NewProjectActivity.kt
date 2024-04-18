@@ -27,22 +27,28 @@ class NewProjectActivity : AppCompatActivity() {
             newFragment.show(supportFragmentManager, "datePicker")
         }
 
+
         val leaderNames = ArrayList<String>()
-        db.collection("utenti") .get() .addOnSuccessListener { documents ->
-            for (document in documents) {
-                val role = document.getString("role")
-                if (role == "Leader") {
-                    val name = document.getString("name") .toString()
-                    leaderNames.add(name)
+        val leader = findViewById<Spinner>(R.id.projectLeaderSpinner)
 
+        db.collection("utenti")
+            .get()
+            .addOnSuccessListener { documents ->
+                for (document in documents) {
+                    val role = document.getString("role")
+                    if (role == "Leader") {
+                        val name = document.getString("name").toString()
+                        leaderNames.add(name)
+                    }
                 }
-            }
-        } .addOnFailureListener { exception -> Log.w(ContentValues.TAG, "Error getting documents: ", exception) }
 
-       val leader = findViewById<Spinner>(R.id.projectLeaderSpinner)
-       val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, leaderNames)
-       adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-       leader.adapter = adapter
+                val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, leaderNames)
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                leader.adapter = adapter
+            }
+            .addOnFailureListener { exception ->
+                Log.w(ContentValues.TAG, "Error getting documents: ", exception)
+            }
 
         val linearLayout = findViewById<LinearLayout>(R.id.linearLayout)
         val buttonAdd = findViewById<Button>(R.id.buttonAdd)
