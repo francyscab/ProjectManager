@@ -45,7 +45,9 @@ class LoggedActivity : AppCompatActivity() {
                 for (document in result) {
                     val title = document.getString("titolo") ?: "" // Ottieni il titolo
                     val leader =document.getString("leader")?:""//ottieni il nome del leader
-                    data.add(ItemsViewModel(title, leader)) // Aggiungi il titolo all'array data
+                    val assegnato =document.getString("assegnato")?:"" //ottieni il booleano assegnato
+
+                    data.add(ItemsViewModel(title, leader, assegnato.toBoolean() )) // Aggiungi il titolo all'array data
                 }
                 Log.d(TAG, "data array: $data")
                 val recyclerview = findViewById<RecyclerView>(R.id.recyclerview)

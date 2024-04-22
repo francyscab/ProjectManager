@@ -6,7 +6,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
+
 
 class CustomAdapter(private val mList: List<ItemsViewModel>) : RecyclerView.Adapter<CustomAdapter.ViewHolder>() {
 
@@ -38,6 +40,15 @@ class CustomAdapter(private val mList: List<ItemsViewModel>) : RecyclerView.Adap
 
         // sets the text to the textview from our itemHolder class
         holder.textView.text = ItemsViewModel.text
+
+        if(ItemsViewModel.assegnato){
+            val context=holder.itemView.context
+            val redBorder = ContextCompat.getDrawable(context,R.drawable.red_border)
+            holder.itemView.background=redBorder
+        }else{
+            holder.itemView.background=null
+        }
+
 
     }
     // return the number of the items in the list

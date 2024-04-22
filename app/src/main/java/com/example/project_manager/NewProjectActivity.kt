@@ -109,6 +109,7 @@ class NewProjectActivity : AppCompatActivity() {
                     "leader" to leader.selectedItem.toString(),
                     "scadenza" to scadenza
                 )
+                nuovoProgetto["assegnato"]= true.toString()
 
                 Log.d(ContentValues.TAG, "nuovoProgetto= $nuovoProgetto")
                 db.collection("progetti")
