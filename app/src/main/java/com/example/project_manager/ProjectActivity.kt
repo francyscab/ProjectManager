@@ -4,8 +4,12 @@ package com.example.project_manager
 import android.content.ContentValues
 import android.os.Bundle
 import android.util.Log
+import android.view.View
+import android.widget.ArrayAdapter
+import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.SeekBar
+import android.widget.Spinner
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.firestore.FirebaseFirestore
@@ -18,6 +22,7 @@ class ProjectActivity : AppCompatActivity() {
     private lateinit var projectLeaderTextView: TextView
     private lateinit var subTaskListLayout: LinearLayout
     private lateinit var progressSeekBar: SeekBar
+    private lateinit var assegnaSottotask: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,12 +34,27 @@ class ProjectActivity : AppCompatActivity() {
         projectLeaderTextView = findViewById(R.id.projectLeaderTextView)
         subTaskListLayout = findViewById(R.id.subTaskListLayout)
         progressSeekBar = findViewById(R.id.progressSeekBar)
+        assegnaSottotask = findViewById(R.id.buttonAssegnaSottottask)
 
         // Ottieni l'ID del progetto dall'intent
         projectId = intent.getStringExtra("projectId") ?: ""
 
         // Carica i dettagli del progetto
         loadProjectDetails()
+
+        assegnaSottotask.setOnClickListener{
+            for( i in 0 until subTaskListLayout.childCount)
+            {
+                val child=subTaskListLayout.getChildAt(i)
+                if(child is LinearLayout){
+                    //trovo lo spinner
+                    val spinner=child.getChildAt(1)as? Spinner
+                    if(spinner!=null){
+                        spinner.visibility=View.VISIBLE
+                    }
+                }
+            }
+        }
     }
 
     private fun loadProjectDetails() {
@@ -59,6 +79,7 @@ class ProjectActivity : AppCompatActivity() {
 
                     // Carica i sottotask del progetto
                     loadSubTasks()
+
                 } else {
                     Log.d(TAG, "No such document")
                 }
@@ -71,24 +92,61 @@ class ProjectActivity : AppCompatActivity() {
     private fun loadSubTasks() {
         val db = FirebaseFirestore.getInstance()
 
-        // Ottieni il riferimento alla collezione dei sottotask del progetto
-        val subTasksRef = db.collection("progetti").document(projectId).collection("sottotask")
-
-        // Ottieni tutti i sottotask del progetto
-        subTasksRef.get()
+        //trovo i nomi dei developer per inserirli nello spinner
+        val developerNames=ArrayList<String>()
+        db.collection("utenti")
+            .get()
             .addOnSuccessListener { documents ->
                 for (document in documents) {
-                    val subTaskName = document.getString("nome")
-
-                    // Aggiungi una TextView per ogni sottotask alla LinearLayout
-                    val subTaskTextView = TextView(this)
-                    subTaskTextView.text = subTaskName
-                    subTaskListLayout.addView(subTaskTextView)
+                    val role = document.getString("role")
+                    if (role == "Developer") {
+                        val name = document.getString("name").toString()
+                        developerNames.add(name)
+                    }
                 }
+                val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, developerNames)
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+
+
+                // Ottieni il riferimento alla collezione dei sottotask del progetto
+                val subTasksRef = db.collection("progetti").document(projectId).collection("sottotask")
+
+                // Ottieni tutti i sottotask del progetto
+                subTasksRef.get()
+                    .addOnSuccessListener { documents ->
+                        for (document in documents) {
+                            val subTaskName = document.getString("nome")
+
+                            //CREA IL LINEAR LAYOUT DELLA TEXT VIEW E SPINNER
+                            val linearLayout=LinearLayout(this)
+                            linearLayout.orientation=LinearLayout.HORIZONTAL
+
+                            // Aggiungi una TextView per ogni sottotask alla LinearLayout
+                            val subTaskTextView = TextView(this)
+                            subTaskTextView.text = subTaskName
+                            subTaskListLayout.addView(subTaskTextView)
+
+                            //CREO LO SPINNER PER OGNI SOTTOTASK PER SELEZIONARE IL DEVELOPER
+                            val subTaskSpinner= Spinner(this)
+                            subTaskSpinner.visibility= View.INVISIBLE
+                            subTaskSpinner.adapter=adapter
+
+                            linearLayout.addView(subTaskSpinner)
+                            subTaskListLayout.addView(linearLayout)
+
+
+                        }
+                    }
+                    .addOnFailureListener { exception ->
+                        Log.d(TAG, "get failed with ", exception)
+                    }
+
             }
             .addOnFailureListener { exception ->
-                Log.d(TAG, "get failed with ", exception)
+                Log.w(ContentValues.TAG, "Error getting documents: ", exception)
             }
+
+
     }
 
     companion object {
