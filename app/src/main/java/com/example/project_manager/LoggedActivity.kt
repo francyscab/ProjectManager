@@ -13,8 +13,10 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlin.math.log
 
 class LoggedActivity : AppCompatActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_logged)
@@ -22,89 +24,87 @@ class LoggedActivity : AppCompatActivity() {
         val db = FirebaseFirestore.getInstance()
 
         // ArrayList of class ItemsViewModel
-        val data = ArrayList<ItemsViewModel>()
+        var data = ArrayList<ItemsViewModel>()
+        val dataLeader= arrayListOf<ItemsViewModel>()
         val newProject=findViewById<Button>(R.id.newProject)
 
-        //NON TROVA L'UTENTE LOGGATO!!!!!!
-        var userName: String?=null;
+
+        var userName: String = ""
         val user = FirebaseAuth.getInstance().currentUser
         if (user != null) {
-            userName = user.displayName
+            userName = user.email.toString()
+            Log.d(TAG, "user: $userName")
         } else {
             Log.w(ContentValues.TAG, "Error current user")
         }
 
-        Log.d(TAG, "username: $user")
-        db.collection("utenti")
-            .get()
-            .addOnSuccessListener{ result->
-                for(document in result){
-                    val name=document.getString("name")
-                    val role=document.getString("role")
-                    Log.d(TAG, "doppooooooo:")
-                    Log.d(TAG, "nome utente: $name")
-                    Log.d(TAG, "nome mio: $userName")
-                    if(name==userName){
-                        if(role=="Manager"){
-                            Log.d(TAG, "MANAGER:")
-                            newProject.setOnClickListener {
-                                startActivity(Intent(this, NewProjectActivity::class.java))
-
-                            }
-                        }
-                        else if(role=="Leader"){
-                            Log.d(TAG, "LEADER:")
-                            newProject.visibility= View.INVISIBLE
-                            //togliere bottone per creare nuovo progetto
-                        }
-                        else{
-                            //role=Developer
-                        }
-                    }
-                }
-            }
-
-
-
-
+        //recycleview
         db.collection("progetti")
             .get()
             .addOnSuccessListener { result ->
-
                 for (document in result) {
                     val title = document.getString("titolo") ?: "" // Ottieni il titolo
-                    data.add(ItemsViewModel(title)) // Aggiungi il titolo all'array data
-                    Log.d(TAG, "${document.id} => ${document.data}")
+                    val leader =document.getString("leader")?:""//ottieni il nome del leader
+                    data.add(ItemsViewModel(title, leader)) // Aggiungi il titolo all'array data
                 }
                 Log.d(TAG, "data array: $data")
-
-                // getting the recyclerview by its id
                 val recyclerview = findViewById<RecyclerView>(R.id.recyclerview)
-
-                // this creates a vertical layout Manager
                 recyclerview.layoutManager = LinearLayoutManager(this)
 
-                // This will pass the ArrayList to our Adapter
-                val adapter = CustomAdapter(data)
+                //distinguo diversi tipi di utenti
+                db.collection("utenti")
+                    .get()
+                    .addOnSuccessListener{ result->
+                        for(document in result){
+                            val nome=document.getString("name")
+                            val email=document.getString("email")
+                            val role=document.getString("role")
+                            if(email==userName){
+                                if(role=="Manager"){
+                                    Log.d(TAG, "MANAGER:")
+                                    newProject.setOnClickListener {
+                                        startActivity(Intent(this, NewProjectActivity::class.java))
+                                    }
+                                }
+                                else if(role=="Leader"){
+                                    Log.d(TAG, "LEADER:")
+                                    //togliere bottone per creare nuovo progetto
+                                    newProject.visibility= View.INVISIBLE
+                                    //MOSTRARE SOLO I PROGETTI DI CUI SI È LEADER--modifico array data
 
-                // Setting the Adapter with the recyclerview
-                recyclerview.adapter = adapter
+                                    data=data.filter{it.leader==nome}as ArrayList<ItemsViewModel>
+                                    Log.d(TAG,"data with nome= $nome  now: $data")
+                                }
+                                else{
+                                    Log.d(TAG, "DEVELOPER:")
+                                }
+                            }
+                        }
 
-                adapter.setOnItemClickListener(object : CustomAdapter.onItemClickListener{
-                    override fun onItemClick(position: Int) {
-                        val clickedItemTitle=data[position].text
-                        Toast.makeText(this@LoggedActivity,"You clicked on item  $clickedItemTitle",
-                            Toast.LENGTH_LONG).show()
+                        //passo arraylist all'adapter
+                        Log.d(TAG,"DATA PRIMA ADAPTER =$data")
+                        val adapter = CustomAdapter(data)
 
-                        val intent = Intent(this@LoggedActivity,ProjectActivity::class.java)
-                        intent.putExtra("projectId", clickedItemTitle) // "projectId" è il nome dell'extra, projectId è l'ID del progetto
-                        startActivity(intent)
+                        recyclerview.adapter = adapter
+
+                        adapter.setOnItemClickListener(object : CustomAdapter.onItemClickListener{
+                            override fun onItemClick(position: Int) {
+                                val clickedItemTitle=data[position].text
+                                Toast.makeText(this@LoggedActivity,"You clicked on item  $clickedItemTitle",
+                                    Toast.LENGTH_LONG).show()
+
+                                val intent = Intent(this@LoggedActivity,ProjectActivity::class.java)
+                                intent.putExtra("projectId", clickedItemTitle) // "projectId" è il nome dell'extra, projectId è l'ID del progetto
+                                startActivity(intent)
+                            }
+                        })
                     }
-                })
 
             }
             .addOnFailureListener { exception ->
                 Log.w(TAG, "Error getting documents.", exception)
             }
+
+        Log.d(TAG, "username: $userName")
     }
 }

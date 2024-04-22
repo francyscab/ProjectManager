@@ -15,6 +15,7 @@ class ProjectActivity : AppCompatActivity() {
     private lateinit var projectId: String
     private lateinit var projectNameTextView: TextView
     private lateinit var projectDeadlineTextView: TextView
+    private lateinit var projectLeaderTextView: TextView
     private lateinit var subTaskListLayout: LinearLayout
     private lateinit var progressSeekBar: SeekBar
 
@@ -25,6 +26,7 @@ class ProjectActivity : AppCompatActivity() {
         // Inizializza le views
         projectNameTextView = findViewById(R.id.projectNameTextView)
         projectDeadlineTextView = findViewById(R.id.projectDeadlineTextView)
+        projectLeaderTextView = findViewById(R.id.projectLeaderTextView)
         subTaskListLayout = findViewById(R.id.subTaskListLayout)
         progressSeekBar = findViewById(R.id.progressSeekBar)
 
@@ -47,10 +49,13 @@ class ProjectActivity : AppCompatActivity() {
                 if (document != null) {
                     val projectName = document.getString("titolo")
                     val projectDeadline = document.getString("scadenza")
+                    val projectLeader = document.getString("leader")
 
                     // Aggiorna le views con i dettagli del progetto
                     projectNameTextView.text = projectName
                     projectDeadlineTextView.text = "Deadline: $projectDeadline"
+                    projectLeaderTextView.text = "Leader: $projectLeader"
+
 
                     // Carica i sottotask del progetto
                     loadSubTasks()
