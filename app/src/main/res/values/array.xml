@@ -3,6 +3,6 @@
     <array name="role">
         <item>Leader</item>
         <item>Manager</item>
-        <item>Employee</item>
+        <item>Developer</item>
     </array>
 </resources>

@@ -12,6 +12,7 @@ import android.widget.SeekBar
 import android.widget.Spinner
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import com.google.api.Distribution.BucketOptions.Linear
 import com.google.firebase.firestore.FirebaseFirestore
 
 class ProjectActivity : AppCompatActivity() {
@@ -23,6 +24,7 @@ class ProjectActivity : AppCompatActivity() {
     private lateinit var subTaskListLayout: LinearLayout
     private lateinit var progressSeekBar: SeekBar
     private lateinit var assegnaSottotask: Button
+    private lateinit var salvaSottotask: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,6 +37,7 @@ class ProjectActivity : AppCompatActivity() {
         subTaskListLayout = findViewById(R.id.subTaskListLayout)
         progressSeekBar = findViewById(R.id.progressSeekBar)
         assegnaSottotask = findViewById(R.id.buttonAssegnaSottottask)
+        salvaSottotask = findViewById(R.id.buttonSalvaAsseganmenti)
 
         // Ottieni l'ID del progetto dall'intent
         projectId = intent.getStringExtra("projectId") ?: ""
@@ -42,17 +45,51 @@ class ProjectActivity : AppCompatActivity() {
         // Carica i dettagli del progetto
         loadProjectDetails()
 
+
+    }
+
+    private fun assegna() {
         assegnaSottotask.setOnClickListener{
             for( i in 0 until subTaskListLayout.childCount)
             {
                 val child=subTaskListLayout.getChildAt(i)
+                Log.d(TAG,"child $child")
                 if(child is LinearLayout){
                     //trovo lo spinner
                     val spinner=child.getChildAt(1)as? Spinner
+                    Log.d(TAG,"spinner  $spinner")
                     if(spinner!=null){
                         spinner.visibility=View.VISIBLE
                     }
                 }
+            }
+            salvaSottotask.visibility=View.VISIBLE
+            salvaSottotask.setOnClickListener {
+
+                assegnaSottotask.visibility=View.INVISIBLE
+                for(i in 0 until subTaskListLayout.childCount){
+                    val child=subTaskListLayout.getChildAt(i)
+
+                    if(child is LinearLayout){
+                        val spinner=child.getChildAt(1) as? Spinner
+                        val  subTaskTextView=child.getChildAt(0) as? TextView
+
+                        if(spinner!=null && subTaskTextView!=null){
+                            val selectedDeveloper= spinner.selectedItem as? String
+                            if(selectedDeveloper!=null){
+                                val developerTextView=TextView(this)
+                                developerTextView.text=selectedDeveloper
+                                child.removeViewAt(1)
+                                child.addView(developerTextView,1)
+
+                                developerTextView.layoutParams=spinner.layoutParams
+                            }
+                            spinner.visibility=View.INVISIBLE
+                        }
+                    }
+                }
+
+                //salvare le modifiche far comparire nome developer a fianco sottotask, salvare anche su firestore
             }
         }
     }
@@ -124,7 +161,7 @@ class ProjectActivity : AppCompatActivity() {
                             // Aggiungi una TextView per ogni sottotask alla LinearLayout
                             val subTaskTextView = TextView(this)
                             subTaskTextView.text = subTaskName
-                            subTaskListLayout.addView(subTaskTextView)
+                            linearLayout.addView(subTaskTextView)
 
                             //CREO LO SPINNER PER OGNI SOTTOTASK PER SELEZIONARE IL DEVELOPER
                             val subTaskSpinner= Spinner(this)
@@ -136,6 +173,7 @@ class ProjectActivity : AppCompatActivity() {
 
 
                         }
+                        assegna();
                     }
                     .addOnFailureListener { exception ->
                         Log.d(TAG, "get failed with ", exception)
