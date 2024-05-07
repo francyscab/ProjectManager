@@ -67,6 +67,8 @@ class ProjectActivity : AppCompatActivity() {
             salvaSottotask.setOnClickListener {
 
                 assegnaSottotask.visibility=View.INVISIBLE
+
+                val db=FirebaseFirestore.getInstance()
                 for(i in 0 until subTaskListLayout.childCount){
                     val child=subTaskListLayout.getChildAt(i)
 
@@ -83,13 +85,27 @@ class ProjectActivity : AppCompatActivity() {
                                 child.addView(developerTextView,1)
 
                                 developerTextView.layoutParams=spinner.layoutParams
+
+                                //ottengo nome del sottotask
+                                val subTaskName=subTaskTextView.text.toString()
+
+                                //aggiorno doc firestore con nome developer
+                                val subTaskRef=db.collection("progetti").document(projectId)
+                                    .collection("sottotask").document(subTaskName)
+                                subTaskRef.update("developer", selectedDeveloper)
+                                    .addOnSuccessListener {
+                                        Log.d(TAG,"Developer assegnato con successo al sottotask: $subTaskName")
+                                    }
+                                    .addOnFailureListener{ exception->
+                                        Log.e(TAG,"Errore nell'aggiornamento del sottotask: $subTaskName",exception)
+                                    }
                             }
                             spinner.visibility=View.INVISIBLE
                         }
                     }
+                    salvaSottotask.visibility=View.INVISIBLE
                 }
 
-                //salvare le modifiche far comparire nome developer a fianco sottotask, salvare anche su firestore
             }
         }
     }
