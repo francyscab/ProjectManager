@@ -27,7 +27,6 @@ class NewProjectActivity : AppCompatActivity() {
             newFragment.show(supportFragmentManager, "datePicker")
         }
 
-
         val leaderNames = ArrayList<String>()
         val leader = findViewById<Spinner>(R.id.projectLeaderSpinner)
 
