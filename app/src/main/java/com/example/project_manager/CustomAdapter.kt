@@ -41,7 +41,7 @@ class CustomAdapter(private val mList: List<ItemsViewModel>) : RecyclerView.Adap
         // sets the text to the textview from our itemHolder class
         holder.textView.text = ItemsViewModel.text
 
-        if(ItemsViewModel.assegnato){
+        if(!ItemsViewModel.assegnato){
             val context=holder.itemView.context
             val redBorder = ContextCompat.getDrawable(context,R.drawable.red_border)
             holder.itemView.background=redBorder

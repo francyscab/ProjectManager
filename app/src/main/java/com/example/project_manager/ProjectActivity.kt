@@ -41,6 +41,7 @@ class ProjectActivity : AppCompatActivity() {
 
         // Ottieni l'ID del progetto dall'intent
         projectId = intent.getStringExtra("projectId") ?: ""
+        Log.d(TAG,"nome progetto selezionato: $projectId")
 
         // Carica i dettagli del progetto
         loadProjectDetails()
@@ -48,8 +49,11 @@ class ProjectActivity : AppCompatActivity() {
 
     }
 
+    //assegna con spinner i vari sottotask ai developer(azione che posso fare solo se leader)
     private fun assegna() {
+        //mostra gli spinner con la scelta del developer per ogni sottotask
         assegnaSottotask.setOnClickListener{
+            assegnaSottotask.visibility=View.INVISIBLE
             for( i in 0 until subTaskListLayout.childCount)
             {
                 val child=subTaskListLayout.getChildAt(i)
@@ -63,22 +67,26 @@ class ProjectActivity : AppCompatActivity() {
                     }
                 }
             }
+            //mostro il bottone di salvataggio
             salvaSottotask.visibility=View.VISIBLE
             salvaSottotask.setOnClickListener {
 
-                assegnaSottotask.visibility=View.INVISIBLE
-
                 val db=FirebaseFirestore.getInstance()
+                //scorro i singoli sottotask
                 for(i in 0 until subTaskListLayout.childCount){
                     val child=subTaskListLayout.getChildAt(i)
 
                     if(child is LinearLayout){
+                        //trovo lo spinner del sottotask e il titolo del sottotask
                         val spinner=child.getChildAt(1) as? Spinner
                         val  subTaskTextView=child.getChildAt(0) as? TextView
 
+                        //se entrambi esistono
                         if(spinner!=null && subTaskTextView!=null){
+                            //estrapolo il developer selezionato dallo spinner
                             val selectedDeveloper= spinner.selectedItem as? String
                             if(selectedDeveloper!=null){
+                                //creo  nuova textview dove inserire il nome una volta salvate le modifiche
                                 val developerTextView=TextView(this)
                                 developerTextView.text=selectedDeveloper
                                 child.removeViewAt(1)
@@ -89,6 +97,7 @@ class ProjectActivity : AppCompatActivity() {
                                 //ottengo nome del sottotask
                                 val subTaskName=subTaskTextView.text.toString()
 
+                                Log.d(TAG,"$selectedDeveloper Developer assegnato al sottotask: $subTaskName")
                                 //aggiorno doc firestore con nome developer
                                 val subTaskRef=db.collection("progetti").document(projectId)
                                     .collection("sottotask").document(subTaskName)
@@ -103,6 +112,9 @@ class ProjectActivity : AppCompatActivity() {
                             spinner.visibility=View.INVISIBLE
                         }
                     }
+                    //setto assegnato del 6ask a true cosi non risulta piu con bordo rosso
+                    val TaskRef=db.collection("progetti").document(projectId)
+                    TaskRef.update("assegnato", true.toString())
                     salvaSottotask.visibility=View.INVISIBLE
                 }
 

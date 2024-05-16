@@ -109,7 +109,7 @@ class NewProjectActivity : AppCompatActivity() {
                     "leader" to leader.selectedItem.toString(),
                     "scadenza" to scadenza
                 )
-                nuovoProgetto["assegnato"]= true.toString()
+                nuovoProgetto["assegnato"]= false.toString()
 
                 Log.d(ContentValues.TAG, "nuovoProgetto= $nuovoProgetto")
                 db.collection("progetti")
@@ -118,11 +118,13 @@ class NewProjectActivity : AppCompatActivity() {
                     .addOnSuccessListener{ documentReference ->
                         val batch=db.batch()
                         for(sottoTask in subTask){
-                            val sottoTaskDoc=db.collection("progetti").document(title).collection("sottotask").document()
+                            val sottoTaskDoc=db.collection("progetti").document(title).collection("sottotask").document(sottoTask)
                             batch.set(sottoTaskDoc, hashMapOf("nome" to sottoTask))
                         }
                         batch.commit().addOnSuccessListener{
-                            Toast.makeText(baseContext, "progetto e sottotask creati con successo", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(baseContext, "progetto e sottotask creati con successo", Toast.LENGTH_SHORT).show(
+
+                            )
 
 
                             //chimata da aggiustare
