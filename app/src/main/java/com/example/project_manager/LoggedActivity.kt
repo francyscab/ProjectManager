@@ -20,7 +20,9 @@ class LoggedActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_logged)
-
+        loadProjectData()
+    }
+    private fun loadProjectData(){
         val db = FirebaseFirestore.getInstance()
 
         // ArrayList of class ItemsViewModel
@@ -108,5 +110,11 @@ class LoggedActivity : AppCompatActivity() {
             }
 
         Log.d(TAG, "username: $userName")
+    }
+
+
+    override fun onResume() {
+        super.onResume()
+        loadProjectData()
     }
 }
