@@ -23,6 +23,7 @@ class LoggedActivity : AppCompatActivity() {
         loadProjectData()
     }
     private fun loadProjectData(){
+        lateinit var role:String
         val db = FirebaseFirestore.getInstance()
 
         // ArrayList of class ItemsViewModel
@@ -62,12 +63,13 @@ class LoggedActivity : AppCompatActivity() {
                         for(document in result){
                             val nome=document.getString("name")
                             val email=document.getString("email")
-                            val role=document.getString("role")
+                            role= document.getString("role").toString()
                             if(email==userName){
                                 if(role=="Manager"){
                                     Log.d(TAG, "MANAGER:")
                                     newProject.setOnClickListener {
-                                        startActivity(Intent(this, NewProjectActivity::class.java))
+                                        val intent = Intent(this, NewProjectActivity::class.java)
+                                        startActivity(intent)
                                     }
                                 }
                                 else if(role=="Leader"){
@@ -98,7 +100,8 @@ class LoggedActivity : AppCompatActivity() {
                                     Toast.LENGTH_LONG).show()
 
                                 val intent = Intent(this@LoggedActivity,ProjectActivity::class.java)
-                                intent.putExtra("projectId", clickedItemTitle) // "projectId" è il nome dell'extra, projectId è l'ID del progetto
+                                intent.putExtra("projectId", clickedItemTitle)
+                                intent.putExtra("role",role)// "projectId" è il nome dell'extra, projectId è l'ID del progetto
                                 startActivity(intent)
                             }
                         })

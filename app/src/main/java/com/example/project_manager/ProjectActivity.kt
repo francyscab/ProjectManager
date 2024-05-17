@@ -25,6 +25,7 @@ class ProjectActivity : AppCompatActivity() {
     private lateinit var progressSeekBar: SeekBar
     private lateinit var assegnaSottotask: Button
     private lateinit var salvaSottotask: Button
+    private lateinit var role:String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,85 +42,92 @@ class ProjectActivity : AppCompatActivity() {
 
         // Ottieni l'ID del progetto dall'intent
         projectId = intent.getStringExtra("projectId") ?: ""
+        role=intent.getStringExtra("role")?:""
+
         Log.d(TAG,"nome progetto selezionato: $projectId")
 
         // Carica i dettagli del progetto
         loadProjectDetails()
-
-
     }
 
     //assegna con spinner i vari sottotask ai developer(azione che posso fare solo se leader)
     private fun assegna() {
         //mostra gli spinner con la scelta del developer per ogni sottotask
-        assegnaSottotask.setOnClickListener{
-            assegnaSottotask.visibility=View.INVISIBLE
-            for( i in 0 until subTaskListLayout.childCount)
-            {
-                val child=subTaskListLayout.getChildAt(i)
-                Log.d(TAG,"child $child")
-                if(child is LinearLayout){
-                    //trovo lo spinner
-                    val spinner=child.getChildAt(1)as? Spinner
-                    Log.d(TAG,"spinner  $spinner")
-                    if(spinner!=null){
-                        spinner.visibility=View.VISIBLE
-                    }
-                }
-            }
-            //mostro il bottone di salvataggio
-            salvaSottotask.visibility=View.VISIBLE
-            salvaSottotask.setOnClickListener {
-
-                val db=FirebaseFirestore.getInstance()
-                //scorro i singoli sottotask
-                for(i in 0 until subTaskListLayout.childCount){
+        if(role=="Leader"){
+            assegnaSottotask.visibility=View.VISIBLE
+            assegnaSottotask.setOnClickListener{
+                assegnaSottotask.visibility=View.INVISIBLE
+                for( i in 0 until subTaskListLayout.childCount)
+                {
                     val child=subTaskListLayout.getChildAt(i)
-
+                    Log.d(TAG,"child $child")
                     if(child is LinearLayout){
-                        //trovo lo spinner del sottotask e il titolo del sottotask
-                        val spinner=child.getChildAt(1) as? Spinner
-                        val  subTaskTextView=child.getChildAt(0) as? TextView
-
-                        //se entrambi esistono
-                        if(spinner!=null && subTaskTextView!=null){
-                            //estrapolo il developer selezionato dallo spinner
-                            val selectedDeveloper= spinner.selectedItem as? String
-                            if(selectedDeveloper!=null){
-                                //creo  nuova textview dove inserire il nome una volta salvate le modifiche
-                                val developerTextView=TextView(this)
-                                developerTextView.text=selectedDeveloper
-                                child.removeViewAt(1)
-                                child.addView(developerTextView,1)
-
-                                developerTextView.layoutParams=spinner.layoutParams
-
-                                //ottengo nome del sottotask
-                                val subTaskName=subTaskTextView.text.toString()
-
-                                Log.d(TAG,"$selectedDeveloper Developer assegnato al sottotask: $subTaskName")
-                                //aggiorno doc firestore con nome developer
-                                val subTaskRef=db.collection("progetti").document(projectId)
-                                    .collection("sottotask").document(subTaskName)
-                                subTaskRef.update("developer", selectedDeveloper)
-                                    .addOnSuccessListener {
-                                        Log.d(TAG,"Developer assegnato con successo al sottotask: $subTaskName")
-                                    }
-                                    .addOnFailureListener{ exception->
-                                        Log.e(TAG,"Errore nell'aggiornamento del sottotask: $subTaskName",exception)
-                                    }
-                            }
-                            spinner.visibility=View.INVISIBLE
+                        //trovo lo spinner
+                        val spinner=child.getChildAt(1)as? Spinner
+                        Log.d(TAG,"spinner  $spinner")
+                        if(spinner!=null){
+                            spinner.visibility=View.VISIBLE
                         }
                     }
-                    //setto assegnato del 6ask a true cosi non risulta piu con bordo rosso
-                    val TaskRef=db.collection("progetti").document(projectId)
-                    TaskRef.update("assegnato", true.toString())
-                    salvaSottotask.visibility=View.INVISIBLE
                 }
+                //mostro il bottone di salvataggio
+                salvaSottotask.visibility=View.VISIBLE
+                salvaSottotask.setOnClickListener {
 
+                    val db=FirebaseFirestore.getInstance()
+                    //scorro i singoli sottotask
+                    for(i in 0 until subTaskListLayout.childCount){
+                        val child=subTaskListLayout.getChildAt(i)
+
+                        if(child is LinearLayout){
+                            //trovo lo spinner del sottotask e il titolo del sottotask
+                            val spinner=child.getChildAt(1) as? Spinner
+                            val  subTaskTextView=child.getChildAt(0) as? TextView
+
+                            //se entrambi esistono
+                            if(spinner!=null && subTaskTextView!=null){
+                                //estrapolo il developer selezionato dallo spinner
+                                val selectedDeveloper= spinner.selectedItem as? String
+                                if(selectedDeveloper!=null){
+                                    //creo  nuova textview dove inserire il nome una volta salvate le modifiche
+                                    val developerTextView=TextView(this)
+                                    developerTextView.text=selectedDeveloper
+                                    child.removeViewAt(1)
+                                    child.addView(developerTextView,1)
+
+                                    developerTextView.layoutParams=spinner.layoutParams
+
+                                    //ottengo nome del sottotask
+                                    val subTaskName=subTaskTextView.text.toString()
+
+                                    Log.d(TAG,"$selectedDeveloper Developer assegnato al sottotask: $subTaskName")
+                                    //aggiorno doc firestore con nome developer
+                                    val subTaskRef=db.collection("progetti").document(projectId)
+                                        .collection("sottotask").document(subTaskName)
+                                    subTaskRef.update("developer", selectedDeveloper)
+                                        .addOnSuccessListener {
+                                            Log.d(TAG,"Developer assegnato con successo al sottotask: $subTaskName")
+                                        }
+                                        .addOnFailureListener{ exception->
+                                            Log.e(TAG,"Errore nell'aggiornamento del sottotask: $subTaskName",exception)
+                                        }
+                                }
+                                spinner.visibility=View.INVISIBLE
+                            }
+                        }
+                        //setto assegnato del 6ask a true cosi non risulta piu con bordo rosso
+                        val TaskRef=db.collection("progetti").document(projectId)
+                        TaskRef.update("assegnato", true.toString())
+                        salvaSottotask.visibility=View.INVISIBLE
+                    }
+
+                }
             }
         }
+        else{
+            assegnaSottotask.visibility=View.INVISIBLE
+        }
+
     }
 
     private fun loadProjectDetails() {
