@@ -73,20 +73,25 @@ class LoggedActivity : AppCompatActivity() {
                                     }
                                 }
                                 else if(role=="Leader"){
+                                    Log.d(TAG, "Role FIND: $role")
                                     Log.d(TAG, "LEADER:")
                                     //togliere bottone per creare nuovo progetto
                                     newProject.visibility= View.INVISIBLE
                                     //MOSTRARE SOLO I PROGETTI DI CUI SI È LEADER--modifico array data
-
                                     data=data.filter{it.leader==nome}as ArrayList<ItemsViewModel>
                                     Log.d(TAG,"data with nome= $nome  now: $data")
                                 }
                                 else{
                                     Log.d(TAG, "DEVELOPER:")
+                                    //togliere bottone per creare nuovo progetto
+                                    newProject.visibility= View.INVISIBLE
+                                    //MOSTRARE SOLO I TASK DI CUI SI È developer--modifico array data
                                 }
+                                break//esci dal ciclo quando trovi lutente desiderato in modo che role non venga modificato
                             }
                         }
 
+                        Log.d(TAG, "Role OUT: $role")
                         //passo arraylist all'adapter
                         Log.d(TAG,"DATA PRIMA ADAPTER =$data")
                         val adapter = CustomAdapter(data)
@@ -96,11 +101,12 @@ class LoggedActivity : AppCompatActivity() {
                         adapter.setOnItemClickListener(object : CustomAdapter.onItemClickListener{
                             override fun onItemClick(position: Int) {
                                 val clickedItemTitle=data[position].text
-                                Toast.makeText(this@LoggedActivity,"You clicked on item  $clickedItemTitle",
+                                Toast.makeText(this@LoggedActivity,"You clicked on item,   $clickedItemTitle ,YOU'RE ROLE IS $role",
                                     Toast.LENGTH_LONG).show()
 
                                 val intent = Intent(this@LoggedActivity,ProjectActivity::class.java)
                                 intent.putExtra("projectId", clickedItemTitle)
+                                Log.d(TAG, "Role SEND: $role")
                                 intent.putExtra("role",role)// "projectId" è il nome dell'extra, projectId è l'ID del progetto
                                 startActivity(intent)
                             }

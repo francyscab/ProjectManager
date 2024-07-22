@@ -27,6 +27,11 @@ class NewProjectActivity : AppCompatActivity() {
             newFragment.show(supportFragmentManager, "datePicker")
         }
 
+        findViewById<Button>(R.id.pickDateSubTask).setOnClickListener {
+            val newFragment = DatePickerFragment()
+            newFragment.show(supportFragmentManager, "datePicker")
+        }
+
         val leaderNames = ArrayList<String>()
         val leader = findViewById<Spinner>(R.id.projectLeaderSpinner)
 
@@ -61,6 +66,19 @@ class NewProjectActivity : AppCompatActivity() {
             )
             editText.hint = "Nome del sotto-task"
             linearLayout.addView(editText,linearLayout.childCount-1)
+
+            val scadenzaSubTask = Button(this).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+                text = "Seleziona data scadenza"
+                setOnClickListener {
+                    val newFragment = DatePickerFragment()
+                    newFragment.show(supportFragmentManager, "datePicker")
+                }
+            }
+
         }
 
         buttonSave.setOnClickListener {

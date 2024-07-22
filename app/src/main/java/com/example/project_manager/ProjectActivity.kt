@@ -52,6 +52,7 @@ class ProjectActivity : AppCompatActivity() {
 
     //assegna con spinner i vari sottotask ai developer(azione che posso fare solo se leader)
     private fun assegna() {
+        Log.d(TAG, "Role received: $role")
         //mostra gli spinner con la scelta del developer per ogni sottotask
         if(role=="Leader"){
             assegnaSottotask.visibility=View.VISIBLE
