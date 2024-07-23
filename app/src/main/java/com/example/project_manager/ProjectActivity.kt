@@ -22,7 +22,7 @@ class ProjectActivity : AppCompatActivity() {
     private lateinit var projectLeaderTextView: TextView
     private lateinit var TaskListLayout: LinearLayout
     private lateinit var progressSeekBar: SeekBar
-    private lateinit var assegnaSottotask: Button
+    private lateinit var assegnaTask: Button
     private lateinit var salvatask: Button
     private lateinit var role:String
 
@@ -36,7 +36,7 @@ class ProjectActivity : AppCompatActivity() {
         projectLeaderTextView = findViewById(R.id.projectLeaderTextView)
         TaskListLayout = findViewById(R.id.TaskListLayout)
         progressSeekBar = findViewById(R.id.progressSeekBar)
-        assegnaSottotask = findViewById(R.id.buttonAssegnaSottottask)
+        assegnaTask = findViewById(R.id.buttonAssegnaSottottask)
         salvatask = findViewById(R.id.buttonSalvaAsseganmenti)
 
         // Ottieni l'ID del progetto dall'intent
@@ -54,9 +54,9 @@ class ProjectActivity : AppCompatActivity() {
         Log.d(TAG, "Role received: $role")
         //mostra gli spinner con la scelta del developer per ogni task
         if(role=="Leader"){
-            assegnaSottotask.visibility=View.VISIBLE
-            assegnaSottotask.setOnClickListener{
-                assegnaSottotask.visibility=View.INVISIBLE
+            assegnaTask.visibility=View.VISIBLE
+            assegnaTask.setOnClickListener{
+                assegnaTask.visibility=View.INVISIBLE
                 for( i in 0 until TaskListLayout.childCount)
                 {
                     val child=TaskListLayout.getChildAt(i)
@@ -125,7 +125,7 @@ class ProjectActivity : AppCompatActivity() {
             }
         }
         else{
-            assegnaSottotask.visibility=View.INVISIBLE
+            assegnaTask.visibility=View.INVISIBLE
         }
 
     }
