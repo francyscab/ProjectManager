@@ -13,6 +13,13 @@ import java.util.Locale
 
 class DatePickerFragment : DialogFragment(), DatePickerDialog.OnDateSetListener {
 
+    private var buttonID: String?=null
+
+    override fun onCreate(savedInstanceState: Bundle?){
+        super.onCreate(savedInstanceState)
+        buttonID=arguments?.getString("id_button")
+    }
+
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         // Use the current date as the default date in the picker.
         val c = Calendar.getInstance()
@@ -34,7 +41,18 @@ class DatePickerFragment : DialogFragment(), DatePickerDialog.OnDateSetListener 
         val formattedDate = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(selectedDate.time)
 
         // Update the text of the button with the selected date
-        (activity?.findViewById<Button>(R.id.pickDate))?.text = formattedDate
+        buttonID?.let {
+            val resId = resources.getIdentifier(it, "id", activity?.packageName)
+            (activity?.findViewById<Button>(resId))?.text = formattedDate
+        }
 
+    }
+
+    fun newInstance(buttonID: String):DatePickerFragment{
+        val fragment=DatePickerFragment()
+        val args=Bundle()
+        args.putString("id_button",buttonID)
+        fragment.arguments=args
+        return fragment
     }
 }

@@ -2,8 +2,11 @@ package com.example.project_manager
 
 import android.content.ContentValues
 import android.content.Intent
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.Log
+import android.util.TypedValue
+import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
@@ -13,6 +16,7 @@ import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import com.google.firebase.firestore.FirebaseFirestore
 
 class NewProjectActivity : AppCompatActivity() {
@@ -23,12 +27,12 @@ class NewProjectActivity : AppCompatActivity() {
         val db = FirebaseFirestore.getInstance()
 
         findViewById<Button>(R.id.pickDate).setOnClickListener {
-            val newFragment = DatePickerFragment()
+            val newFragment = DatePickerFragment().newInstance("pickDate")
             newFragment.show(supportFragmentManager, "datePicker")
         }
 
-        findViewById<Button>(R.id.pickDateSubTask).setOnClickListener {
-            val newFragment = DatePickerFragment()
+        findViewById<Button>(R.id.pickDateTask).setOnClickListener {
+            val newFragment = DatePickerFragment().newInstance("pickDateTask")
             newFragment.show(supportFragmentManager, "datePicker")
         }
 
@@ -59,28 +63,53 @@ class NewProjectActivity : AppCompatActivity() {
         val buttonSave=findViewById<Button>(R.id.buttonSave)
 
         buttonAdd.setOnClickListener {
-            val editText = EditText(this)
-            editText.layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-            editText.hint = "Nome del sotto-task"
-            linearLayout.addView(editText,linearLayout.childCount-1)
-
-            val scadenzaSubTask = Button(this).apply {
+            // Crea un EditText per il nome del sotto-task
+            val editTextNome = EditText(this).apply {
                 layoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
                 )
-                text = "Seleziona data scadenza"
+                hint = "Nome del task"
+            }
+
+            // Aggiungi il EditText al LinearLayout
+            linearLayout.addView(editTextNome, linearLayout.childCount - 1)
+
+            // Crea un EditText per la descrizione del task
+            val editTextDescrizione = EditText(this).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+                hint = "Descrizione del task"
+            }
+
+            // Aggiungi il EditText al LinearLayout
+            linearLayout.addView(editTextDescrizione, linearLayout.childCount - 1)
+
+            // Crea un EditText per la scadenza
+            val scadenzaTask = Button(this).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+                text=""
+                background= getSelectableItemBackground()
+                hint = "Seleziona data scadenza"
+                id= View.generateViewId()
+                val buttonID=id.toString()
                 setOnClickListener {
-                    val newFragment = DatePickerFragment()
+                    val newFragment = DatePickerFragment().newInstance(buttonID)
                     newFragment.show(supportFragmentManager, "datePicker")
                 }
             }
 
+            // Aggiungi il pulsante al LinearLayout
+            linearLayout.addView(scadenzaTask, linearLayout.childCount - 1)
         }
 
+        
+        
         buttonSave.setOnClickListener {
             val title=findViewById<EditText>(R.id.titleNewProject).text.toString()
             val scadenza=findViewById<Button>(R.id.pickDate).text.toString()
@@ -106,9 +135,9 @@ class NewProjectActivity : AppCompatActivity() {
             }
             for(i in 0 until linearLayout.childCount -1){
                 val editText=linearLayout.getChildAt(i) as EditText
-                val subTaskName=editText.text.toString()
-                if(subTaskName.isNotEmpty()){
-                    subTask.add(subTaskName)
+                val TaskName=editText.text.toString()
+                if(TaskName.isNotEmpty()){
+                    subTask.add(TaskName)
                 }
                 else{
                     Toast.makeText(baseContext, "aggiungi almeno un sottotask", Toast.LENGTH_SHORT).show()
@@ -159,5 +188,11 @@ class NewProjectActivity : AppCompatActivity() {
             }
         }
 
+    }
+
+    fun getSelectableItemBackground(): Drawable? {
+        val typedValue = TypedValue()
+        theme.resolveAttribute(android.R.attr.selectableItemBackground, typedValue, true)
+        return ContextCompat.getDrawable(this, typedValue.resourceId)
     }
 }
