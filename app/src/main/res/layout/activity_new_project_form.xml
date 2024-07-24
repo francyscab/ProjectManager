@@ -4,7 +4,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/azzurro"
     tools:context=".SignInActivity">
+
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
@@ -12,6 +14,17 @@
     android:layout_height="match_parent"
     tools:context=".SignInActivity"
     android:orientation="vertical">
+    <!-- Barra superiore con il nome dell'applicazione -->
+    <TextView
+        android:id="@+id/appName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/cadetblue"
+        android:padding="16dp"
+        android:text="@string/app_name"
+        android:textColor="@android:color/black"
+        android:textSize="17sp"
+        android:gravity="center" />
 
     <TextView
         android:layout_marginTop="40dp"
@@ -31,13 +44,34 @@
             android:layout_width="50dp"
             android:layout_height="53dp"
             android:layout_marginLeft="50dp"
-            android:src="@drawable/title" />
+            android:src="@drawable/icona_progetto_ios" />
 
         <EditText
             android:id="@+id/titleNewProject"
             android:layout_width="236dp"
             android:layout_height="wrap_content"
             android:hint="Title"
+            android:inputType="text"
+            android:textSize="30dp" />
+
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="40dp"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="50dp"
+            android:layout_height="53dp"
+            android:layout_marginLeft="50dp"
+            android:src="@drawable/icona_descrizione_ios" />
+
+        <EditText
+            android:id="@+id/descrizioneNewProject"
+            android:layout_width="236dp"
+            android:layout_height="wrap_content"
+            android:hint="Descrizione"
             android:inputType="text"
             android:textSize="30dp" />
 
@@ -61,7 +95,7 @@
             android:layout_width="50dp"
             android:layout_height="53dp"
             android:layout_marginLeft="50dp"
-            android:src="@drawable/person" />
+            android:src="@drawable/icona_user_ios" />
 
         <Spinner
             android:id="@+id/projectLeaderSpinner"
@@ -114,7 +148,7 @@
         android:textColor="@color/red"
         android:layout_marginLeft="120dp"/>
 
-    <LinearLayout
+    <!--<LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -164,6 +198,7 @@
         </LinearLayout>
 
     </LinearLayout>
+    -->
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -174,8 +209,10 @@
 
         <Button
             android:id="@+id/buttonSave"
+            android:backgroundTint="@color/cadetblue"
             android:layout_width="100dp"
             android:layout_height="wrap_content"
+            android:textColor="@color/black"
             android:text=" Salva" />
     </LinearLayout>
 

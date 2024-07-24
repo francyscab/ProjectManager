@@ -6,4 +6,6 @@
     <string name="libro">Libro</string>
     <string name="add">Aggiungi</string>
     <string name="user">User</string>
+    <string name="login">Accedi</string>
+    <string name="signin">Iscriviti</string>
 </resources>
