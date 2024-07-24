@@ -3,23 +3,35 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/azzurro"
     tools:context=".MainActivity"
     android:orientation="vertical">
+    <!-- Barra superiore con il nome dell'applicazione -->
+    <TextView
+        android:id="@+id/appName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/cadetblue"
+        android:padding="16dp"
+        android:text="@string/app_name"
+        android:textColor="@android:color/black"
+        android:textSize="17sp"
+        android:gravity="center" />
 
     <TextView
         android:layout_marginTop="40dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Welcome"
-        android:textSize="50dp"
-        android:layout_marginLeft="40dp"/>
+        android:textSize="40dp"
+        android:layout_marginLeft="105dp"/>
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="170dp"
+        android:layout_marginLeft="140dp"
         android:text="Back!"
-        android:textSize="50dp" />
+        android:textSize="40dp" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -31,7 +43,7 @@
             android:layout_marginLeft="75dp"
             android:layout_width="50dp"
             android:layout_height="53dp"
-            android:src="@drawable/username" />
+            android:src="@drawable/icona_user_ios" />
 
         <EditText
             android:id="@+id/username_field"
@@ -52,7 +64,7 @@
         <ImageView
             android:layout_width="50dp"
             android:layout_height="53dp"
-            android:src="@drawable/password"
+            android:src="@drawable/icona_pw_ios"
             android:layout_marginLeft="75dp"/>
 
         <EditText
@@ -79,7 +91,7 @@
         android:layout_height="60dp"
         android:layout_marginLeft="85dp"
         android:layout_marginTop="30dp"
-        android:backgroundTint="@color/black"
+        android:backgroundTint="@color/cadetblue"
         android:text="Sign in"
         android:textColor="@color/white" />
 
