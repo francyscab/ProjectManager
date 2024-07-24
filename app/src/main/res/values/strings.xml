@@ -1,3 +1,9 @@
 <resources>
-    <string name="app_name">project_manager</string>
+    <string name="app_name">Project Manager</string>
+    <string name="conclusi">Conclusi</string>
+    <string name="tutti">Tutti</string>
+    <string name="inCorso">In Corso</string>
+    <string name="libro">Libro</string>
+    <string name="add">Aggiungi</string>
+    <string name="user">User</string>
 </resources>

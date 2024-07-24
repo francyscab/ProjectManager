@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Button
+import android.widget.ImageButton
 import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -29,7 +30,7 @@ class LoggedActivity : AppCompatActivity() {
         // ArrayList of class ItemsViewModel
         var data = ArrayList<ItemsViewModel>()
         val dataLeader= arrayListOf<ItemsViewModel>()
-        val newProject=findViewById<Button>(R.id.newProject)
+        val newProject=findViewById<ImageButton>(R.id.newProject)
 
 
         var userName: String = ""

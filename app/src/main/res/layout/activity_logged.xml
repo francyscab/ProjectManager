@@ -1,24 +1,125 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:background="@color/azzurro"
     tools:context=".MainActivity">
 
-    <Button
-        android:id="@+id/newProject"
+    <!-- Barra superiore con il nome dell'applicazione -->
+    <TextView
+        android:id="@+id/appName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="newProject"/>
+        android:background="@color/cadetblue"
+        android:padding="16dp"
+        android:text="@string/app_name"
+        android:textColor="@android:color/black"
+        android:textSize="17sp"
+        android:gravity="center" />
+
+    <!-- Barra con tre bottoni e un'icona -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="8dp"
+        android:gravity="center_vertical">
+
+        <Button
+            android:id="@+id/button1"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:backgroundTint="@color/white"
+            android:textColor="@color/black"
+            android:textSize="10dp"
+            android:text="@string/tutti" />
+
+        <Button
+            android:id="@+id/button2"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:backgroundTint="@color/white"
+            android:textColor="@color/black"
+            android:textSize="10dp"
+            android:text="@string/inCorso" />
+
+        <Button
+            android:id="@+id/button3"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:backgroundTint="@color/white"
+            android:textColor="@color/black"
+            android:textSize="10dp"
+            android:text="@string/conclusi" />
+
+        <ImageView
+            android:id="@+id/icon"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:src="@drawable/icona_filtro_ios"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:scaleType="fitCenter" />
+    </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerview"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        tools:itemCount="5"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        tools:itemCount="6"
         tools:listitem="@layout/card_view_design" />
 
+    <LinearLayout
+        android:id="@+id/bottomBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="@color/cadetblue">
+
+        <ImageButton
+            android:id="@+id/button_book"
+            android:layout_width="48dp"
+            android:layout_height="50dp"
+            android:src="@drawable/icona_progetto_ios"
+            android:contentDescription="@string/libro"
+            android:background="?attr/selectableItemBackground"
+            android:padding="8dp"
+            android:layout_weight="1"
+            android:scaleType="fitCenter" />
+
+        <ImageButton
+            android:id="@+id/newProject"
+            android:layout_width="48dp"
+            android:layout_height="50dp"
+            android:src="@drawable/icona_piu_ios"
+            android:contentDescription="@string/add"
+            android:background="?attr/selectableItemBackground"
+            android:padding="8dp"
+            android:layout_weight="1"
+            android:scaleType="fitCenter" />
+
+        <ImageButton
+            android:id="@+id/button_person"
+            android:layout_width="48dp"
+            android:layout_height="50dp"
+            android:src="@drawable/icona_user_ios"
+            android:contentDescription="@string/user"
+            android:background="?attr/selectableItemBackground"
+            android:padding="8dp"
+            android:layout_weight="1"
+            android:scaleType="fitCenter" />
+    </LinearLayout>
 </LinearLayout>
