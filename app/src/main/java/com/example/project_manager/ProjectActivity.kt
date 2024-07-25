@@ -145,6 +145,7 @@ class ProjectActivity : AppCompatActivity() {
                 if (document != null) {
                     val projectName = document.getString("titolo")?.uppercase()
                     val projectDeadline = document.getString("scadenza")
+                    val projectdescr=document.getString("descrizione")
                     val projectLeader = document.getString("leader")?.split(" ")?.joinToString(" ") {
                         it.replaceFirstChar {
                             if (it.isLowerCase()) it.titlecase(
@@ -159,6 +160,7 @@ class ProjectActivity : AppCompatActivity() {
                     projectNameTextView.text = projectName
                     projectDeadlineTextView.text = "$projectDeadline"
                     projectLeaderTextView.text = "$projectLeader"
+                    projectDescriptionTextView.text="$projectdescr"
 
 
                     // Carica i sottotask del progetto

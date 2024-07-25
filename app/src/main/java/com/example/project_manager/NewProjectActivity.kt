@@ -114,11 +114,13 @@ class NewProjectActivity : AppCompatActivity() {
         buttonSave.setOnClickListener {
             val title = findViewById<EditText>(R.id.titleNewProject).text.toString()
             val scadenza = findViewById<Button>(R.id.pickDate).text.toString()
+            val descrizione=findViewById<EditText>(R.id.descrizioneNewProject).text.toString()
             val tasks=ArrayList<Map<String,String>>()
 
             val err_title = findViewById<TextView>(R.id.errore_titolo)
             val err_date = findViewById<TextView>(R.id.errore_date)
             val err_leader = findViewById<TextView>(R.id.errore_projectLeader)
+            val err_descrizione=findViewById<TextView>(R.id.errore_descrizione)
 
             var check_campi = true;
 
@@ -133,6 +135,10 @@ class NewProjectActivity : AppCompatActivity() {
             if (leader.selectedItemPosition == AdapterView.INVALID_POSITION) {
                 err_leader.setText("select the leader of this project")
                 check_campi = false;
+            }
+            if(descrizione=="") {
+                err_descrizione.setText("missing descriptiom")
+                check_campi=false
             }
             /*for (i in 0 until linearLayout.childCount step 3) {
                 val editTextNome = linearLayout.getChildAt(i) as? EditText
@@ -171,11 +177,13 @@ class NewProjectActivity : AppCompatActivity() {
                 err_title.setText("")
                 err_leader.setText("")
                 err_date.setText("")
+                err_descrizione.setText("")
 
                 val nuovoProgetto = hashMapOf(
                     "titolo" to title,
                     "leader" to leader.selectedItem.toString(),
-                    "scadenza" to scadenza
+                    "scadenza" to scadenza,
+                    "descrizione" to descrizione
                 )
                 nuovoProgetto["assegnato"] = false.toString()
 
