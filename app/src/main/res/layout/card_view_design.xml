@@ -13,7 +13,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:background="@color/white"
-        android:padding="14dp">
+        android:padding="dp">
 
         <TextView
             android:id="@+id/titolo"
@@ -22,8 +22,24 @@
             android:layout_marginStart="10dp"
             android:layout_marginLeft="15dp"
             android:text="Titolo Progetto"
+            android:layout_weight="10"
             android:textSize="17dp"
             android:textStyle="bold"
+            android:layout_marginTop="16dp"
+            />
+
+        <TextView
+            android:id="@+id/new_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:layout_marginLeft="15dp"
+            android:text="@string/nuovo"
+            android:layout_weight="1"
+            android:textSize="10dp"
+            android:background="@color/cadetblue"
+            android:textStyle="bold"
+            android:visibility="invisible"
             />
 
     </LinearLayout>
