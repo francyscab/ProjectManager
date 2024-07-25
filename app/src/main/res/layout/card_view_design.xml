@@ -13,7 +13,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:background="@color/white"
-        android:padding="dp">
+        >
 
         <TextView
             android:id="@+id/titolo"
