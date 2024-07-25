@@ -13,11 +13,13 @@ import android.widget.Spinner
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.firestore.FirebaseFirestore
+import java.util.Locale
 
 class ProjectActivity : AppCompatActivity() {
 
     private lateinit var projectId: String
     private lateinit var projectNameTextView: TextView
+    private lateinit var projectDescriptionTextView: TextView
     private lateinit var projectDeadlineTextView: TextView
     private lateinit var projectLeaderTextView: TextView
     private lateinit var TaskListLayout: LinearLayout
@@ -34,10 +36,11 @@ class ProjectActivity : AppCompatActivity() {
         projectNameTextView = findViewById(R.id.projectNameTextView)
         projectDeadlineTextView = findViewById(R.id.projectDeadlineTextView)
         projectLeaderTextView = findViewById(R.id.projectLeaderTextView)
-        TaskListLayout = findViewById(R.id.TaskListLayout)
-        progressSeekBar = findViewById(R.id.progressSeekBar)
-        assegnaTask = findViewById(R.id.buttonAssegnaSottottask)
-        salvatask = findViewById(R.id.buttonSalvaAsseganmenti)
+        projectDescriptionTextView=findViewById(R.id.descrizioneProgetto)
+        //TaskListLayout = findViewById(R.id.TaskListLayout)
+        //progressSeekBar = findViewById(R.id.progressSeekBar)
+        //assegnaTask = findViewById(R.id.buttonAssegnaSottottask)
+        //salvatask = findViewById(R.id.buttonSalvaAsseganmenti)
 
         // Ottieni l'ID del progetto dall'intent
         projectId = intent.getStringExtra("projectId") ?: ""
@@ -50,7 +53,7 @@ class ProjectActivity : AppCompatActivity() {
     }
 
     //assegna con spinner i vari task ai developer(azione che posso fare solo se leader)
-    private fun assegna() {
+    /*private fun assegna() {
         Log.d(TAG, "Role received: $role")
         //mostra gli spinner con la scelta del developer per ogni task
         if(role=="Leader"){
@@ -128,7 +131,7 @@ class ProjectActivity : AppCompatActivity() {
             assegnaTask.visibility=View.INVISIBLE
         }
 
-    }
+    }*/
 
     private fun loadProjectDetails() {
         val db = FirebaseFirestore.getInstance()
@@ -140,14 +143,22 @@ class ProjectActivity : AppCompatActivity() {
         projectRef.get()
             .addOnSuccessListener { document ->
                 if (document != null) {
-                    val projectName = document.getString("titolo")
+                    val projectName = document.getString("titolo")?.uppercase()
                     val projectDeadline = document.getString("scadenza")
-                    val projectLeader = document.getString("leader")
+                    val projectLeader = document.getString("leader")?.split(" ")?.joinToString(" ") {
+                        it.replaceFirstChar {
+                            if (it.isLowerCase()) it.titlecase(
+                                Locale.getDefault()
+                            ) else it.toString()
+                        }
+                    }
+
+
 
                     // Aggiorna le views con i dettagli del progetto
                     projectNameTextView.text = projectName
-                    projectDeadlineTextView.text = "Deadline: $projectDeadline"
-                    projectLeaderTextView.text = "Leader: $projectLeader"
+                    projectDeadlineTextView.text = "$projectDeadline"
+                    projectLeaderTextView.text = "$projectLeader"
 
 
                     // Carica i sottotask del progetto
@@ -209,7 +220,7 @@ class ProjectActivity : AppCompatActivity() {
 
 
                         }
-                        assegna();
+                        //assegna();
                     }
                     .addOnFailureListener { exception ->
                         Log.d(TAG, "get failed with ", exception)

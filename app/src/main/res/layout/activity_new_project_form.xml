@@ -52,7 +52,7 @@
             android:layout_height="wrap_content"
             android:hint="Title"
             android:inputType="text"
-            android:textSize="30dp" />
+            android:textSize="25dp" />
 
     </LinearLayout>
     <LinearLayout
@@ -72,8 +72,11 @@
             android:layout_width="236dp"
             android:layout_height="wrap_content"
             android:hint="Descrizione"
-            android:inputType="text"
-            android:textSize="30dp" />
+            android:inputType="textMultiLine"
+            android:gravity="top"
+            android:lines="5"
+            android:scrollbars="vertical"
+            android:textSize="25dp" />
 
     </LinearLayout>
     <TextView

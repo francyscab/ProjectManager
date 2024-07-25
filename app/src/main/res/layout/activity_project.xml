@@ -1,7 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/azzurro"
+    android:orientation="vertical"
+    >
+
+    <!-- Barra superiore con il nome dell'applicazione -->
+    <TextView
+        android:id="@+id/appName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/cadetblue"
+        android:padding="16dp"
+        android:text="@string/app_name"
+        android:textColor="@android:color/black"
+        android:textSize="17sp"
+        android:gravity="center" />
 
     <TextView
         android:id="@+id/projectNameTextView"
@@ -10,45 +25,149 @@
         android:text="Project Name"
         android:textSize="24sp"
         android:layout_marginTop="16dp"
-        android:layout_centerHorizontal="true"/>
+        android:layout_gravity="center"/>
 
     <TextView
-        android:id="@+id/projectDeadlineTextView"
-        android:layout_width="wrap_content"
+        android:id="@+id/descrizioneProgetto"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Deadline: "
-        android:layout_below="@id/projectNameTextView"
-        android:layout_marginTop="8dp"
-        android:layout_centerHorizontal="true"/>
+        android:text=""
+        android:textSize="15sp"
+        android:layout_marginTop="16dp"
+        android:paddingLeft="15dp"
+        android:paddingRight="15dp"
+        android:gravity="left"/>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="160dp"
+        android:layout_marginTop="20dp"
+        android:orientation="horizontal">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:layout_weight="1"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="15dp"
+            android:background="@drawable/rouded_square">
 
-    <TextView
-        android:id="@+id/projectLeaderTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Leader: "
-        android:layout_below="@id/projectNameTextView"
-        android:layout_marginTop="30dp"
-        android:layout_centerHorizontal="true"/>
+            <TextView
+                android:id="@+id/projectProgressi"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/progressi"
+                android:layout_marginTop="16dp"
+                android:textStyle="bold"
+                android:textSize="20dp"
+                android:layout_gravity="center"/>
 
-    <TextView
+            <TextView
+                android:id="@+id/projectProgressiTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="0%"
+                android:textStyle="bold"
+                android:textSize="50dp"
+                android:layout_gravity="center"/>
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:layout_weight="1"
+            android:layout_marginStart="15dp"
+            android:layout_marginEnd="20dp"
+            android:background="@drawable/rouded_square">
+
+            <TextView
+                android:id="@+id/projectDeadline"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/scadenza"
+                android:layout_marginTop="16dp"
+                android:textStyle="bold"
+                android:textSize="20dp"
+                android:layout_gravity="center"/>
+
+            <TextView
+                android:id="@+id/projectDeadlineTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:textStyle="bold"
+                android:textSize="25dp"
+                android:gravity="center"
+                android:paddingTop="12dp"
+                android:layout_gravity="center"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="160dp"
+        android:layout_marginTop="20dp"
+        android:orientation="horizontal"
+        >
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginStart="110dp"
+            android:layout_marginEnd="110dp"
+            android:layout_weight="1"
+            android:background="@drawable/rouded_square"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/projectLeader"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="16dp"
+                android:text="@string/leader"
+                android:textSize="20dp"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:id="@+id/profileImage"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_marginTop="13dp"
+                android:background="@drawable/rounded_image"
+                android:clipToOutline="true"
+                android:scaleType="centerCrop"
+                android:src="@drawable/icona_user_ios" />
+
+            <TextView
+                android:id="@+id/projectLeaderTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="16dp"
+                android:text=""
+                android:textSize="20dp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+    </LinearLayout>
+
+  <!--<TextView
         android:id="@+id/TaskHeaderTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Tasks:"
         android:textStyle="bold"
-        android:layout_below="@id/projectDeadlineTextView"
-        android:layout_marginTop="25dp"
-        android:layout_marginStart="16dp"/>
+        android:layout_marginTop="25dp"/>
 
     <LinearLayout
         android:id="@+id/TaskListLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:layout_below="@id/TaskHeaderTextView"
-        android:layout_marginTop="8dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"/>
+        android:layout_marginTop="8dp"/>
 
     <TextView
         android:id="@+id/progressHeaderTextView"
@@ -56,38 +175,29 @@
         android:layout_height="wrap_content"
         android:text="Progress:"
         android:textStyle="bold"
-        android:layout_below="@id/TaskListLayout"
-        android:layout_marginTop="16dp"
-        android:layout_marginStart="16dp"/>
-
+        android:layout_marginTop="16dp"/>
     <SeekBar
         android:id="@+id/progressSeekBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/progressHeaderTextView"
-        android:layout_marginTop="8dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"/>
+        android:layout_marginTop="8dp"/>
 
     <Button
         android:id="@+id/buttonAssegnaSottottask"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/progressSeekBar"
         android:layout_marginTop="30dp"
         android:text="assegna sottotask"
-        android:layout_centerHorizontal="true"/>
+        android:layout_gravity="center"/>
 
     <Button
         android:id="@+id/buttonSalvaAsseganmenti"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/buttonAssegnaSottottask"
         android:layout_marginTop="10dp"
         android:text="salva"
-        android:layout_centerHorizontal="true"
-        android:visibility="invisible"/>
+        android:layout_gravity="center"
+        android:visibility="invisible"/>-->
 
 
-
-</RelativeLayout>
+</LinearLayout>

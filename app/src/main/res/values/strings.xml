@@ -8,4 +8,7 @@
     <string name="user">User</string>
     <string name="login">Accedi</string>
     <string name="signin">Iscriviti</string>
+    <string name="scadenza">SCADENZA</string>
+    <string name="progressi">AVANZAMENTO</string>
+    <string name="leader">LEADER</string>
 </resources>

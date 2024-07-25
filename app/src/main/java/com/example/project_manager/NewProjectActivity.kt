@@ -32,10 +32,10 @@ class NewProjectActivity : AppCompatActivity() {
             newFragment.show(supportFragmentManager, "datePicker")
         }
 
-        findViewById<Button>(R.id.pickDateTask).setOnClickListener {
+        /*findViewById<Button>(R.id.pickDateTask).setOnClickListener {
             val newFragment = DatePickerFragment().newInstance("pickDateTask")
             newFragment.show(supportFragmentManager, "datePicker")
-        }
+        }*/
 
         val leaderNames = ArrayList<String>()
         val leader = findViewById<Spinner>(R.id.projectLeaderSpinner)
@@ -59,11 +59,11 @@ class NewProjectActivity : AppCompatActivity() {
                 Log.w(ContentValues.TAG, "Error getting documents: ", exception)
             }
 
-        val linearLayout = findViewById<LinearLayout>(R.id.linearLayout)
-        val buttonAdd = findViewById<Button>(R.id.buttonAdd)
+       // val linearLayout = findViewById<LinearLayout>(R.id.linearLayout)
+        //val buttonAdd = findViewById<Button>(R.id.buttonAdd)
         val buttonSave=findViewById<Button>(R.id.buttonSave)
 
-        buttonAdd.setOnClickListener {
+        /*buttonAdd.setOnClickListener {
             // Crea un EditText per il nome del sotto-task
             val editTextNome = EditText(this).apply {
                 layoutParams = LinearLayout.LayoutParams(
@@ -109,7 +109,7 @@ class NewProjectActivity : AppCompatActivity() {
             linearLayout.addView(scadenzaTask, linearLayout.childCount - 1)
         }
 
-        
+        */
         
         buttonSave.setOnClickListener {
             val title = findViewById<EditText>(R.id.titleNewProject).text.toString()
@@ -134,7 +134,7 @@ class NewProjectActivity : AppCompatActivity() {
                 err_leader.setText("select the leader of this project")
                 check_campi = false;
             }
-            for (i in 0 until linearLayout.childCount step 3) {
+            /*for (i in 0 until linearLayout.childCount step 3) {
                 val editTextNome = linearLayout.getChildAt(i) as? EditText
                 val taskName = editTextNome?.text.toString()
 
@@ -165,7 +165,7 @@ class NewProjectActivity : AppCompatActivity() {
                     check_campi = false
                 }
             }
-            Log.d(ContentValues.TAG, "Tasks array: $tasks")
+            Log.d(ContentValues.TAG, "Tasks array: $tasks")*/
 
             if (check_campi) {
                 err_title.setText("")
