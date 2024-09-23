@@ -154,17 +154,31 @@ class ProjectActivity : AppCompatActivity() {
                         }
                     }
 
+                    Log.d(TAG, "Role received: $role")
+                    val progLeaderCont = findViewById<LinearLayout>(R.id.progLeaderCont)
+
+                    // nascondere il TextView
+                    if (role=="Leader") {
+                        progLeaderCont.visibility = View.GONE
+                        projectNameTextView.text = projectName
+                        projectDeadlineTextView.text = "$projectDeadline"
+                        projectDescriptionTextView.text="$projectdescr"
+                    } else {
+                        // Se la condizione è falsa mostrare il TextView
+                        progLeaderCont.visibility = View.VISIBLE
+                        projectNameTextView.text = projectName
+                        projectDeadlineTextView.text = "$projectDeadline"
+                        projectLeaderTextView.text = "$projectLeader"
+                        projectDescriptionTextView.text="$projectdescr"
+                    }
 
 
                     // Aggiorna le views con i dettagli del progetto
-                    projectNameTextView.text = projectName
-                    projectDeadlineTextView.text = "$projectDeadline"
-                    projectLeaderTextView.text = "$projectLeader"
-                    projectDescriptionTextView.text="$projectdescr"
+
 
 
                     // Carica i sottotask del progetto
-                    loadTasks()
+                    //loadTasks()
 
                 } else {
                     Log.d(TAG, "No such document")

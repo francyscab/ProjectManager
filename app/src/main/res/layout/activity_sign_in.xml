@@ -3,15 +3,28 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/azzurro"
     tools:context=".SignInActivity"
     android:orientation="vertical">
 
+    <!-- Barra superiore con il nome dell'applicazione -->
     <TextView
-        android:layout_marginTop="40dp"
+        android:id="@+id/appName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/cadetblue"
+        android:padding="16dp"
+        android:text="@string/app_name"
+        android:textColor="@android:color/black"
+        android:textSize="17sp"
+        android:gravity="center" />
+
+    <TextView
+        android:layout_marginTop="15dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Welcome to"
-        android:textSize="50dp"
+        android:textSize="45dp"
         android:layout_marginLeft="20dp"/>
 
     <TextView
@@ -19,12 +32,12 @@
         android:layout_height="wrap_content"
         android:layout_marginLeft="20dp"
         android:text="Project Manager!"
-        android:textSize="50dp" />
+        android:textSize="45dp" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="40dp"
+        android:layout_marginTop="20dp"
         android:orientation="horizontal">
 
         <ImageView
@@ -54,7 +67,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="5dp"
         android:orientation="horizontal">
 
         <ImageView
@@ -85,7 +98,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="5dp"
         android:orientation="horizontal">
 
         <ImageView
@@ -114,7 +127,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginTop="10dp">
+        android:layout_marginTop="5dp">
 
         <ImageView
             android:layout_width="50dp"
@@ -143,7 +156,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginTop="10dp">
+        android:layout_marginTop="5dp">
 
         <ImageView
             android:layout_width="50dp"
@@ -171,9 +184,9 @@
         android:layout_width="230dp"
         android:layout_height="60dp"
         android:layout_marginLeft="85dp"
-        android:layout_marginTop="20dp"
-        android:backgroundTint="@color/black"
-        android:text="Sign up"
-        android:textColor="@color/white" />
+        android:layout_marginTop="15dp"
+        android:backgroundTint="@color/cadetblue"
+        android:textColor="@color/black"
+        android:text="Sign up" />
 
 </LinearLayout>
