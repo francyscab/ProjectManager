@@ -156,15 +156,18 @@ class ProjectActivity : AppCompatActivity() {
 
                     Log.d(TAG, "Role received: $role")
                     val progLeaderCont = findViewById<LinearLayout>(R.id.progLeaderCont)
+                    val progLeaderTask= findViewById<LinearLayout>(R.id.progLeaderTask)
 
                     // nascondere il TextView
                     if (role=="Leader") {
                         progLeaderCont.visibility = View.GONE
+                        progLeaderTask.visibility = View.VISIBLE
                         projectNameTextView.text = projectName
                         projectDeadlineTextView.text = "$projectDeadline"
                         projectDescriptionTextView.text="$projectdescr"
                     } else {
                         // Se la condizione è falsa mostrare il TextView
+                        progLeaderTask.visibility = View.GONE
                         progLeaderCont.visibility = View.VISIBLE
                         projectNameTextView.text = projectName
                         projectDeadlineTextView.text = "$projectDeadline"
