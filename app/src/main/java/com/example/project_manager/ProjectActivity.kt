@@ -2,11 +2,13 @@ package com.example.project_manager
 
 
 import android.content.ContentValues
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.Spinner
@@ -157,14 +159,29 @@ class ProjectActivity : AppCompatActivity() {
                     Log.d(TAG, "Role received: $role")
                     val progLeaderCont = findViewById<LinearLayout>(R.id.progLeaderCont)
                     val progLeaderTask= findViewById<LinearLayout>(R.id.progLeaderTask)
+                    val testoTask=findViewById<TextView>(R.id.testoTask)
 
                     // nascondere il TextView
                     if (role=="Leader") {
+                        //aggiungere lisener su bottone + per task
+                        val bottoneTask=findViewById<ImageButton>(R.id.aggiungiTaskButton).setOnClickListener {
+                            //aprire schermata per aggiungere task
+                            val intent = Intent(this, NewProjectActivity::class.java)
+                            // Aggiungere il parametro "task" all'Intent
+                            intent.putExtra("tipo_form", "task")
+                            startActivity(intent)
+                        }
                         progLeaderCont.visibility = View.GONE
                         progLeaderTask.visibility = View.VISIBLE
                         projectNameTextView.text = projectName
                         projectDeadlineTextView.text = "$projectDeadline"
                         projectDescriptionTextView.text="$projectdescr"
+                        //if(nessun task)
+                        //non ho ancora task da visualizzare
+                        val testoTask=findViewById<TextView>(R.id.testoTask)
+                        testoTask.text="non ci sono ancora task da visualizzare"
+                        //else
+                        //caricare task nelle card?
                     } else {
                         // Se la condizione è falsa mostrare il TextView
                         progLeaderTask.visibility = View.GONE

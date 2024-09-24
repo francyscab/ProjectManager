@@ -37,6 +37,16 @@ class NewProjectActivity : AppCompatActivity() {
             newFragment.show(supportFragmentManager, "datePicker")
         }*/
 
+        //se nuovo prog è stato chiamato da un tasto per creare un nuovo task o nuovo progetto
+        val tipoForm = intent.getStringExtra("tipo_form")
+        if(tipoForm=="task"){
+            //sto creando un task
+            //cerco i developer e non i leader
+
+        }
+        else{
+            //sto creando un nuovo progetto
+        }
         val leaderNames = ArrayList<String>()
         val leader = findViewById<Spinner>(R.id.projectLeaderSpinner)
 
