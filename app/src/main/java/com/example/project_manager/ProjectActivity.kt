@@ -169,6 +169,7 @@ class ProjectActivity : AppCompatActivity() {
                             val intent = Intent(this, NewProjectActivity::class.java)
                             // Aggiungere il parametro "task" all'Intent
                             intent.putExtra("tipo_form", "task")
+                            intent.putExtra("project-id",projectId)
                             startActivity(intent)
                         }
                         progLeaderCont.visibility = View.GONE

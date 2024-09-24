@@ -109,7 +109,7 @@
             android:src="@drawable/icona_user_ios" />
 
         <Spinner
-            android:id="@+id/projectLeaderSpinner"
+            android:id="@+id/projectElementSpinner"
             android:layout_width="240dp"
             android:layout_height="match_parent"
             android:spinnerMode="dropdown"
@@ -119,7 +119,7 @@
     </LinearLayout>
 
     <TextView
-        android:id="@+id/errore_projectLeader"
+        android:id="@+id/errore_spinner"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text=""
