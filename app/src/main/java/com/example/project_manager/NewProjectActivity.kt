@@ -179,10 +179,8 @@ class NewProjectActivity : AppCompatActivity() {
                                 ).show(
                                 )//dopo averlo creato apro la schermata del nuovo task
                                 val intent = Intent(this, ProjectActivity::class.java)
-                                intent.putExtra(
-                                    "tasktId",
-                                    title
-                                )
+                                intent.putExtra("tasktId", title)
+                                intent.putExtra("projectId", projectId)
                                 startActivity(intent)
                             }.addOnFailureListener { exception ->
                                 Log.w(ContentValues.TAG, "Error adding document", exception)

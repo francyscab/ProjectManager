@@ -30,6 +30,8 @@ class ProjectActivity : AppCompatActivity() {
     private lateinit var assegnaTask: Button
     private lateinit var salvatask: Button
     private lateinit var role:String
+    private lateinit var progLeaderCont:LinearLayout
+    private lateinit var progLeaderTask:LinearLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,15 +53,18 @@ class ProjectActivity : AppCompatActivity() {
         subtaskId=intent.getStringExtra("subtaskId")?: ""
         role=intent.getStringExtra("role")?:""
 
-        if (projectId.isNotEmpty()) {
+        progLeaderCont = findViewById<LinearLayout>(R.id.progLeaderCont)
+        progLeaderTask= findViewById<LinearLayout>(R.id.progLeaderTask)
+
+        if (subtaskId.isNotEmpty()) {
             // Esegui la logica per il progetto
-            loadDetails("progetto")
+            loadDetails("subtask")
         } else if (taskId.isNotEmpty()) {
             // Esegui la logica per il task
             loadDetails("task")
-        } else if (subtaskId.isNotEmpty()) {
+        } else if (projectId.isNotEmpty()) {
             // Esegui la logica per il task
-            loadDetails("subtask")
+            loadDetails("progetto")
         }else {
             // Gestisci il caso in cui nessun ID sia passato
             Log.w(TAG, "Nessun ID del progetto o del task fornito.")
@@ -91,8 +96,8 @@ class ProjectActivity : AppCompatActivity() {
                         }
 
                         Log.d(TAG, "Role received: $role")
-                        val progLeaderCont = findViewById<LinearLayout>(R.id.progLeaderCont)
-                        val progLeaderTask= findViewById<LinearLayout>(R.id.progLeaderTask)
+                        //val progLeaderCont = findViewById<LinearLayout>(R.id.progLeaderCont)
+                        //val progLeaderTask= findViewById<LinearLayout>(R.id.progLeaderTask)
 
                         // nascondere sezione con leader
                         if (role=="Leader") {
@@ -137,8 +142,32 @@ class ProjectActivity : AppCompatActivity() {
                     Log.d(TAG, "get failed with ", exception)
                 }
         }else if(tipo=="task"){
-            val taskRef = db.collection("progetti").document(projectId)//!!! devo passate al task oltre il task id anche l'id del progetto devo trascinarlo per le varie chiamate'
+            val taskRef = db.collection("progetti").document(projectId).collection("task").document(taskId)
+            taskRef.get()
+                .addOnSuccessListener { document ->
+                    if (document != null) {
+                        val taskName = document.getString("titolo")?.uppercase()
+                        val taskDeadline = document.getString("scadenza")
+                        val taskdescr = document.getString("descrizione")
+                        val taskDev = document.getString("developer")
+                            document.getString("developer")?.split(" ")?.joinToString(" ") {
+                                it.replaceFirstChar {
+                                    if (it.isLowerCase()) it.titlecase(
+                                        Locale.getDefault()
+                                    ) else it.toString()
+                                }
+                            }
 
+                        progLeaderTask.visibility = View.GONE
+                        progLeaderCont.visibility = View.VISIBLE
+                        projectNameTextView.text = taskName
+                        projectDeadlineTextView.text = "$taskDeadline"
+                        projectLeaderTextView.text = "$taskDev"
+                        projectDescriptionTextView.text="$taskdescr"
+                    }
+                }.addOnFailureListener { exception ->
+                    Log.d(TAG, "get failed with ", exception)
+                }
         }else if(tipo=="subtask"){
 
         }else{
