@@ -1,18 +1,14 @@
 package com.example.project_manager
 
 
-import android.content.ContentValues
-import android.content.ContentValues.TAG
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.SeekBar
-import android.widget.Spinner
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -23,6 +19,8 @@ import java.util.Locale
 class ProjectActivity : AppCompatActivity() {
 
     private lateinit var projectId: String
+    private lateinit var taskId: String
+    private lateinit var subtaskId: String
     private lateinit var projectNameTextView: TextView
     private lateinit var projectDescriptionTextView: TextView
     private lateinit var projectDeadlineTextView: TextView
@@ -49,86 +47,106 @@ class ProjectActivity : AppCompatActivity() {
 
         // Ottieni l'ID del progetto dall'intent
         projectId = intent.getStringExtra("projectId") ?: ""
+        taskId=intent.getStringExtra("taskId")?:""
+        subtaskId=intent.getStringExtra("subtaskId")?: ""
         role=intent.getStringExtra("role")?:""
 
-        Log.d(TAG,"nome progetto selezionato: $projectId")
-
-        // Carica i dettagli del progetto
-        loadProjectDetails()
+        if (projectId.isNotEmpty()) {
+            // Esegui la logica per il progetto
+            loadDetails("progetto")
+        } else if (taskId.isNotEmpty()) {
+            // Esegui la logica per il task
+            loadDetails("task")
+        } else if (subtaskId.isNotEmpty()) {
+            // Esegui la logica per il task
+            loadDetails("subtask")
+        }else {
+            // Gestisci il caso in cui nessun ID sia passato
+            Log.w(TAG, "Nessun ID del progetto o del task fornito.")
+        }
     }
 
-    private fun loadProjectDetails() {
+    private fun loadDetails(tipo : String) {
         val db = FirebaseFirestore.getInstance()
 
-        // Ottieni il riferimento al documento del progetto
-        val projectRef = db.collection("progetti").document(projectId)
+        //devo capire se si tratta di un task, un progetto o in un successivo momento di un sottotask
+        if (tipo=="progetto"){
+            val projectRef = db.collection("progetti").document(projectId)
 
-        // Ottieni i dettagli del progetto dal documento
-        projectRef.get()
-            .addOnSuccessListener { document ->
-                if (document != null) {
-                    val projectName = document.getString("titolo")?.uppercase()
-                    val projectDeadline = document.getString("scadenza")
-                    val projectdescr=document.getString("descrizione")
-                    val projectLeader = document.getString("leader")?.split(" ")?.joinToString(" ") {
-                        it.replaceFirstChar {
-                            if (it.isLowerCase()) it.titlecase(
-                                Locale.getDefault()
-                            ) else it.toString()
-                        }
-                    }
-
-                    Log.d(TAG, "Role received: $role")
-                    val progLeaderCont = findViewById<LinearLayout>(R.id.progLeaderCont)
-                    val progLeaderTask= findViewById<LinearLayout>(R.id.progLeaderTask)
-                    //val testoTask=findViewById<TextView>(R.id.testoTask)
-
-                    // nascondere il TextView
-                    if (role=="Leader") {
-                        //aggiungere lisener su bottone + per task
-                        val bottoneTask=findViewById<ImageButton>(R.id.aggiungiTaskButton).setOnClickListener {
-                            //aprire schermata per aggiungere task
-                            val intent = Intent(this, NewProjectActivity::class.java)
-                            // Aggiungere il parametro "task" all'Intent
-                            intent.putExtra("tipo_form", "task")
-                            intent.putExtra("project-id",projectId)
-                            startActivity(intent)
+            // Ottieni i dettagli del progetto dal documento
+            // -se sei un leader carica anche  ì task e togli sezione per visualizzare leader
+            // -se sei manager togli sezione per visulaizzare task e visualizza sezione per nome leader
+            projectRef.get()
+                .addOnSuccessListener { document ->
+                    if (document != null) {
+                        val projectName = document.getString("titolo")?.uppercase()
+                        val projectDeadline = document.getString("scadenza")
+                        val projectdescr=document.getString("descrizione")
+                        val projectLeader = document.getString("leader")?.split(" ")?.joinToString(" ") {
+                            it.replaceFirstChar {
+                                if (it.isLowerCase()) it.titlecase(
+                                    Locale.getDefault()
+                                ) else it.toString()
+                            }
                         }
 
-                        //RENDI VISIBILE SEZIONE PER TASK
-                        progLeaderCont.visibility = View.GONE
-                        progLeaderTask.visibility = View.VISIBLE
-                        projectNameTextView.text = projectName
-                        projectDeadlineTextView.text = "$projectDeadline"
-                        projectDescriptionTextView.text="$projectdescr"
+                        Log.d(TAG, "Role received: $role")
+                        val progLeaderCont = findViewById<LinearLayout>(R.id.progLeaderCont)
+                        val progLeaderTask= findViewById<LinearLayout>(R.id.progLeaderTask)
 
-                        loadTask()
+                        // nascondere sezione con leader
+                        if (role=="Leader") {
+                            //aggiungere lisener su bottone + per task
+                            findViewById<ImageButton>(R.id.aggiungiTaskButton).setOnClickListener {
+                                //aprire schermata per aggiungere task
+                                val intent = Intent(this, NewProjectActivity::class.java)
+                                // Aggiungere il parametro "task" all'Intent per capire che stiamo aggiungendo un task (con stasso codice posso aggiungere task, sottotask e progetti)
+                                intent.putExtra("tipo_form", "task")
+                                intent.putExtra("project-id",projectId)
+                                startActivity(intent)
+                                //CHIUDO E TORNO ALLA SCHERMATA DEL PROGETTO E AGGIORNO con nuovo progetto
+                                loadTask()
+                            }
 
+                            //RENDI VISIBILE SEZIONE recycleview PER TASK
+                            progLeaderCont.visibility = View.GONE
+                            progLeaderTask.visibility = View.VISIBLE
+                            projectNameTextView.text = projectName
+                            projectDeadlineTextView.text = "$projectDeadline"
+                            projectDescriptionTextView.text="$projectdescr"
+
+                            //carica i task
+                            loadTask()
+
+                        } else if(role=="Manager") {
+                            // Se la condizione è falsa mostrare il TextView CON NOME LEADER PROGETTO
+                            progLeaderTask.visibility = View.GONE
+                            progLeaderCont.visibility = View.VISIBLE
+                            projectNameTextView.text = projectName
+                            projectDeadlineTextView.text = "$projectDeadline"
+                            projectLeaderTextView.text = "$projectLeader"
+                            projectDescriptionTextView.text="$projectdescr"
+                        }else{
+                            //generare errore perche ruolo è errato
+                        }
                     } else {
-                        // Se la condizione è falsa mostrare il TextView CON NOME LEADER PROGETTO
-                        progLeaderTask.visibility = View.GONE
-                        progLeaderCont.visibility = View.VISIBLE
-                        projectNameTextView.text = projectName
-                        projectDeadlineTextView.text = "$projectDeadline"
-                        projectLeaderTextView.text = "$projectLeader"
-                        projectDescriptionTextView.text="$projectdescr"
+                        Log.d(TAG, "No such document")
                     }
-
-
-                    // Aggiorna le views con i dettagli del progetto
-
-
-
-                    // Carica i sottotask del progetto
-                    //loadTasks()
-
-                } else {
-                    Log.d(TAG, "No such document")
                 }
-            }
-            .addOnFailureListener { exception ->
-                Log.d(TAG, "get failed with ", exception)
-            }
+                .addOnFailureListener { exception ->
+                    Log.d(TAG, "get failed with ", exception)
+                }
+        }else if(tipo=="task"){
+            val taskRef = db.collection("progetti").document(projectId)//!!! devo passate al task oltre il task id anche l'id del progetto devo trascinarlo per le varie chiamate'
+
+        }else if(tipo=="subtask"){
+
+        }else{
+            //errore
+        }
+
+        // Ottieni il riferimento al documento del progetto
+
     }
 
     private fun loadTask() {

@@ -177,7 +177,13 @@ class NewProjectActivity : AppCompatActivity() {
                                     "$tipoForm creato con successo",
                                     Toast.LENGTH_SHORT
                                 ).show(
+                                )//dopo averlo creato apro la schermata del nuovo task
+                                val intent = Intent(this, ProjectActivity::class.java)
+                                intent.putExtra(
+                                    "tasktId",
+                                    title
                                 )
+                                startActivity(intent)
                             }.addOnFailureListener { exception ->
                                 Log.w(ContentValues.TAG, "Error adding document", exception)
                             }
