@@ -2,6 +2,7 @@ package com.example.project_manager
 
 
 import android.content.ContentValues
+import android.content.ContentValues.TAG
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -14,6 +15,8 @@ import android.widget.SeekBar
 import android.widget.Spinner
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.firestore.FirebaseFirestore
 import java.util.Locale
 
@@ -54,87 +57,6 @@ class ProjectActivity : AppCompatActivity() {
         loadProjectDetails()
     }
 
-    //assegna con spinner i vari task ai developer(azione che posso fare solo se leader)
-    /*private fun assegna() {
-        Log.d(TAG, "Role received: $role")
-        //mostra gli spinner con la scelta del developer per ogni task
-        if(role=="Leader"){
-            assegnaTask.visibility=View.VISIBLE
-            assegnaTask.setOnClickListener{
-                assegnaTask.visibility=View.INVISIBLE
-                for( i in 0 until TaskListLayout.childCount)
-                {
-                    val child=TaskListLayout.getChildAt(i)
-                    Log.d(TAG,"child $child")
-                    if(child is LinearLayout){
-                        //trovo lo spinner
-                        val spinner=child.getChildAt(1)as? Spinner
-                        Log.d(TAG,"spinner  $spinner")
-                        if(spinner!=null){
-                            spinner.visibility=View.VISIBLE
-                        }
-                    }
-                }
-                //mostro il bottone di salvataggio
-                salvatask.visibility=View.VISIBLE
-                salvatask.setOnClickListener {
-
-                    val db=FirebaseFirestore.getInstance()
-                    //scorro i singoli task
-                    for(i in 0 until TaskListLayout.childCount){
-                        val child=TaskListLayout.getChildAt(i)
-
-                        if(child is LinearLayout){
-                            //trovo lo spinner del task e il titolo del task
-                            val spinner=child.getChildAt(1) as? Spinner
-                            val  TaskTextView=child.getChildAt(0) as? TextView
-
-                            //se entrambi esistono
-                            if(spinner!=null && TaskTextView!=null){
-                                //estrapolo il developer selezionato dallo spinner
-                                val selectedDeveloper= spinner.selectedItem as? String
-                                if(selectedDeveloper!=null){
-                                    //creo  nuova textview dove inserire il nome una volta salvate le modifiche
-                                    val developerTextView=TextView(this)
-                                    developerTextView.text=selectedDeveloper
-                                    child.removeViewAt(1)
-                                    child.addView(developerTextView,1)
-
-                                    developerTextView.layoutParams=spinner.layoutParams
-
-                                    //ottengo nome del task
-                                    val TaskName=TaskTextView.text.toString()
-
-                                    Log.d(TAG,"$selectedDeveloper Developer assegnato al task: $TaskName")
-                                    //aggiorno doc firestore con nome developer
-                                    val TaskRef=db.collection("progetti").document(projectId)
-                                        .collection("task").document(TaskName)
-                                    TaskRef.update("developer", selectedDeveloper)
-                                        .addOnSuccessListener {
-                                            Log.d(TAG,"Developer assegnato con successo al sottotask: $TaskName")
-                                        }
-                                        .addOnFailureListener{ exception->
-                                            Log.e(TAG,"Errore nell'aggiornamento del sottotask: $TaskName",exception)
-                                        }
-                                }
-                                spinner.visibility=View.INVISIBLE
-                            }
-                        }
-                        //setto assegnato del task a true cosi non risulta piu con bordo rosso
-                        val TaskRef=db.collection("progetti").document(projectId)
-                        TaskRef.update("assegnato", true.toString())
-                        salvatask.visibility=View.INVISIBLE
-                    }
-
-                }
-            }
-        }
-        else{
-            assegnaTask.visibility=View.INVISIBLE
-        }
-
-    }*/
-
     private fun loadProjectDetails() {
         val db = FirebaseFirestore.getInstance()
 
@@ -159,7 +81,7 @@ class ProjectActivity : AppCompatActivity() {
                     Log.d(TAG, "Role received: $role")
                     val progLeaderCont = findViewById<LinearLayout>(R.id.progLeaderCont)
                     val progLeaderTask= findViewById<LinearLayout>(R.id.progLeaderTask)
-                    val testoTask=findViewById<TextView>(R.id.testoTask)
+                    //val testoTask=findViewById<TextView>(R.id.testoTask)
 
                     // nascondere il TextView
                     if (role=="Leader") {
@@ -172,19 +94,18 @@ class ProjectActivity : AppCompatActivity() {
                             intent.putExtra("project-id",projectId)
                             startActivity(intent)
                         }
+
+                        //RENDI VISIBILE SEZIONE PER TASK
                         progLeaderCont.visibility = View.GONE
                         progLeaderTask.visibility = View.VISIBLE
                         projectNameTextView.text = projectName
                         projectDeadlineTextView.text = "$projectDeadline"
                         projectDescriptionTextView.text="$projectdescr"
-                        //if(nessun task)
-                        //non ho ancora task da visualizzare
-                        val testoTask=findViewById<TextView>(R.id.testoTask)
-                        testoTask.text="non ci sono ancora task da visualizzare"
-                        //else
-                        //caricare task nelle card?
+
+                        loadTask()
+
                     } else {
-                        // Se la condizione è falsa mostrare il TextView
+                        // Se la condizione è falsa mostrare il TextView CON NOME LEADER PROGETTO
                         progLeaderTask.visibility = View.GONE
                         progLeaderCont.visibility = View.VISIBLE
                         projectNameTextView.text = projectName
@@ -210,66 +131,58 @@ class ProjectActivity : AppCompatActivity() {
             }
     }
 
-    private fun loadTasks() {
+    private fun loadTask() {
+        val data = ArrayList<ItemsViewModel>()
         val db = FirebaseFirestore.getInstance()
 
-        //trovo i nomi dei developer per inserirli nello spinner
-        val developerNames=ArrayList<String>()
-        db.collection("utenti")
+        db.collection("progetti")
+            .document(projectId)
+            .collection("task")
             .get()
-            .addOnSuccessListener { documents ->
-                for (document in documents) {
-                    val role = document.getString("role")
-                    if (role == "Developer") {
-                        val name = document.getString("name").toString()
-                        developerNames.add(name)
-                    }
+            .addOnSuccessListener { result ->
+                for (document in result) {
+                    val title = document.getString("titolo") ?: ""
+                    val developer = document.getString("developer") ?: ""
+                    val assegnato = false
+
+                    data.add(ItemsViewModel(title, developer, assegnato))
                 }
-                val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, developerNames)
-                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+
+                Log.d(TAG, "data array: $data")
 
 
-                // Ottieni il riferimento alla collezione dei sottotask del progetto
-                val TasksRef = db.collection("progetti").document(projectId).collection("task")
+                // Ottieni riferimenti a RecyclerView e TextView
+                val recyclerviewTask = findViewById<RecyclerView>(R.id.recyclerviewTask)
+                val noTasksTextView = findViewById<TextView>(R.id.noTasksTextView)
 
-                // Ottieni tutti i task del progetto
-                TasksRef.get()
-                    .addOnSuccessListener { documents ->
-                        for (document in documents) {
-                            val TaskName = document.getString("nome")
+                if (data.isEmpty()) {
+                    // Se la lista è vuota, nascondi il RecyclerView e mostra il TextView
+                    recyclerviewTask.visibility = View.GONE
+                    noTasksTextView.visibility = View.VISIBLE
+                } else {
+                    // Altrimenti, imposta l'adapter e mostra il RecyclerView
+                    recyclerviewTask.visibility = View.VISIBLE
+                    noTasksTextView.visibility = View.GONE
 
-                            //CREA IL LINEAR LAYOUT DELLA TEXT VIEW E SPINNER
-                            val linearLayout=LinearLayout(this)
-                            linearLayout.orientation=LinearLayout.HORIZONTAL
+                    recyclerviewTask.layoutManager = LinearLayoutManager(this)
 
-                            // Aggiungi una TextView per ogni sottotask alla LinearLayout
-                            val TaskTextView = TextView(this)
-                            TaskTextView.text = TaskName
-                            linearLayout.addView(TaskTextView)
+                    val adapter = CustomAdapter(data)
 
-                            //CREO LO SPINNER PER OGNI TASK PER SELEZIONARE IL DEVELOPER
-                            val TaskSpinner= Spinner(this)
-                            TaskSpinner.visibility= View.INVISIBLE
-                            TaskSpinner.adapter=adapter
-
-                            linearLayout.addView(TaskSpinner)
-                            TaskListLayout.addView(linearLayout)
-
-
+                    adapter.setOnItemClickListener(object : CustomAdapter.onItemClickListener {
+                        override fun onItemClick(position: Int) {
+                            // Logica quando un elemento viene cliccato
                         }
-                        //assegna();
-                    }
-                    .addOnFailureListener { exception ->
-                        Log.d(TAG, "get failed with ", exception)
-                    }
+                    })
 
+                    recyclerviewTask.adapter = adapter
+                }
             }
             .addOnFailureListener { exception ->
-                Log.w(ContentValues.TAG, "Error getting documents: ", exception)
+                Log.e(TAG, "Error getting tasks: ", exception)
+                // Gestisci gli errori, se necessario
             }
-
-
     }
+
 
     companion object {
         private const val TAG = "ProjectDetailsActivity"
