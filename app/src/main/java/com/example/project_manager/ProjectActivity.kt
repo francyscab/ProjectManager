@@ -48,21 +48,30 @@ class ProjectActivity : AppCompatActivity() {
         //salvatask = findViewById(R.id.buttonSalvaAsseganmenti)
 
         // Ottieni l'ID del progetto dall'intent
+
+        Log.d(TAG, "paramentri ricevuti su projectactivity")
         projectId = intent.getStringExtra("projectId") ?: ""
+        Log.d(TAG, "projectid  $projectId")
         taskId=intent.getStringExtra("taskId")?:""
+        Log.d(TAG, "taskid  $taskId")
         subtaskId=intent.getStringExtra("subtaskId")?: ""
+        Log.d(TAG, "subtaskid  $subtaskId")
         role=intent.getStringExtra("role")?:""
+        Log.d(TAG, "role  $role")
 
         progLeaderCont = findViewById<LinearLayout>(R.id.progLeaderCont)
         progLeaderTask= findViewById<LinearLayout>(R.id.progLeaderTask)
 
         if (subtaskId.isNotEmpty()) {
             // Esegui la logica per il progetto
+            Log.d(TAG, "SUBTASK")
             loadDetails("subtask")
         } else if (taskId.isNotEmpty()) {
+            Log.d(TAG, "TASK")
             // Esegui la logica per il task
             loadDetails("task")
         } else if (projectId.isNotEmpty()) {
+            Log.d(TAG, "PROJECT")
             // Esegui la logica per il task
             loadDetails("progetto")
         }else {
@@ -76,6 +85,7 @@ class ProjectActivity : AppCompatActivity() {
 
         //devo capire se si tratta di un task, un progetto o in un successivo momento di un sottotask
         if (tipo=="progetto"){
+            Log.d(TAG, "LOADDETAILS PROGETTO")
             val projectRef = db.collection("progetti").document(projectId)
 
             // Ottieni i dettagli del progetto dal documento
@@ -150,13 +160,13 @@ class ProjectActivity : AppCompatActivity() {
                         val taskDeadline = document.getString("scadenza")
                         val taskdescr = document.getString("descrizione")
                         val taskDev = document.getString("developer")
-                            document.getString("developer")?.split(" ")?.joinToString(" ") {
-                                it.replaceFirstChar {
-                                    if (it.isLowerCase()) it.titlecase(
-                                        Locale.getDefault()
-                                    ) else it.toString()
-                                }
+                        document.getString("developer")?.split(" ")?.joinToString(" ") {
+                            it.replaceFirstChar {
+                                if (it.isLowerCase()) it.titlecase(
+                                    Locale.getDefault()
+                                ) else it.toString()
                             }
+                        }
 
                         progLeaderTask.visibility = View.GONE
                         progLeaderCont.visibility = View.VISIBLE

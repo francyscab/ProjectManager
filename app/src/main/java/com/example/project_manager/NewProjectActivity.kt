@@ -21,10 +21,14 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlin.math.log
 
 class NewProjectActivity : AppCompatActivity() {
+
+    private lateinit var role:String
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_new_project_form)
 
+        role=intent.getStringExtra("role")?:""
 
         val db = FirebaseFirestore.getInstance()
 
@@ -146,10 +150,8 @@ class NewProjectActivity : AppCompatActivity() {
                                 )
                                 //dopo averlo creato apro la schermata del nuovo progetto
                                 val intent = Intent(this, ProjectActivity::class.java)
-                                intent.putExtra(
-                                    "projectId",
-                                    title
-                                )
+                                intent.putExtra("projectId",title)
+                                intent.putExtra("role",role )
                                 startActivity(intent)
                             }.addOnFailureListener { exception ->
                                 Log.w(ContentValues.TAG, "Error adding document", exception)
@@ -177,9 +179,13 @@ class NewProjectActivity : AppCompatActivity() {
                                     "$tipoForm creato con successo",
                                     Toast.LENGTH_SHORT
                                 ).show(
-                                )//dopo averlo creato apro la schermata del nuovo task
+                                )
+                                //dopo averlo creato apro la schermata del nuovo task
+                                Log.w(ContentValues.TAG, "taskid $title")
+                                Log.w(ContentValues.TAG, "projectid $projectId")
+                                Log.w(ContentValues.TAG, "calling new activity")
                                 val intent = Intent(this, ProjectActivity::class.java)
-                                intent.putExtra("tasktId", title)
+                                intent.putExtra("taskId", title)
                                 intent.putExtra("projectId", projectId)
                                 startActivity(intent)
                             }.addOnFailureListener { exception ->

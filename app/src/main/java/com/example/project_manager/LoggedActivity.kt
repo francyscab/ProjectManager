@@ -71,6 +71,7 @@ class LoggedActivity : AppCompatActivity() {
                                     newProject.setOnClickListener {
                                         val intent = Intent(this, NewProjectActivity::class.java)
                                         intent.putExtra("tipo_form", "progetto")
+                                        intent.putExtra("role", role)
                                         startActivity(intent)
                                     }
                                 }
