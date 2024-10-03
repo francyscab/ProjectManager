@@ -84,13 +84,44 @@ class LoggedActivity : AppCompatActivity() {
                                     data=data.filter{it.leader==nome}as ArrayList<ItemsViewModel>
                                     Log.d(TAG,"data with nome= $nome  now: $data")
                                 }
-                                else{
-                                    Log.d(TAG, "DEVELOPER:")
+                                else {
+                                    Log.d(TAG, "DEVELOPER: $nome")
                                     //togliere bottone per creare nuovo progetto
-                                    newProject.visibility= View.INVISIBLE
+                                    newProject.visibility = View.INVISIBLE
+
                                     //MOSTRARE SOLO I TASK DI CUI SI È developer--modifico array data
+
+                                    // Nuovo array per memorizzare i task
+                                    val tasksForDeveloper = ArrayList<ItemsViewModel>()
+
+                                    for (project in data) {
+                                        // Recupera il progetto corrispondente al nome
+                                        //Log.d(TAG, "ORA RECUPERO TASK DEL PROGETTO ${project.text}")
+
+                                        db.collection("progetti")
+                                            .document(project.text)
+                                            .collection("task")
+                                            .get()
+                                            .addOnSuccessListener { result ->
+                                                for (document in result) {
+                                                    //Log.d(TAG, "task trovato  ${document.data}")
+                                                    val title = document.getString("titolo") ?: ""
+                                                    val developer =
+                                                        document.getString("developer") ?: ""
+                                                    val assegnato = false
+
+                                                    if (developer == nome) {
+                                                        Log.d(TAG, "task aggiunto  ${document.data}")
+                                                        tasksForDeveloper.add(ItemsViewModel(title, developer, assegnato))
+                                                    }
+                                                }
+
+                                            }
+                                    }
+                                    Log.d(TAG, "data:  $tasksForDeveloper")
+
+                                    break//esci dal ciclo quando trovi lutente desiderato in modo che role non venga modificato
                                 }
-                                break//esci dal ciclo quando trovi lutente desiderato in modo che role non venga modificato
                             }
                         }
 

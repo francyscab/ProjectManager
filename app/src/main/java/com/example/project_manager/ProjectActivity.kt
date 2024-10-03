@@ -172,6 +172,7 @@ class ProjectActivity : AppCompatActivity() {
                         progLeaderCont.visibility = View.VISIBLE
                         projectNameTextView.text = taskName
                         projectDeadlineTextView.text = "$taskDeadline"
+                        findViewById<TextView>(R.id.projectLeader).text="DEVELOPER"
                         projectLeaderTextView.text = "$taskDev"
                         projectDescriptionTextView.text="$taskdescr"
                     }
