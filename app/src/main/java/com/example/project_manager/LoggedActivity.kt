@@ -7,157 +7,195 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import android.widget.Button
 import android.widget.ImageButton
+import android.widget.TextView
 import android.widget.Toast
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import kotlin.math.log
+import com.google.firebase.firestore.firestore
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 class LoggedActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_logged)
-        loadProjectData()
+        loadRecycleView()
     }
-    private fun loadProjectData(){
-        lateinit var role:String
-        val db = FirebaseFirestore.getInstance()
-
-        // ArrayList of class ItemsViewModel
-        var data = ArrayList<ItemsViewModel>()
-        val dataLeader= arrayListOf<ItemsViewModel>()
-        val newProject=findViewById<ImageButton>(R.id.newProject)
 
 
-        var userName: String = ""
-        val user = FirebaseAuth.getInstance().currentUser
-        if (user != null) {
-            userName = user.email.toString()
-            Log.d(TAG, "user: $userName")
-        } else {
-            Log.w(ContentValues.TAG, "Error current user")
-        }
+    private fun loadRecycleView() {
+        Log.d(TAG, "LOADRECYCLEVIEW")
+        //val db = FirebaseFirestore.getInstance()
+
+        var data= ArrayList<ItemsViewModel>()
+        var userName=""
+        var role=""
+        //val dataLeader= arrayListOf<ItemsViewModel>()
+        val newProject = findViewById<ImageButton>(R.id.newProject)
 
         //recycleview
-        db.collection("progetti")
-            .get()
-            .addOnSuccessListener { result ->
-                for (document in result) {
-                    val title = document.getString("titolo") ?: "" // Ottieni il titolo
-                    val leader =document.getString("leader")?:""//ottieni il nome del leader
-                    val assegnato =document.getString("assegnato")?:"" //ottieni il booleano assegnato
+        val recyclerview = findViewById<RecyclerView>(R.id.recyclerview)
+        recyclerview.layoutManager = LinearLayoutManager(this)
 
-                    data.add(ItemsViewModel(title, leader, assegnato.toBoolean() )) // Aggiungi il titolo all'array data
-                }
-                Log.d(TAG, "data array: $data")
-                val recyclerview = findViewById<RecyclerView>(R.id.recyclerview)
-                recyclerview.layoutManager = LinearLayoutManager(this)
 
-                //distinguo diversi tipi di utenti
-                db.collection("utenti")
-                    .get()
-                    .addOnSuccessListener{ result->
-                        for(document in result){
-                            val nome=document.getString("name")
-                            val email=document.getString("email")
-                            role= document.getString("role").toString()
-                            if(email==userName){
-                                if(role=="Manager"){
-                                    Log.d(TAG, "MANAGER:")
-                                    newProject.setOnClickListener {
-                                        val intent = Intent(this, NewProjectActivity::class.java)
-                                        intent.putExtra("tipo_form", "progetto")
-                                        intent.putExtra("role", role)
-                                        startActivity(intent)
-                                    }
-                                }
-                                else if(role=="Leader"){
-                                    Log.d(TAG, "Role FIND: $role")
-                                    Log.d(TAG, "LEADER:")
-                                    //togliere bottone per creare nuovo progetto
-                                    newProject.visibility= View.INVISIBLE
-                                    //MOSTRARE SOLO I PROGETTI DI CUI SI È LEADER--modifico array data
-                                    data=data.filter{it.leader==nome}as ArrayList<ItemsViewModel>
-                                    Log.d(TAG,"data with nome= $nome  now: $data")
-                                }
-                                else {
-                                    Log.d(TAG, "DEVELOPER: $nome")
-                                    //togliere bottone per creare nuovo progetto
-                                    newProject.visibility = View.INVISIBLE
+        lifecycleScope.launch {
+            userName = getUser()
+            Log.d(TAG, "username: $userName")
 
-                                    //MOSTRARE SOLO I TASK DI CUI SI È developer--modifico array data
+            role = getRole(userName)
+            Log.d(TAG, "role: $role")
 
-                                    // Nuovo array per memorizzare i task
-                                    val tasksForDeveloper = ArrayList<ItemsViewModel>()
+            data = loadProjectData()
+            Log.d(TAG, "data: $data")
 
-                                    for (project in data) {
-                                        // Recupera il progetto corrispondente al nome
-                                        //Log.d(TAG, "ORA RECUPERO TASK DEL PROGETTO ${project.text}")
+            if (role == "Manager") {
+                Log.d(TAG, "MANAGER: $userName")
 
-                                        db.collection("progetti")
-                                            .document(project.text)
-                                            .collection("task")
-                                            .get()
-                                            .addOnSuccessListener { result ->
-                                                for (document in result) {
-                                                    //Log.d(TAG, "task trovato  ${document.data}")
-                                                    val title = document.getString("titolo") ?: ""
-                                                    val developer =
-                                                        document.getString("developer") ?: ""
-                                                    val assegnato = false
+                //comportamento bottone nuovo progetto
+                /*newProject.setOnClickListener {
+                    val intent = Intent(this, NewProjectActivity::class.java)
+                    intent.putExtra("tipo_form", "progetto")
+                    intent.putExtra("role", role)
+                    startActivity(intent)
+                }*/
+                visualizza(recyclerview, data, role)
+            } else if (role == "Leader") {
+                Log.d(TAG, "LEADER: $userName")
 
-                                                    if (developer == nome) {
-                                                        Log.d(TAG, "task aggiunto  ${document.data}")
-                                                        tasksForDeveloper.add(ItemsViewModel(title, developer, assegnato))
-                                                    }
-                                                }
+                //togliere bottone per creare nuovo progetto
+                newProject.visibility = View.INVISIBLE
 
-                                            }
-                                    }
-                                    Log.d(TAG, "data:  $tasksForDeveloper")
+                //MOSTRARE SOLO I PROGETTI DI CUI SI È LEADER--modifico array data
+                data = data.filter { it.leader == userName } as ArrayList<ItemsViewModel>
+                visualizza(recyclerview, data, role)
+            } else if (role == "Developer") {
+                Log.d(TAG, "DEVELOPER: $userName")
+                //togliere bottone per creare nuovo progetto
+                newProject.visibility = View.INVISIBLE
 
-                                    break//esci dal ciclo quando trovi lutente desiderato in modo che role non venga modificato
-                                }
-                            }
-                        }
-
-                        Log.d(TAG, "Role OUT: $role")
-                        //passo arraylist all'adapter
-                        Log.d(TAG,"DATA PRIMA ADAPTER =$data")
-                        val adapter = CustomAdapter(data)
-
-                        recyclerview.adapter = adapter
-
-                        adapter.setOnItemClickListener(object : CustomAdapter.onItemClickListener{
-                            override fun onItemClick(position: Int) {
-                                val clickedItemTitle=data[position].text
-                                Toast.makeText(this@LoggedActivity,"You clicked on item,   $clickedItemTitle ,YOU'RE ROLE IS $role",
-                                    Toast.LENGTH_LONG).show()
-
-                                val intent = Intent(this@LoggedActivity,ProjectActivity::class.java)
-                                intent.putExtra("projectId", clickedItemTitle)
-                                Log.d(TAG, "Role SEND: $role")
-                                intent.putExtra("role",role)// "projectId" è il nome dell'extra, projectId è l'ID del progetto
-                                startActivity(intent)
-                            }
-                        })
-                    }
-
+                //salvo array di task che hanno come developer quello attualmente loggato
+                var tasksForDeveloper = ArrayList<ItemsViewModel>()
+                tasksForDeveloper=loadTask(data, userName)
+                visualizza(recyclerview,data,role)
             }
-            .addOnFailureListener { exception ->
-                Log.w(TAG, "Error getting documents.", exception)
+            else{
+                //errore
             }
 
-        Log.d(TAG, "username: $userName")
+
+        }
     }
 
+
+    private fun visualizza(recyclerView: RecyclerView, data: List<ItemsViewModel>, role: String) {
+        Log.d(TAG, "VISUALIZZA RICEVE ARRAY : $data")
+        val adapter = CustomAdapter(data)
+
+        recyclerView.adapter = adapter
+
+        adapter.setOnItemClickListener(object : CustomAdapter.onItemClickListener {
+            override fun onItemClick(position: Int) {
+                val clickedItemTitle = data[position].text
+                Toast.makeText(this@LoggedActivity, "You clicked on item: $clickedItemTitle, YOU'RE ROLE IS $role",
+                    Toast.LENGTH_LONG).show()
+
+                val intent = Intent(this@LoggedActivity, ProjectActivity::class.java)
+                intent.putExtra("projectId", clickedItemTitle)
+                Log.d(TAG, "Role SEND: $role")
+                intent.putExtra("role", role) // Passa il ruolo
+                startActivity(intent)
+            }
+        })
+    }
+
+    //ricavo user e in particolare username
+    private suspend fun getUser(): String {
+        val user = FirebaseAuth.getInstance().currentUser
+        return if (user != null) {
+            val userName = user.email.toString()
+            Log.d(TAG, "user: $userName")
+            userName
+        } else {
+            Log.w(TAG, "Error current user")
+            "" // Restituisci una stringa vuota se non c'è un utente corrente
+        }
+    }
+
+    //ricavo ruolo dell'utente
+    private suspend fun getRole(userName: String): String {
+        val db = FirebaseFirestore.getInstance()
+        var role = ""
+
+        try {
+            val result = db.collection("utenti").get().await() // Usa await() per attendere il completamento
+            for (document in result) {
+                val email = document.getString("email")
+                if (email == userName) {
+                    role = document.getString("role") ?: "" // Ottieni il ruolo e gestisci i null
+                    break
+                }
+            }
+        } catch (exception: Exception) {
+            Log.w(TAG, "Error getting role.", exception)
+        }
+
+        return role
+    }
+
+    //carica tutti i progetti
+    private suspend fun loadProjectData(): ArrayList<ItemsViewModel> {
+        Log.d(TAG, "loadProjectData:")
+        val db = Firebase.firestore
+        val data = ArrayList<ItemsViewModel>()
+
+        try {
+            val result = db.collection("progetti").get().await()
+            for (document in result) {
+                val title = document.getString("titolo") ?: "" // Ottieni il titolo
+                val leader = document.getString("leader") ?: "" // Ottieni il nome del leader
+                val assegnato = document.getString("assegnato") ?: "" // Ottieni il booleano assegnato
+                data.add(ItemsViewModel(title, leader, assegnato.toBoolean()))
+            }
+        } catch (exception: Exception) {
+            Log.w(TAG, "Error getting project.", exception)
+        }
+
+        return data
+    }
+
+    private suspend fun loadTask(data: ArrayList<ItemsViewModel>, userName: String): ArrayList<ItemsViewModel> {
+        val userTasks = ArrayList<ItemsViewModel>()
+        val db = FirebaseFirestore.getInstance()
+
+        for (project in data) {
+            val result = db.collection("progetti")
+                .document(project.text)
+                .collection("task")
+                .get()
+                .await()
+
+            for (document in result) {
+                val title = document.getString("titolo") ?: ""
+                val developer = document.getString("developer") ?: ""
+                val assegnato = false
+                if (developer == userName) {
+                    userTasks.add(ItemsViewModel(title, developer, assegnato))
+                }
+            }
+        }
+        return userTasks
+    }
 
     override fun onResume() {
         super.onResume()
-        loadProjectData()
+        lifecycleScope.launch {
+            val data = loadProjectData()
+        }
     }
 }
