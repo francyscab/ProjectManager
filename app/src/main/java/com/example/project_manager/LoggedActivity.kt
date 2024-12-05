@@ -36,6 +36,7 @@ class LoggedActivity : AppCompatActivity() {
         var data= ArrayList<ItemsViewModel>()
         var userName=""
         var role=""
+        var name=""
         //val dataLeader= arrayListOf<ItemsViewModel>()
         val newProject = findViewById<ImageButton>(R.id.newProject)
 
@@ -54,16 +55,19 @@ class LoggedActivity : AppCompatActivity() {
             data = loadProjectData()
             Log.d(TAG, "data: $data")
 
+            name=getName(userName)
+            Log.d(TAG, "role: $role")
+
             if (role == "Manager") {
                 Log.d(TAG, "MANAGER: $userName")
 
                 //comportamento bottone nuovo progetto
-                /*newProject.setOnClickListener {
-                    val intent = Intent(this, NewProjectActivity::class.java)
+                newProject.setOnClickListener {
+                    val intent = Intent(this@LoggedActivity, NewProjectActivity::class.java)
                     intent.putExtra("tipo_form", "progetto")
                     intent.putExtra("role", role)
                     startActivity(intent)
-                }*/
+                }
                 visualizza(recyclerview, data, role)
             } else if (role == "Leader") {
                 Log.d(TAG, "LEADER: $userName")
@@ -72,16 +76,18 @@ class LoggedActivity : AppCompatActivity() {
                 newProject.visibility = View.INVISIBLE
 
                 //MOSTRARE SOLO I PROGETTI DI CUI SI È LEADER--modifico array data
-                data = data.filter { it.leader == userName } as ArrayList<ItemsViewModel>
+                data = data.filter { it.leader == name } as ArrayList<ItemsViewModel>
+                Log.d(TAG,"data leader: $data")
                 visualizza(recyclerview, data, role)
             } else if (role == "Developer") {
                 Log.d(TAG, "DEVELOPER: $userName")
+
                 //togliere bottone per creare nuovo progetto
                 newProject.visibility = View.INVISIBLE
 
                 //salvo array di task che hanno come developer quello attualmente loggato
                 var tasksForDeveloper = ArrayList<ItemsViewModel>()
-                tasksForDeveloper=loadTask(data, userName)
+                tasksForDeveloper=loadTask(data, name)
                 visualizza(recyclerview,data,role)
             }
             else{
@@ -148,6 +154,26 @@ class LoggedActivity : AppCompatActivity() {
         return role
     }
 
+    //ricavo nome dell'utente
+    private suspend fun getName(userName: String): String {
+        val db = FirebaseFirestore.getInstance()
+        var name = ""
+
+        try {
+            val result = db.collection("utenti").get().await() // Usa await() per attendere il completamento
+            for (document in result) {
+                val email = document.getString("email")
+                if (email == userName) {
+                    name = document.getString("name") ?: "" // Ottieni il nome e gestisci i null
+                    break
+                }
+            }
+        } catch (exception: Exception) {
+            Log.w(TAG, "Error getting name.", exception)
+        }
+
+        return name
+    }
     //carica tutti i progetti
     private suspend fun loadProjectData(): ArrayList<ItemsViewModel> {
         Log.d(TAG, "loadProjectData:")
@@ -169,7 +195,7 @@ class LoggedActivity : AppCompatActivity() {
         return data
     }
 
-    private suspend fun loadTask(data: ArrayList<ItemsViewModel>, userName: String): ArrayList<ItemsViewModel> {
+    private suspend fun loadTask(data: ArrayList<ItemsViewModel>, name: String): ArrayList<ItemsViewModel> {
         val userTasks = ArrayList<ItemsViewModel>()
         val db = FirebaseFirestore.getInstance()
 
@@ -184,7 +210,7 @@ class LoggedActivity : AppCompatActivity() {
                 val title = document.getString("titolo") ?: ""
                 val developer = document.getString("developer") ?: ""
                 val assegnato = false
-                if (developer == userName) {
+                if (developer == name) {
                     userTasks.add(ItemsViewModel(title, developer, assegnato))
                 }
             }
