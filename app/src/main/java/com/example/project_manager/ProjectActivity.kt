@@ -180,6 +180,8 @@ class ProjectActivity : AppCompatActivity() {
                     Log.d(TAG, "get failed with ", exception)
                 }
         }else if(tipo=="subtask"){
+            val typeElencoTextView = findViewById<TextView>(R.id.typeElenco)
+            typeElencoTextView.text = "SOTTOTASK" //
 
         }else{
             //errore
@@ -203,7 +205,7 @@ class ProjectActivity : AppCompatActivity() {
                     val developer = document.getString("developer") ?: ""
                     val assegnato = false
 
-                    data.add(ItemsViewModel(title, developer, assegnato))
+                    data.add(ItemsViewModel(title, developer, assegnato, projectId, taskId))
                 }
 
                 Log.d(TAG, "data array: $data")

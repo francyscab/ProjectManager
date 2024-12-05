@@ -42,13 +42,16 @@ class CustomAdapter(private val mList: List<ItemsViewModel>) : RecyclerView.Adap
         holder.textView.text = ItemsViewModel.text
         val labelNew: TextView=holder.itemView.findViewById(R.id.new_label)
 
+        holder.projectId=ItemsViewModel.projectId.toString()
+        holder.taskId=ItemsViewModel.taskId.toString()
+        holder.subtaskId=ItemsViewModel.subtaskId.toString()
+
         if(!ItemsViewModel.assegnato){
             val context=holder.itemView.context
             labelNew.visibility=View.VISIBLE
         }else{
             holder.itemView.background=null
         }
-
 
     }
     // return the number of the items in the list
@@ -57,14 +60,17 @@ class CustomAdapter(private val mList: List<ItemsViewModel>) : RecyclerView.Adap
     }
 
     // Holds the views for adding it to text
-    class ViewHolder(ItemView: View,listener: onItemClickListener) : RecyclerView.ViewHolder(ItemView) {
+    class ViewHolder(ItemView: View, listener: onItemClickListener) : RecyclerView.ViewHolder(ItemView) {
         val textView: TextView = itemView.findViewById(R.id.titolo)
+        var projectId: String = "" // Changed to String
+        var taskId: String = "" // Changed to String
+        var subtaskId: String = "" // Changed to String
+
         init {
             itemView.setOnClickListener {
                 listener.onItemClick(adapterPosition)
             }
         }
-
     }
 }
 

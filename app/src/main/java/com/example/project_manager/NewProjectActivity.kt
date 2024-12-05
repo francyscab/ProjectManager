@@ -6,19 +6,16 @@ import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.Log
 import android.util.TypedValue
-import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
-import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.google.firebase.firestore.FirebaseFirestore
-import kotlin.math.log
 
 class NewProjectActivity : AppCompatActivity() {
 
@@ -42,6 +39,8 @@ class NewProjectActivity : AppCompatActivity() {
         var spinner=""
         if(tipoForm=="task"){
             //sto creando un task
+            val typeNewTextView = findViewById<TextView>(R.id.typeNew)
+            typeNewTextView.text = "NEW TASK"
             //cerco i developer per lo spinner
             spinner="Developer"
         }

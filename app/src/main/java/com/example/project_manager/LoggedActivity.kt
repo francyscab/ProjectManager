@@ -108,11 +108,14 @@ class LoggedActivity : AppCompatActivity() {
         adapter.setOnItemClickListener(object : CustomAdapter.onItemClickListener {
             override fun onItemClick(position: Int) {
                 val clickedItemTitle = data[position].text
+                val clickedItem = data[position]
                 Toast.makeText(this@LoggedActivity, "You clicked on item: $clickedItemTitle, YOU'RE ROLE IS $role",
                     Toast.LENGTH_LONG).show()
 
                 val intent = Intent(this@LoggedActivity, ProjectActivity::class.java)
-                intent.putExtra("projectId", clickedItemTitle)
+                intent.putExtra("projectId", clickedItem.projectId)
+                intent.putExtra("taskId", clickedItem.taskId)
+                intent.putExtra("subtaskId", clickedItem.subtaskId)
                 Log.d(TAG, "Role SEND: $role")
                 intent.putExtra("role", role) // Passa il ruolo
                 startActivity(intent)
@@ -186,7 +189,7 @@ class LoggedActivity : AppCompatActivity() {
                 val title = document.getString("titolo") ?: "" // Ottieni il titolo
                 val leader = document.getString("leader") ?: "" // Ottieni il nome del leader
                 val assegnato = document.getString("assegnato") ?: "" // Ottieni il booleano assegnato
-                data.add(ItemsViewModel(title, leader, assegnato.toBoolean()))
+                data.add(ItemsViewModel(title, leader, assegnato.toBoolean(), document.id))
             }
         } catch (exception: Exception) {
             Log.w(TAG, "Error getting project.", exception)
@@ -211,7 +214,15 @@ class LoggedActivity : AppCompatActivity() {
                 val developer = document.getString("developer") ?: ""
                 val assegnato = false
                 if (developer == name) {
-                    userTasks.add(ItemsViewModel(title, developer, assegnato))
+                    userTasks.add(
+                        ItemsViewModel(
+                            title,
+                            developer,
+                            assegnato,
+                            project.projectId, // Pass project ID from the outer loop
+                            document.id // Pass document ID as task ID
+                        )
+                    )
                 }
             }
         }
