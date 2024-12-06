@@ -18,13 +18,16 @@ import java.util.Locale
 
 class ProjectActivity : AppCompatActivity() {
 
+    private lateinit var name: String //nome utente chiamante
+    private lateinit var creator : String
     private lateinit var projectId: String
     private lateinit var taskId: String
     private lateinit var subtaskId: String
     private lateinit var projectNameTextView: TextView
     private lateinit var projectDescriptionTextView: TextView
     private lateinit var projectDeadlineTextView: TextView
-    private lateinit var projectLeaderTextView: TextView
+    private lateinit var projectCreatorTextView: TextView
+    private lateinit var projectAssignedTextView: TextView
     private lateinit var TaskListLayout: LinearLayout
     private lateinit var progressSeekBar: SeekBar
     private lateinit var assegnaTask: Button
@@ -40,38 +43,36 @@ class ProjectActivity : AppCompatActivity() {
         // Inizializza le views
         projectNameTextView = findViewById(R.id.projectNameTextView)
         projectDeadlineTextView = findViewById(R.id.projectDeadlineTextView)
-        projectLeaderTextView = findViewById(R.id.projectLeaderTextView)
+        projectCreatorTextView = findViewById(R.id.projectCreatorTextView)
         projectDescriptionTextView=findViewById(R.id.descrizioneProgetto)
+        projectAssignedTextView = findViewById(R.id.projectAssignedTextView)
         //TaskListLayout = findViewById(R.id.TaskListLayout)
         //progressSeekBar = findViewById(R.id.progressSeekBar)
         //assegnaTask = findViewById(R.id.buttonAssegnaSottottask)
         //salvatask = findViewById(R.id.buttonSalvaAsseganmenti)
 
-        // Ottieni l'ID del progetto dall'intent
+        // Ottieni INFORMAZIONI dall'intent
 
         Log.d(TAG, "paramentri ricevuti su projectactivity")
         projectId = intent.getStringExtra("projectId") ?: ""
-        Log.d(TAG, "projectid  $projectId")
         taskId=intent.getStringExtra("taskId")?:""
-        Log.d(TAG, "taskid  $taskId")
         subtaskId=intent.getStringExtra("subtaskId")?: ""
-        Log.d(TAG, "subtaskid  $subtaskId")
         role=intent.getStringExtra("role")?:""
-        Log.d(TAG, "role  $role")
+        name=intent.getStringExtra("name")?:""
+        Log.d(TAG, "PROJECT ACTIVITY, SONO STATA CHIAMATA DA $name CON PROJECTID $projectId TASKID $taskId SUBTASKID $subtaskId E ROLE $role")
 
-        progLeaderCont = findViewById<LinearLayout>(R.id.progLeaderCont)
         progLeaderTask= findViewById<LinearLayout>(R.id.progLeaderTask)
 
         if (subtaskId.isNotEmpty()) {
             // Esegui la logica per il progetto
-            Log.d(TAG, "SUBTASK")
+            Log.d(TAG, " E' UN SUBTASK")
             loadDetails("subtask")
         } else if (taskId.isNotEmpty()) {
-            Log.d(TAG, "TASK")
+            Log.d(TAG, "E' UNTASK")
             // Esegui la logica per il task
             loadDetails("task")
         } else if (projectId.isNotEmpty()) {
-            Log.d(TAG, "PROJECT")
+            Log.d(TAG, "E' UN PROJECT")
             // Esegui la logica per il task
             loadDetails("progetto")
         }else {
@@ -85,15 +86,16 @@ class ProjectActivity : AppCompatActivity() {
 
         //devo capire se si tratta di un task, un progetto o in un successivo momento di un sottotask
         if (tipo=="progetto"){
-            Log.d(TAG, "LOADDETAILS PROGETTO")
+            Log.d(TAG, "LOAD DETAILS PROGETTO")
             val projectRef = db.collection("progetti").document(projectId)
 
             // Ottieni i dettagli del progetto dal documento
-            // -se sei un leader carica anche  ì task e togli sezione per visualizzare leader
+            // -se sei un leader carica anche  ì task
             // -se sei manager togli sezione per visulaizzare task e visualizza sezione per nome leader
             projectRef.get()
                 .addOnSuccessListener { document ->
                     if (document != null) {
+                        val projectCreator=document.getString("creator")
                         val projectName = document.getString("titolo")?.uppercase()
                         val projectDeadline = document.getString("scadenza")
                         val projectdescr=document.getString("descrizione")
@@ -105,11 +107,8 @@ class ProjectActivity : AppCompatActivity() {
                             }
                         }
 
-                        Log.d(TAG, "Role received: $role")
-                        //val progLeaderCont = findViewById<LinearLayout>(R.id.progLeaderCont)
-                        //val progLeaderTask= findViewById<LinearLayout>(R.id.progLeaderTask)
+                        Log.d(TAG, "HO OTTENUTO LE SEGUENTI INFORMAZIONI: CREATOR$projectCreator  PROJECTNAME $projectName PROJECTDEADLINE $projectDeadline PROJECTDESCRIZIONE $projectdescr PROJECTLEADER $projectLeader ")
 
-                        // nascondere sezione con leader
                         if (role=="Leader") {
                             //aggiungere lisener su bottone + per task
                             findViewById<ImageButton>(R.id.aggiungiTaskButton).setOnClickListener {
@@ -123,8 +122,8 @@ class ProjectActivity : AppCompatActivity() {
                                 loadTask()
                             }
 
-                            //RENDI VISIBILE SEZIONE recycleview PER TASK
-                            progLeaderCont.visibility = View.GONE
+                            projectCreatorTextView.text = projectCreator
+                            projectAssignedTextView.text=projectLeader
                             progLeaderTask.visibility = View.VISIBLE
                             projectNameTextView.text = projectName
                             projectDeadlineTextView.text = "$projectDeadline"
@@ -134,12 +133,12 @@ class ProjectActivity : AppCompatActivity() {
                             loadTask()
 
                         } else if(role=="Manager") {
-                            // Se la condizione è falsa mostrare il TextView CON NOME LEADER PROGETTO
+                            //TOLGO VISUALIZZAZIONE RECYCLER VIEW
                             progLeaderTask.visibility = View.GONE
-                            progLeaderCont.visibility = View.VISIBLE
                             projectNameTextView.text = projectName
                             projectDeadlineTextView.text = "$projectDeadline"
-                            projectLeaderTextView.text = "$projectLeader"
+                            projectCreatorTextView.text = "$projectCreator"
+                            projectAssignedTextView.text = "$projectLeader"
                             projectDescriptionTextView.text="$projectdescr"
                         }else{
                             //generare errore perche ruolo è errato
@@ -151,30 +150,43 @@ class ProjectActivity : AppCompatActivity() {
                 .addOnFailureListener { exception ->
                     Log.d(TAG, "get failed with ", exception)
                 }
-        }else if(tipo=="task"){
-            val taskRef = db.collection("progetti").document(projectId).collection("task").document(taskId)
-            taskRef.get()
-                .addOnSuccessListener { document ->
-                    if (document != null) {
-                        val taskName = document.getString("titolo")?.uppercase()
-                        val taskDeadline = document.getString("scadenza")
-                        val taskdescr = document.getString("descrizione")
-                        val taskDev = document.getString("developer")
-                        document.getString("developer")?.split(" ")?.joinToString(" ") {
-                            it.replaceFirstChar {
-                                if (it.isLowerCase()) it.titlecase(
-                                    Locale.getDefault()
-                                ) else it.toString()
-                            }
-                        }
+        }else if (tipo == "task") {
+            val projectRef = db.collection("progetti").document(projectId)
+            val taskRef = projectRef.collection("task").document(taskId)
 
-                        progLeaderTask.visibility = View.GONE
-                        progLeaderCont.visibility = View.VISIBLE
-                        projectNameTextView.text = taskName
-                        projectDeadlineTextView.text = "$taskDeadline"
-                        findViewById<TextView>(R.id.projectLeader).text="DEVELOPER"
-                        projectLeaderTextView.text = "$taskDev"
-                        projectDescriptionTextView.text="$taskdescr"
+            // Get project leader
+            projectRef.get()
+                .addOnSuccessListener { projectDocument ->
+                    if (projectDocument != null) {
+                        val projectLeader = projectDocument.getString("leader")
+                        projectCreatorTextView.text = projectLeader
+
+                        // Get task developer
+                        taskRef.get()
+                            .addOnSuccessListener { taskDocument ->
+                                if (taskDocument != null) {
+                                    val taskName = taskDocument.getString("titolo")?.uppercase()
+                                    val taskDeadline = taskDocument.getString("scadenza")
+                                    val taskdescr = taskDocument.getString("descrizione")
+                                    val taskDev = taskDocument.getString("developer")
+                                    taskDocument.getString("developer")?.split(" ")?.joinToString(" ") {
+                                        it.replaceFirstChar {
+                                            if (it.isLowerCase()) it.titlecase(
+                                                Locale.getDefault()
+                                            ) else it.toString()
+                                        }
+                                    }
+
+                                    projectAssignedTextView.text = taskDev
+                                    progLeaderTask.visibility = View.GONE
+                                    progLeaderCont.visibility = View.VISIBLE
+                                    projectNameTextView.text = taskName
+                                    projectDeadlineTextView.text = "$taskDeadline"
+                                    projectDescriptionTextView.text = "$taskdescr"
+                                }
+                            }.addOnFailureListener { exception ->
+                                Log.d(TAG, "get failed with ", exception)
+                            }
                     }
                 }.addOnFailureListener { exception ->
                     Log.d(TAG, "get failed with ", exception)

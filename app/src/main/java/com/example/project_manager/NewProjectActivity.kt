@@ -20,12 +20,14 @@ import com.google.firebase.firestore.FirebaseFirestore
 class NewProjectActivity : AppCompatActivity() {
 
     private lateinit var role:String
+    private lateinit var creator:String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_new_project_form)
 
         role=intent.getStringExtra("role")?:""
+        creator=intent.getStringExtra("creator")?:""
 
         val db = FirebaseFirestore.getInstance()
 
@@ -123,23 +125,18 @@ class NewProjectActivity : AppCompatActivity() {
                 //vale sia per task che per progetti perche quando prog è nuoovo io vedo e creo task, quando task è nuovo il developer deve creare sottotask
                 nuovo["assegnato"] = false.toString()
 
-                Log.d(ContentValues.TAG, "nuovo $tipoForm= $nuovo")
                 Log.d(ContentValues.TAG, "tipo form $tipoForm")
 
                 //aggiungo un progetto
                 if(tipoForm=="progetto"){
+                    nuovo["creator"] = creator
 
+                    Log.d(ContentValues.TAG, "STO AGGIUNGENDO UN NUOVO $tipoForm= $nuovo")
                     db.collection("progetti")
                         .document(title)
                         .set(nuovo)
                         .addOnSuccessListener { documentReference ->
                             val batch = db.batch()
-                            /*for (t in tasks) {
-                                val taskDoc =
-                                    db.collection("progetti").document(title).collection("task")
-                                        .document(t["nome"]!!)
-                                batch.set(taskDoc, t)
-                            }*/
                             batch.commit().addOnSuccessListener {
                                 Toast.makeText(
                                     baseContext,
@@ -151,6 +148,8 @@ class NewProjectActivity : AppCompatActivity() {
                                 val intent = Intent(this, ProjectActivity::class.java)
                                 intent.putExtra("projectId",title)
                                 intent.putExtra("role",role )
+                                intent.putExtra("name",creator)
+
                                 startActivity(intent)
                             }.addOnFailureListener { exception ->
                                 Log.w(ContentValues.TAG, "Error adding document", exception)

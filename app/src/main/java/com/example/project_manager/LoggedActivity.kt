@@ -47,40 +47,37 @@ class LoggedActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             userName = getUser()
-            Log.d(TAG, "username: $userName")
-
             role = getRole(userName)
-            Log.d(TAG, "role: $role")
-
             data = loadProjectData()
-            Log.d(TAG, "data: $data")
-
             name=getName(userName)
-            Log.d(TAG, "role: $role")
+            Log.d(TAG,"SONO IN LOGGED ACTIVITY E SONO username=$userName ruolo=$role e mi chiamo=$name")
 
             if (role == "Manager") {
-                Log.d(TAG, "MANAGER: $userName")
+                Log.d(TAG, "SICCOME SONO IL MANAGER: $userName")
 
                 //comportamento bottone nuovo progetto
                 newProject.setOnClickListener {
                     val intent = Intent(this@LoggedActivity, NewProjectActivity::class.java)
                     intent.putExtra("tipo_form", "progetto")
                     intent.putExtra("role", role)
+                    intent.putExtra("creator", name)
+                    Log.d(TAG,"STO CHIAMANDO NEWPROJECTACTIVITY con role= $role e creator= $name E TIPO FORM= progetto")
                     startActivity(intent)
                 }
-                visualizza(recyclerview, data, role)
+                Log.d(TAG,"STO CHIAMANDO VISULAIZZA CON DATA= $data E ROLE= $role E NAME= $name")
+                visualizza(recyclerview, data, role,name)
             } else if (role == "Leader") {
-                Log.d(TAG, "LEADER: $userName")
+                Log.d(TAG, "SICCOME SONO IL LEADER: $userName")
 
                 //togliere bottone per creare nuovo progetto
                 newProject.visibility = View.INVISIBLE
 
                 //MOSTRARE SOLO I PROGETTI DI CUI SI È LEADER--modifico array data
                 data = data.filter { it.leader == name } as ArrayList<ItemsViewModel>
-                Log.d(TAG,"data leader: $data")
-                visualizza(recyclerview, data, role)
+                Log.d(TAG,"STO CHIAMANDO VISULAIZZA CON DATA= $data E ROLE= $role E NAME= $name")
+                visualizza(recyclerview, data, role,name)
             } else if (role == "Developer") {
-                Log.d(TAG, "DEVELOPER: $userName")
+                Log.d(TAG, "SICCOME SONO IL DEVELOPER: $userName")
 
                 //togliere bottone per creare nuovo progetto
                 newProject.visibility = View.INVISIBLE
@@ -88,7 +85,8 @@ class LoggedActivity : AppCompatActivity() {
                 //salvo array di task che hanno come developer quello attualmente loggato
                 var tasksForDeveloper = ArrayList<ItemsViewModel>()
                 tasksForDeveloper=loadTask(data, name)
-                visualizza(recyclerview,data,role)
+                Log.d(TAG,"STO CHIAMANDO VISULAIZZA CON DATA= $data E ROLE= $role E NAME= $name")
+                visualizza(recyclerview,tasksForDeveloper,role,name)
             }
             else{
                 //errore
@@ -99,8 +97,7 @@ class LoggedActivity : AppCompatActivity() {
     }
 
 
-    private fun visualizza(recyclerView: RecyclerView, data: List<ItemsViewModel>, role: String) {
-        Log.d(TAG, "VISUALIZZA RICEVE ARRAY : $data")
+    private fun visualizza(recyclerView: RecyclerView, data: List<ItemsViewModel>, role: String,name:String) {
         val adapter = CustomAdapter(data)
 
         recyclerView.adapter = adapter
@@ -118,6 +115,8 @@ class LoggedActivity : AppCompatActivity() {
                 intent.putExtra("subtaskId", clickedItem.subtaskId)
                 Log.d(TAG, "Role SEND: $role")
                 intent.putExtra("role", role) // Passa il ruolo
+                intent.putExtra("name", name)
+                Log.d(TAG,"STO CHIAMANDO PROJECT ACTIVITY CON ROLE= $role E NAME= $name PROJECTID= ${clickedItem.projectId} TASKID= ${clickedItem.taskId} SUBTASKID= ${clickedItem.subtaskId}")
                 startActivity(intent)
             }
         })
@@ -206,28 +205,26 @@ class LoggedActivity : AppCompatActivity() {
             val result = db.collection("progetti")
                 .document(project.text)
                 .collection("task")
+                .whereEqualTo("developer", name) // Filter tasks assigned to the developer
                 .get()
                 .await()
 
             for (document in result) {
                 val title = document.getString("titolo") ?: ""
-                val developer = document.getString("developer") ?: ""
-                val assegnato = false
-                if (developer == name) {
-                    userTasks.add(
-                        ItemsViewModel(
-                            title,
-                            developer,
-                            assegnato,
-                            project.projectId, // Pass project ID from the outer loop
-                            document.id // Pass document ID as task ID
-                        )
+                userTasks.add(
+                    ItemsViewModel(
+                        text = title, // Task title
+                        leader = "", // You might need to fetch the leader information
+                        assegnato = false, // You might need to fetch the assigned status
+                        projectId = project.projectId, // Project ID
+                        taskId = document.id // Task ID
                     )
-                }
+                )
             }
         }
         return userTasks
     }
+
 
     override fun onResume() {
         super.onResume()
