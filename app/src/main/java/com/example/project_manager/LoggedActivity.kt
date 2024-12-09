@@ -98,22 +98,20 @@ class LoggedActivity : AppCompatActivity() {
 
 
     private fun visualizza(recyclerView: RecyclerView, data: List<ItemsViewModel>, role: String,name:String) {
+        Log.d(TAG, "SONO IN VISUALIZZA CON DATA= $data E ROLE= $role E NAME= $name")
         val adapter = CustomAdapter(data)
-
         recyclerView.adapter = adapter
 
         adapter.setOnItemClickListener(object : CustomAdapter.onItemClickListener {
             override fun onItemClick(position: Int) {
-                val clickedItemTitle = data[position].text
                 val clickedItem = data[position]
-                Toast.makeText(this@LoggedActivity, "You clicked on item: $clickedItemTitle, YOU'RE ROLE IS $role",
-                    Toast.LENGTH_LONG).show()
+                Log.d(TAG, "hai cliccato su $clickedItem")
+                Log.d(TAG,"projectid=${clickedItem.projectId} taskid=${clickedItem.taskId} subtaskid=${clickedItem.subtaskId}")
 
                 val intent = Intent(this@LoggedActivity, ProjectActivity::class.java)
                 intent.putExtra("projectId", clickedItem.projectId)
                 intent.putExtra("taskId", clickedItem.taskId)
                 intent.putExtra("subtaskId", clickedItem.subtaskId)
-                Log.d(TAG, "Role SEND: $role")
                 intent.putExtra("role", role) // Passa il ruolo
                 intent.putExtra("name", name)
                 Log.d(TAG,"STO CHIAMANDO PROJECT ACTIVITY CON ROLE= $role E NAME= $name PROJECTID= ${clickedItem.projectId} TASKID= ${clickedItem.taskId} SUBTASKID= ${clickedItem.subtaskId}")
@@ -178,7 +176,6 @@ class LoggedActivity : AppCompatActivity() {
     }
     //carica tutti i progetti
     private suspend fun loadProjectData(): ArrayList<ItemsViewModel> {
-        Log.d(TAG, "loadProjectData:")
         val db = Firebase.firestore
         val data = ArrayList<ItemsViewModel>()
 
@@ -202,6 +199,10 @@ class LoggedActivity : AppCompatActivity() {
         val db = FirebaseFirestore.getInstance()
 
         for (project in data) {
+            // Get the project document to retrieve the leader information
+            val projectDocument = db.collection("progetti").document(project.text).get().await()
+            val leader = projectDocument.getString("leader") ?: "" // Get leader from project document
+
             val result = db.collection("progetti")
                 .document(project.text)
                 .collection("task")
@@ -214,7 +215,7 @@ class LoggedActivity : AppCompatActivity() {
                 userTasks.add(
                     ItemsViewModel(
                         text = title, // Task title
-                        leader = "", // You might need to fetch the leader information
+                        leader = leader, // Set leader information from project document
                         assegnato = false, // You might need to fetch the assigned status
                         projectId = project.projectId, // Project ID
                         taskId = document.id // Task ID

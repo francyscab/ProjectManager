@@ -11,9 +11,12 @@ import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import java.util.Locale
 
 class ProjectActivity : AppCompatActivity() {
@@ -53,7 +56,6 @@ class ProjectActivity : AppCompatActivity() {
 
         // Ottieni INFORMAZIONI dall'intent
 
-        Log.d(TAG, "paramentri ricevuti su projectactivity")
         projectId = intent.getStringExtra("projectId") ?: ""
         taskId=intent.getStringExtra("taskId")?:""
         subtaskId=intent.getStringExtra("subtaskId")?: ""
@@ -117,6 +119,7 @@ class ProjectActivity : AppCompatActivity() {
                                 // Aggiungere il parametro "task" all'Intent per capire che stiamo aggiungendo un task (con stasso codice posso aggiungere task, sottotask e progetti)
                                 intent.putExtra("tipo_form", "task")
                                 intent.putExtra("project-id",projectId)
+                                Log.d(TAG,"STO CHIAMANDO NEWPROJECTACTIVITY con TIPO FORM= task e PROJECTID= $projectId")
                                 startActivity(intent)
                                 //CHIUDO E TORNO ALLA SCHERMATA DEL PROGETTO E AGGIORNO con nuovo progetto
                                 loadTask()
@@ -151,46 +154,43 @@ class ProjectActivity : AppCompatActivity() {
                     Log.d(TAG, "get failed with ", exception)
                 }
         }else if (tipo == "task") {
-            val projectRef = db.collection("progetti").document(projectId)
-            val taskRef = projectRef.collection("task").document(taskId)
+            lifecycleScope.launch {
+                try {
+                    val projectDocument = db.collection("progetti").document(projectId).get().await()
+                    val projectLeader = projectDocument.getString("leader")
+                    projectCreatorTextView.text = projectLeader
 
-            // Get project leader
-            projectRef.get()
-                .addOnSuccessListener { projectDocument ->
-                    if (projectDocument != null) {
-                        val projectLeader = projectDocument.getString("leader")
-                        projectCreatorTextView.text = projectLeader
+                    val taskDocument = db.collection("progetti")
+                        .document(projectId)
+                        .collection("task")
+                        .document(taskId)
+                        .get()
+                        .await()
 
-                        // Get task developer
-                        taskRef.get()
-                            .addOnSuccessListener { taskDocument ->
-                                if (taskDocument != null) {
-                                    val taskName = taskDocument.getString("titolo")?.uppercase()
-                                    val taskDeadline = taskDocument.getString("scadenza")
-                                    val taskdescr = taskDocument.getString("descrizione")
-                                    val taskDev = taskDocument.getString("developer")
-                                    taskDocument.getString("developer")?.split(" ")?.joinToString(" ") {
-                                        it.replaceFirstChar {
-                                            if (it.isLowerCase()) it.titlecase(
-                                                Locale.getDefault()
-                                            ) else it.toString()
-                                        }
-                                    }
-
-                                    projectAssignedTextView.text = taskDev
-                                    progLeaderTask.visibility = View.GONE
-                                    progLeaderCont.visibility = View.VISIBLE
-                                    projectNameTextView.text = taskName
-                                    projectDeadlineTextView.text = "$taskDeadline"
-                                    projectDescriptionTextView.text = "$taskdescr"
-                                }
-                            }.addOnFailureListener { exception ->
-                                Log.d(TAG, "get failed with ", exception)
+                    if (taskDocument != null) {
+                        val taskName = taskDocument.getString("titolo")?.uppercase()
+                        val taskDeadline = taskDocument.getString("scadenza")
+                        val taskdescr = taskDocument.getString("descrizione")
+                        val taskDev = taskDocument.getString("developer")
+                        taskDocument.getString("developer")?.split(" ")?.joinToString(" ") {
+                            it.replaceFirstChar {
+                                if (it.isLowerCase()) it.titlecase(
+                                    Locale.getDefault()
+                                ) else it.toString()
                             }
+                        }
+
+                        projectAssignedTextView.text = taskDev
+                        progLeaderTask.visibility = View.GONE
+                        progLeaderCont.visibility = View.VISIBLE
+                        projectNameTextView.text = taskName
+                        projectDeadlineTextView.text = "$taskDeadline"
+                        projectDescriptionTextView.text = "$taskdescr"
                     }
-                }.addOnFailureListener { exception ->
-                    Log.d(TAG, "get failed with ", exception)
+                } catch (e: Exception) {
+                    Log.d(TAG, "get failed with ", e)
                 }
+            }
         }else if(tipo=="subtask"){
             val typeElencoTextView = findViewById<TextView>(R.id.typeElenco)
             typeElencoTextView.text = "SOTTOTASK" //
