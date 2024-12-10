@@ -154,6 +154,7 @@ class ProjectActivity : AppCompatActivity() {
                     Log.d(TAG, "get failed with ", exception)
                 }
         }else if (tipo == "task") {
+            Log.d(TAG, "LOAD DETAILS TASK")
             lifecycleScope.launch {
                 try {
                     val projectDocument = db.collection("progetti").document(projectId).get().await()
@@ -180,9 +181,9 @@ class ProjectActivity : AppCompatActivity() {
                             }
                         }
 
+                        Log.d(TAG, "HO OTTENUTO LE SEGUENTI INFORMAZIONI: TASKNAME $taskName TASKDEADLINE $taskDeadline TASKDESCRIZIONE $taskdescr TASKDEV $taskDev ")
                         projectAssignedTextView.text = taskDev
-                        progLeaderTask.visibility = View.GONE
-                        progLeaderCont.visibility = View.VISIBLE
+                        progLeaderTask.visibility = View.VISIBLE
                         projectNameTextView.text = taskName
                         projectDeadlineTextView.text = "$taskDeadline"
                         projectDescriptionTextView.text = "$taskdescr"
