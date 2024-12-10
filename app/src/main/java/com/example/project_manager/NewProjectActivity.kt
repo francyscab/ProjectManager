@@ -6,10 +6,12 @@ import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.Log
 import android.util.TypedValue
+import android.view.View.GONE
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
@@ -21,6 +23,10 @@ class NewProjectActivity : AppCompatActivity() {
 
     private lateinit var role:String
     private lateinit var creator:String
+    private lateinit var projectId:String
+    private lateinit var taskid:String
+    private lateinit var tipoForm: String
+    private lateinit var err_spinner: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,7 +34,11 @@ class NewProjectActivity : AppCompatActivity() {
 
         role=intent.getStringExtra("role")?:""
         creator=intent.getStringExtra("creator")?:""
+        projectId=intent.getStringExtra("project-id")?:""
+        taskid=intent.getStringExtra("task-id")?:""
+        tipoForm = intent.getStringExtra("tipo_form")?:""
 
+        val spinnerElement = findViewById<Spinner>(R.id.projectElementSpinner)
         val db = FirebaseFirestore.getInstance()
 
         findViewById<Button>(R.id.pickDate).setOnClickListener {
@@ -36,43 +46,49 @@ class NewProjectActivity : AppCompatActivity() {
             newFragment.show(supportFragmentManager, "datePicker")
         }
 
+
         //se nuovo prog è stato chiamato da un tasto per creare un nuovo task o nuovo progetto
-        val tipoForm = intent.getStringExtra("tipo_form")
         var spinner=""
-        if(tipoForm=="task"){
-            //sto creando un task
-            val typeNewTextView = findViewById<TextView>(R.id.typeNew)
-            typeNewTextView.text = "NEW TASK"
-            //cerco i developer per lo spinner
-            spinner="Developer"
-        }
-        else{
-            //sto creando un nuovo progetto
-            //cerco i leader per lo spinner
-            spinner="Leader"
-        }
-        val spinnerNames = ArrayList<String>()
-        val spinnerElement = findViewById<Spinner>(R.id.projectElementSpinner)
+        if(tipoForm=="progetto"|| tipoForm=="task"){
+            if(tipoForm=="task"){
+                //sto creando un task
+                val typeNewTextView = findViewById<TextView>(R.id.typeNew)
+                typeNewTextView.text = "NEW TASK"
+                //cerco i developer per lo spinner
+                spinner="Developer"
+            }
+            else if(tipoForm=="task"){
+                //sto creando un nuovo progetto
+                val typeNewTextView = findViewById<TextView>(R.id.typeNew)
+                typeNewTextView.text = "NEW SUBTASK"
+                //cerco i leader per lo spinner
+                spinner="Leader"
+            }
+            val spinnerNames = ArrayList<String>()
 
-        //riempio lo spinner con i leader o con i developer
-        db.collection("utenti")
-            .get()
-            .addOnSuccessListener { documents ->
-                for (document in documents) {
-                    val role = document.getString("role")
-                    if (role == spinner) {
-                        val name = document.getString("name").toString()
-                        spinnerNames.add(name)
+
+            //riempio lo spinner con i leader o con i developer
+            db.collection("utenti")
+                .get()
+                .addOnSuccessListener { documents ->
+                    for (document in documents) {
+                        val role = document.getString("role")
+                        if (role == spinner) {
+                            val name = document.getString("name").toString()
+                            spinnerNames.add(name)
+                        }
                     }
+                    val spinnerAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, spinnerNames)
+                    spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                    spinnerElement.adapter = spinnerAdapter
                 }
-                val spinnerAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, spinnerNames)
-                spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-                spinnerElement.adapter = spinnerAdapter
-            }
-            .addOnFailureListener { exception ->
-                Log.w(ContentValues.TAG, "Error getting documents: ", exception)
-            }
+                .addOnFailureListener { exception ->
+                    Log.w(ContentValues.TAG, "Error getting documents: ", exception)
+                }
+        }
 
+        val spinnerLayout = findViewById<LinearLayout>(R.id.spinnerLinearLayout)
+        if(tipoForm=="progetto"|| tipoForm=="task"){spinnerLayout.visibility=GONE }
         val buttonSave=findViewById<Button>(R.id.buttonSave)
 
         buttonSave.setOnClickListener {
@@ -82,7 +98,11 @@ class NewProjectActivity : AppCompatActivity() {
 
             val err_title = findViewById<TextView>(R.id.errore_titolo)
             val err_date = findViewById<TextView>(R.id.errore_date)
-            val err_spinner = findViewById<TextView>(R.id.errore_date)
+
+            //spinner solo se task o sottotask
+            if(tipoForm=="progetto"|| tipoForm=="task"){
+                err_spinner = findViewById<TextView>(R.id.errore_date)
+            }
 
             val err_descrizione=findViewById<TextView>(R.id.errore_descrizione)
 
@@ -118,7 +138,6 @@ class NewProjectActivity : AppCompatActivity() {
 
                 val nuovo = hashMapOf(
                     "titolo" to title,
-                    "${spinner.toLowerCase()}" to spinnerElement.selectedItem.toString(),
                     "scadenza" to scadenza,
                     "descrizione" to descrizione
                 )
@@ -130,6 +149,7 @@ class NewProjectActivity : AppCompatActivity() {
                 //aggiungo un progetto
                 if(tipoForm=="progetto"){
                     nuovo["creator"] = creator
+                    nuovo["${spinner.toLowerCase()}"] = spinnerElement.selectedItem.toString()
 
                     Log.d(ContentValues.TAG, "STO AGGIUNGENDO UN NUOVO $tipoForm= $nuovo")
                     db.collection("progetti")
@@ -159,9 +179,7 @@ class NewProjectActivity : AppCompatActivity() {
 
                 //aggiungo un task
                 else if (tipoForm=="task"){
-
-                    //recupero l'id el progetto di cui sto creando i task
-                    val projectId=intent.getStringExtra("project-id").toString()
+                    nuovo["${spinner.toLowerCase()}"] = spinnerElement.selectedItem.toString()
 
                     //aggiungo task alla collezione task del progetto corrente
                     db.collection("progetti")
@@ -189,6 +207,40 @@ class NewProjectActivity : AppCompatActivity() {
                             }.addOnFailureListener { exception ->
                                 Log.w(ContentValues.TAG, "Error adding document", exception)
                             }
+                        }
+                }else if (tipoForm == "subtask") {
+                    // Get the task ID from the intent or wherever it's stored
+
+                    db.collection("progetti")
+                        .document(projectId)
+                        .collection("task")
+                        .document(taskid)
+                        .collection("subtask")
+                        .document(title)
+                        .set(nuovo)
+                        .addOnSuccessListener { documentReference ->
+                            val batch = db.batch()
+                            batch.commit().addOnSuccessListener {
+                                Toast.makeText(
+                                    baseContext,
+                                    "$tipoForm creato con successo",
+                                    Toast.LENGTH_SHORT
+                                ).show(
+                                )
+                                //dopo averlo creato apro la schermata del nuovo sottotask
+                                Log.w(ContentValues.TAG, "subtaskid $title")
+                                Log.w(ContentValues.TAG, "taskid $taskid")
+                                Log.w(ContentValues.TAG, "projectid $projectId")
+                                Log.w(ContentValues.TAG, "calling new activity")
+                                val intent = Intent(this, ProjectActivity::class.java)
+                                intent.putExtra("subtaskId", title)
+                                intent.putExtra("taskId", taskid)
+                                intent.putExtra("projectId", projectId)
+                                startActivity(intent)
+                            }
+                                .addOnFailureListener { exception ->
+                                    Log.w(ContentValues.TAG, "Error adding document", exception)
+                                }
                         }
                 }
 

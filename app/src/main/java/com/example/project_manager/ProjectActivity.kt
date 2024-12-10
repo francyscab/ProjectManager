@@ -187,6 +187,20 @@ class ProjectActivity : AppCompatActivity() {
                         projectNameTextView.text = taskName
                         projectDeadlineTextView.text = "$taskDeadline"
                         projectDescriptionTextView.text = "$taskdescr"
+
+                        findViewById<ImageButton>(R.id.aggiungiTaskButton).setOnClickListener {
+                            //aprire schermata per aggiungere task
+                            val intent = Intent(this@ProjectActivity, NewProjectActivity::class.java)
+                            // Aggiungere il parametro "task" all'Intent per capire che stiamo aggiungendo un task (con stasso codice posso aggiungere task, sottotask e progetti)
+                            intent.putExtra("tipo_form", "subtask")
+                            intent.putExtra("project-id",projectId)
+                            intent.putExtra("task-id",taskId)
+                            Log.d(TAG,"STO CHIAMANDO NEWPROJECTACTIVITY con TIPO FORM= sottotask e PROJECTID= $projectId")
+                            startActivity(intent)
+                            //CHIUDO E TORNO ALLA SCHERMATA DEL PROGETTO E AGGIORNO con nuovo progetto
+                            loadTask()
+                        }
+
                     }
                 } catch (e: Exception) {
                     Log.d(TAG, "get failed with ", e)
