@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.util.Log
 import android.util.TypedValue
 import android.view.View.GONE
+import android.view.View.VISIBLE
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
@@ -88,7 +89,9 @@ class NewProjectActivity : AppCompatActivity() {
         }
 
         val spinnerLayout = findViewById<LinearLayout>(R.id.spinnerLinearLayout)
-        if(tipoForm=="progetto"|| tipoForm=="task"){spinnerLayout.visibility=GONE }
+        //if(tipoForm=="progetto"|| tipoForm=="task"){spinnerLayout.visibility=GONE }
+        if(tipoForm=="progetto"|| tipoForm=="task"){spinnerLayout.visibility= VISIBLE}
+        else{spinnerLayout.visibility=GONE }
         val buttonSave=findViewById<Button>(R.id.buttonSave)
 
         buttonSave.setOnClickListener {
@@ -130,7 +133,9 @@ class NewProjectActivity : AppCompatActivity() {
             if (check_campi) {
                 err_title.setText("")
                 //solo per progetti e per task, non per sottotask...fare distinzione!!!
-                err_spinner.setText("")
+                if(tipoForm=="progetto"|| tipoForm=="task"){
+                    err_spinner.setText("")
+                }
                 err_date.setText("")
                 err_descrizione.setText("")
 
@@ -200,15 +205,18 @@ class NewProjectActivity : AppCompatActivity() {
                                 Log.w(ContentValues.TAG, "taskid $title")
                                 Log.w(ContentValues.TAG, "projectid $projectId")
                                 Log.w(ContentValues.TAG, "calling new activity")
+                                Log.w(ContentValues.TAG, "role $role")
                                 val intent = Intent(this, ProjectActivity::class.java)
                                 intent.putExtra("taskId", title)
                                 intent.putExtra("projectId", projectId)
+                                intent.putExtra("role",role )
                                 startActivity(intent)
                             }.addOnFailureListener { exception ->
                                 Log.w(ContentValues.TAG, "Error adding document", exception)
                             }
                         }
                 }else if (tipoForm == "subtask") {
+                    Log.d(ContentValues.TAG, "STO AGGIUNGENDO UN NUOVO $tipoForm= $nuovo")
                     // Get the task ID from the intent or wherever it's stored
 
                     db.collection("progetti")
@@ -236,6 +244,7 @@ class NewProjectActivity : AppCompatActivity() {
                                 intent.putExtra("subtaskId", title)
                                 intent.putExtra("taskId", taskid)
                                 intent.putExtra("projectId", projectId)
+                                intent.putExtra("role",role )
                                 startActivity(intent)
                             }
                                 .addOnFailureListener { exception ->

@@ -1,10 +1,11 @@
 package com.example.project_manager
 
-
+import kotlinx.coroutines.*
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.view.View.GONE
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.LinearLayout
@@ -66,7 +67,7 @@ class ProjectActivity : AppCompatActivity() {
         progLeaderTask= findViewById<LinearLayout>(R.id.progLeaderTask)
 
         if (subtaskId.isNotEmpty()) {
-            // Esegui la logica per il progetto
+            // Esegui la logica per il SOTTOTASK
             Log.d(TAG, " E' UN SUBTASK")
             loadDetails("subtask")
         } else if (taskId.isNotEmpty()) {
@@ -75,7 +76,7 @@ class ProjectActivity : AppCompatActivity() {
             loadDetails("task")
         } else if (projectId.isNotEmpty()) {
             Log.d(TAG, "E' UN PROJECT")
-            // Esegui la logica per il task
+            // Esegui la logica per il PROGETTO
             loadDetails("progetto")
         }else {
             // Gestisci il caso in cui nessun ID sia passato
@@ -86,14 +87,14 @@ class ProjectActivity : AppCompatActivity() {
     private fun loadDetails(tipo : String) {
         val db = FirebaseFirestore.getInstance()
 
-        //devo capire se si tratta di un task, un progetto o in un successivo momento di un sottotask
+        //devo capire se si tratta di un task, un progetto o di un sottotask
         if (tipo=="progetto"){
             Log.d(TAG, "LOAD DETAILS PROGETTO")
             val projectRef = db.collection("progetti").document(projectId)
 
             // Ottieni i dettagli del progetto dal documento
             // -se sei un leader carica anche  ì task
-            // -se sei manager togli sezione per visulaizzare task e visualizza sezione per nome leader
+            // -se sei manager togli sezione per visulaizzare task
             projectRef.get()
                 .addOnSuccessListener { document ->
                     if (document != null) {
@@ -108,7 +109,6 @@ class ProjectActivity : AppCompatActivity() {
                                 ) else it.toString()
                             }
                         }
-
                         Log.d(TAG, "HO OTTENUTO LE SEGUENTI INFORMAZIONI: CREATOR$projectCreator  PROJECTNAME $projectName PROJECTDEADLINE $projectDeadline PROJECTDESCRIZIONE $projectdescr PROJECTLEADER $projectLeader ")
 
                         if (role=="Leader") {
@@ -119,6 +119,7 @@ class ProjectActivity : AppCompatActivity() {
                                 // Aggiungere il parametro "task" all'Intent per capire che stiamo aggiungendo un task (con stasso codice posso aggiungere task, sottotask e progetti)
                                 intent.putExtra("tipo_form", "task")
                                 intent.putExtra("project-id",projectId)
+                                intent.putExtra("role",role)
                                 Log.d(TAG,"STO CHIAMANDO NEWPROJECTACTIVITY con TIPO FORM= task e PROJECTID= $projectId")
                                 startActivity(intent)
                                 //CHIUDO E TORNO ALLA SCHERMATA DEL PROGETTO E AGGIORNO con nuovo progetto
@@ -188,86 +189,166 @@ class ProjectActivity : AppCompatActivity() {
                         projectDeadlineTextView.text = "$taskDeadline"
                         projectDescriptionTextView.text = "$taskdescr"
 
-                        findViewById<ImageButton>(R.id.aggiungiTaskButton).setOnClickListener {
-                            //aprire schermata per aggiungere task
-                            val intent = Intent(this@ProjectActivity, NewProjectActivity::class.java)
-                            // Aggiungere il parametro "task" all'Intent per capire che stiamo aggiungendo un task (con stasso codice posso aggiungere task, sottotask e progetti)
-                            intent.putExtra("tipo_form", "subtask")
-                            intent.putExtra("project-id",projectId)
-                            intent.putExtra("task-id",taskId)
-                            Log.d(TAG,"STO CHIAMANDO NEWPROJECTACTIVITY con TIPO FORM= sottotask e PROJECTID= $projectId")
-                            startActivity(intent)
-                            //CHIUDO E TORNO ALLA SCHERMATA DEL PROGETTO E AGGIORNO con nuovo progetto
+                        if(role=="Leader"){
+                            Log.w(TAG,"Sono un leader e ho la recycler view gone")
+                            //sto visualizzando un task di un leader percio non devo visualizzare i sottotask
+                            progLeaderTask.visibility = View.GONE
+                        }else if(role=="Developer"){
+                            Log.w(TAG,"Sono un developer e ho la recycler view visibile")
+                            //sto visualizzando un task di un developer percio devo visualizzare i sottotask
+                            progLeaderTask.visibility = View.VISIBLE
+                            findViewById<ImageButton>(R.id.aggiungiTaskButton).setOnClickListener {
+                                //aprire schermata per aggiungere task
+                                val intent =
+                                    Intent(this@ProjectActivity, NewProjectActivity::class.java)
+                                // Aggiungere il parametro "task" all'Intent per capire che stiamo aggiungendo un task (con stasso codice posso aggiungere task, sottotask e progetti)
+                                intent.putExtra("tipo_form", "subtask")
+                                intent.putExtra("project-id", projectId)
+                                intent.putExtra("task-id", taskId)
+                                Log.d(
+                                    TAG,
+                                    "STO CHIAMANDO NEWPROJECTACTIVITY con TIPO FORM= sottotask e PROJECTID= $projectId"
+                                )
+                                startActivity(intent)
+                                //CHIUDO E TORNO ALLA SCHERMATA DEL PROGETTO E AGGIORNO con nuovo progetto
+                                loadTask()
+                            }
                             loadTask()
                         }
-
                     }
                 } catch (e: Exception) {
                     Log.d(TAG, "get failed with ", e)
                 }
             }
-        }else if(tipo=="subtask"){
-            val typeElencoTextView = findViewById<TextView>(R.id.typeElenco)
-            typeElencoTextView.text = "SOTTOTASK" //
+        }
+        else if(tipo=="subtask" ){
+            Log.d(TAG, "LOAD DETAILS SOTTOTASK")
+            Log.d(TAG, "role è $role")
+            //visualizzo solo info sottotask da developer quindi tolgo recicler view e tolgo "assegnato a"
+            progLeaderTask.visibility = View.GONE
+            lifecycleScope.launch {
+                try {
+                    val projectDocument =
+                        db.collection("progetti").document(projectId).collection("task")
+                            .document(taskId).get().await()
+                    val projectLeader = projectDocument.getString("developer")
+                    projectCreatorTextView.text = projectLeader
+
+
+                    val subtaskDocument = db.collection("progetti")
+                        .document(projectId)
+                        .collection("task")
+                        .document(taskId)
+                        .get()
+                        .await()
+
+                    if (subtaskDocument != null) {
+                        val subtaskName = subtaskDocument.getString("titolo")?.uppercase()
+                        val subtaskDeadline = subtaskDocument.getString("scadenza")
+                        val subtaskdescr = subtaskDocument.getString("descrizione")
+                        val subtaskDev = subtaskDocument.getString("developer")
+                        subtaskDocument.getString("developer")?.split(" ")?.joinToString(" ") {
+                            it.replaceFirstChar {
+                                if (it.isLowerCase()) it.titlecase(
+                                    Locale.getDefault()
+                                ) else it.toString()
+                            }
+                        }
+
+                        Log.d(
+                            TAG,
+                            "HO OTTENUTO LE SEGUENTI INFORMAZIONI: SUBTASKNAME $subtaskName SUBTASKDEADLINE $subtaskDeadline TASKDESCRIZIONE $subtaskdescr TASKDEV $subtaskDev "
+                        )
+                        findViewById<LinearLayout>(R.id.assignedCont).visibility = GONE
+                        //projectAssignedTextView.text = subtaskDev
+                        progLeaderTask.visibility = View.VISIBLE
+                        projectNameTextView.text = subtaskName
+                        projectDeadlineTextView.text = "$subtaskDeadline"
+                        projectDescriptionTextView.text = "$subtaskdescr"
+                    }
+                } catch (e: Exception) {
+                    Log.d(TAG, "get failed with ", e)
+                }
+            }
+
 
         }else{
             //errore
         }
-
-        // Ottieni il riferimento al documento del progetto
-
     }
 
+    //funzione che carica i task o sottotask nella recycler view
     private fun loadTask() {
         val data = ArrayList<ItemsViewModel>()
         val db = FirebaseFirestore.getInstance()
+        val recyclerviewTask = findViewById<RecyclerView>(R.id.recyclerviewTask)
+        val noTasksTextView = findViewById<TextView>(R.id.noTasksTextView)
 
-        db.collection("progetti")
-            .document(projectId)
-            .collection("task")
-            .get()
-            .addOnSuccessListener { result ->
-                for (document in result) {
-                    val title = document.getString("titolo") ?: ""
-                    val developer = document.getString("developer") ?: ""
-                    val assegnato = false
+        // Avvia una Coroutine nel contesto del Main Thread
+        CoroutineScope(Dispatchers.Main).launch {
+            try {
+                if (role == "Leader") {
+                    val taskDocuments = db.collection("progetti")
+                        .document(projectId)
+                        .collection("task")
+                        .get()
+                        .await() // Attendi il risultato della query
 
-                    data.add(ItemsViewModel(title, developer, assegnato, projectId, taskId))
+                    for (document in taskDocuments) {
+                        val title = document.getString("titolo") ?: ""
+                        val developer = document.getString("developer") ?: ""
+                        val assegnato = false
+                        data.add(ItemsViewModel(title, developer, assegnato, projectId, taskId))
+                    }
+                } else if (role == "Developer") {
+                    val subtaskDocuments = db.collection("progetti")
+                        .document(projectId)
+                        .collection("task")
+                        .document(taskId)
+                        .collection("subtask")
+                        .get()
+                        .await() // Attendi il risultato della query
+
+                    for (document in subtaskDocuments) {
+                        val title = document.getString("titolo") ?: ""
+                        val developer = document.getString("developer") ?: ""
+                        val assegnato = false
+                        data.add(ItemsViewModel(title, developer, assegnato, projectId, taskId))
+                    }
                 }
 
-                Log.d(TAG, "data array: $data")
+                // Aggiorna la UI una volta caricati i dati
+                updateUI(data, recyclerviewTask, noTasksTextView)
 
+            } catch (e: Exception) {
+                Log.e(TAG, "Error loading tasks: ", e)
+                updateUI(data, recyclerviewTask, noTasksTextView) // Anche in caso di errore, aggiorna la UI
+            }
+        }
+    }
 
-                // Ottieni riferimenti a RecyclerView e TextView
-                val recyclerviewTask = findViewById<RecyclerView>(R.id.recyclerviewTask)
-                val noTasksTextView = findViewById<TextView>(R.id.noTasksTextView)
+    //carica recycle view con i dati
+    private fun updateUI(
+        data: ArrayList<ItemsViewModel>,
+        recyclerviewTask: RecyclerView,
+        noTasksTextView: TextView
+    ) {
+        if (data.isEmpty()) {
+            recyclerviewTask.visibility = View.GONE
+            noTasksTextView.visibility = View.VISIBLE
+        } else {
+            recyclerviewTask.visibility = View.VISIBLE
+            noTasksTextView.visibility = View.GONE
 
-                if (data.isEmpty()) {
-                    // Se la lista è vuota, nascondi il RecyclerView e mostra il TextView
-                    recyclerviewTask.visibility = View.GONE
-                    noTasksTextView.visibility = View.VISIBLE
-                } else {
-                    // Altrimenti, imposta l'adapter e mostra il RecyclerView
-                    recyclerviewTask.visibility = View.VISIBLE
-                    noTasksTextView.visibility = View.GONE
-
-                    recyclerviewTask.layoutManager = LinearLayoutManager(this)
-
-                    val adapter = CustomAdapter(data)
-
-                    adapter.setOnItemClickListener(object : CustomAdapter.onItemClickListener {
-                        override fun onItemClick(position: Int) {
-                            // Logica quando un elemento viene cliccato
-                        }
-                    })
-
-                    recyclerviewTask.adapter = adapter
+            recyclerviewTask.layoutManager = LinearLayoutManager(this)
+            val adapter = CustomAdapter(data)
+            adapter.setOnItemClickListener(object : CustomAdapter.onItemClickListener {
+                override fun onItemClick(position: Int) {
+                    // Logica quando un elemento viene cliccato
                 }
-            }
-            .addOnFailureListener { exception ->
-                Log.e(TAG, "Error getting tasks: ", exception)
-                // Gestisci gli errori, se necessario
-            }
+            })
+            recyclerviewTask.adapter = adapter
+        }
     }
 
 
