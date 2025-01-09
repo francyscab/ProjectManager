@@ -38,6 +38,7 @@ class NewProjectActivity : AppCompatActivity() {
         projectId=intent.getStringExtra("project-id")?:""
         taskid=intent.getStringExtra("task-id")?:""
         tipoForm = intent.getStringExtra("tipo_form")?:""
+        Log.d(ContentValues.TAG, "sto chiamando newprojectactivity con role $role, creator $creator, projectId $projectId, taskid $taskid, tipoForm $tipoForm")
 
         val spinnerElement = findViewById<Spinner>(R.id.projectElementSpinner)
         val db = FirebaseFirestore.getInstance()
@@ -146,7 +147,7 @@ class NewProjectActivity : AppCompatActivity() {
                     "scadenza" to scadenza,
                     "descrizione" to descrizione
                 )
-                //vale sia per task che per progetti perche quando prog è nuoovo io vedo e creo task, quando task è nuovo il developer deve creare sottotask
+
                 nuovo["assegnato"] = false.toString()
 
                 Log.d(ContentValues.TAG, "tipo form $tipoForm")
@@ -236,10 +237,11 @@ class NewProjectActivity : AppCompatActivity() {
                                 ).show(
                                 )
                                 //dopo averlo creato apro la schermata del nuovo sottotask
+                                Log.w(ContentValues.TAG, "sto chiamando project activity per visualizzare il nuovo task")
                                 Log.w(ContentValues.TAG, "subtaskid $title")
                                 Log.w(ContentValues.TAG, "taskid $taskid")
                                 Log.w(ContentValues.TAG, "projectid $projectId")
-                                Log.w(ContentValues.TAG, "calling new activity")
+
                                 val intent = Intent(this, ProjectActivity::class.java)
                                 intent.putExtra("subtaskId", title)
                                 intent.putExtra("taskId", taskid)

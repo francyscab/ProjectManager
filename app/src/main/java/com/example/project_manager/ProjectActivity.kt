@@ -205,9 +205,10 @@ class ProjectActivity : AppCompatActivity() {
                                 intent.putExtra("tipo_form", "subtask")
                                 intent.putExtra("project-id", projectId)
                                 intent.putExtra("task-id", taskId)
+                                intent.putExtra("role",role)
                                 Log.d(
                                     TAG,
-                                    "STO CHIAMANDO NEWPROJECTACTIVITY con TIPO FORM= sottotask e PROJECTID= $projectId"
+                                    "STO CHIAMANDO NEWPROJECTACTIVITY con TIPO FORM= sottotask e PROJECTID= $projectId e TASKID= $taskId e ROLE= $role"
                                 )
                                 startActivity(intent)
                                 //CHIUDO E TORNO ALLA SCHERMATA DEL PROGETTO E AGGIORNO con nuovo progetto
@@ -224,8 +225,7 @@ class ProjectActivity : AppCompatActivity() {
         else if(tipo=="subtask" ){
             Log.d(TAG, "LOAD DETAILS SOTTOTASK")
             Log.d(TAG, "role è $role")
-            //visualizzo solo info sottotask da developer quindi tolgo recicler view e tolgo "assegnato a"
-            progLeaderTask.visibility = View.GONE
+
             lifecycleScope.launch {
                 try {
                     val projectDocument =
@@ -239,6 +239,8 @@ class ProjectActivity : AppCompatActivity() {
                         .document(projectId)
                         .collection("task")
                         .document(taskId)
+                        .collection("subtask")
+                        .document(subtaskId)
                         .get()
                         .await()
 
@@ -260,8 +262,8 @@ class ProjectActivity : AppCompatActivity() {
                             "HO OTTENUTO LE SEGUENTI INFORMAZIONI: SUBTASKNAME $subtaskName SUBTASKDEADLINE $subtaskDeadline TASKDESCRIZIONE $subtaskdescr TASKDEV $subtaskDev "
                         )
                         findViewById<LinearLayout>(R.id.assignedCont).visibility = GONE
-                        //projectAssignedTextView.text = subtaskDev
-                        progLeaderTask.visibility = View.VISIBLE
+                        //visualizzo solo info sottotask da developer quindi tolgo recicler view e tolgo "assegnato a"
+                        progLeaderTask.visibility = GONE
                         projectNameTextView.text = subtaskName
                         projectDeadlineTextView.text = "$subtaskDeadline"
                         projectDescriptionTextView.text = "$subtaskdescr"
