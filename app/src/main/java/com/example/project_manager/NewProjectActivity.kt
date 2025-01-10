@@ -146,7 +146,8 @@ class NewProjectActivity : AppCompatActivity() {
                 val nuovo = hashMapOf(
                     "titolo" to title,
                     "scadenza" to scadenza,
-                    "descrizione" to descrizione
+                    "descrizione" to descrizione,
+                    "progress" to 0
                 )
 
                 nuovo["assegnato"] = false.toString()

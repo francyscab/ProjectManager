@@ -13,6 +13,7 @@ import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.get
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -43,6 +44,7 @@ class ProjectActivity : AppCompatActivity() {
     private lateinit var tipoElenco:TextView
     private lateinit var seekbarLayout:LinearLayout
     private lateinit var seekbutton:Button
+    private lateinit var progressLabel:TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -73,6 +75,7 @@ class ProjectActivity : AppCompatActivity() {
         seekbarLayout=findViewById(R.id.seekbarLayout)
         progressSeekBar=findViewById(R.id.seekBar)
         seekbutton=findViewById(R.id.saveButton)
+        progressLabel=findViewById(R.id.progressLabel)
 
 
         if (subtaskId.isNotEmpty()) {
@@ -287,7 +290,10 @@ class ProjectActivity : AppCompatActivity() {
                         progLeaderTask.visibility = GONE
                         seekbarLayout.visibility= View.VISIBLE
 
-                        val manageSeekbar=manageSubtaskProgress(projectId,taskId,subtaskId,role,progressSeekBar,seekbutton)
+                        val manageSeekbar=manageSubtaskProgress(projectId,taskId,subtaskId,role,progressSeekBar,seekbutton,progressLabel,
+                            { calculateAndUpdateTaskProgress(db,projectId,taskId,
+                                { calculateAndUpdateProjectProgress(projectId,db) }) })
+
                         projectNameTextView.text = subtaskName
                         projectDeadlineTextView.text = "$subtaskDeadline"
                         projectDescriptionTextView.text = "$subtaskdescr"
@@ -404,6 +410,8 @@ class ProjectActivity : AppCompatActivity() {
         role: String,
         seekBar: SeekBar,
         saveButton: Button,
+        progressLabel: TextView,
+        onSuccess: () -> Unit
     ): Boolean {
         // Check if the role is valid
         if (role != "Developer") {
@@ -422,9 +430,11 @@ class ProjectActivity : AppCompatActivity() {
                 if (document.exists()) {
                     val currentProgress = document.getLong("progress")?.toInt() ?: 0
                     seekBar.progress = currentProgress
+                    progressLabel.text = "$currentProgress%"
                 } else {
                     // Document doesn't exist, set progress to 0
                     seekBar.progress = 0
+                    progressLabel.text = "0%"
                 }
             }
             .addOnFailureListener { exception ->
@@ -440,6 +450,7 @@ class ProjectActivity : AppCompatActivity() {
                 .document(subtaskId)
                 .update("progress", currentProgress)
                 .addOnSuccessListener {
+                    onSuccess()
                     Log.d("manageSubtaskProgress", "Progress saved successfully: $currentProgress")
                 }
                 .addOnFailureListener { exception ->
@@ -447,6 +458,119 @@ class ProjectActivity : AppCompatActivity() {
                 }
         }
         return true
+    }
+
+    fun calculateAndUpdateProjectProgress(
+        projectId: String,
+        db: FirebaseFirestore,
+    ) {
+        val projectRef = db.collection("progetti").document(projectId)
+
+        // Get all tasks for the project
+        projectRef.collection("task")
+            .get()
+            .addOnSuccessListener { taskDocuments ->
+                if (taskDocuments.isEmpty) {
+                    // No tasks found, set project progress to 0
+                    projectRef.update("progress", 0)
+                        .addOnSuccessListener {
+                            Log.d("calculateAndUpdateProjectProgress", "Project progress updated to 0 (no tasks).")
+
+                        }
+                        .addOnFailureListener { exception ->
+                            Log.e("calculateAndUpdateProjectProgress", "Error updating project progress to 0: ${exception.message}")
+                        }
+                    return@addOnSuccessListener
+                }
+
+                var totalProgress = 0
+                var taskCount = 0
+
+                for (taskDocument in taskDocuments) {
+                    val progress = taskDocument.getLong("progress")?.toInt() ?: 0
+                    totalProgress += progress
+                    taskCount++
+                }
+
+                // Calculate average progress
+                val averageProgress = if (taskCount > 0) {
+                    totalProgress / taskCount
+                } else {
+                    0
+                }
+
+                // Update project's "avanzamento" field
+                projectRef.update("progress", averageProgress)
+                    .addOnSuccessListener {
+                        Log.d("calculateAndUpdateProjectProgress", "Project progress updated to: $averageProgress")
+
+                    }
+                    .addOnFailureListener { exception ->
+                        Log.e("calculateAndUpdateProjectProgress", "Error updating project progress: ${exception.message}")
+                    }
+            }
+            .addOnFailureListener { exception ->
+                Log.e("calculateAndUpdateProjectProgress", "Error getting tasks: ${exception.message}")
+            }
+    }
+
+    fun calculateAndUpdateTaskProgress(
+        db: FirebaseFirestore,
+        projectId: String,
+        taskId: String,
+        onSuccess: () -> Unit,
+
+    ) {
+        val taskRef = db.collection("progetti").document(projectId).collection("task").document(taskId)
+
+        // Get all subtasks for the task
+        taskRef.collection("subtask")
+            .get()
+            .addOnSuccessListener { subtaskDocuments ->
+                if (subtaskDocuments.isEmpty) {
+                    // No subtasks found, set task progress to 0
+                    taskRef.update("progress", 0)
+                        .addOnSuccessListener {
+                            Log.d("calculateAndUpdateTaskProgress", "Task progress updated to 0 (no subtasks).")
+                            onSuccess()
+                        }
+                        .addOnFailureListener { exception ->
+                            Log.e("calculateAndUpdateTaskProgress", "Error updating task progress to 0: ${exception.message}")
+                        }
+                    return@addOnSuccessListener
+                }
+
+                var totalProgress = 0
+                var subtaskCount = 0
+
+                for (subtaskDocument in subtaskDocuments) {
+                    val progress = subtaskDocument.getLong("progress")?.toInt() ?: 0
+                    totalProgress += progress
+                    subtaskCount++
+                }
+
+                // Calculate average progress
+                val averageProgress = if (subtaskCount > 0) {
+                    totalProgress / subtaskCount
+                } else {
+                    0
+                }
+
+                // Update task's "progress" field
+                taskRef.update("progress", averageProgress)
+                    .addOnSuccessListener {
+                        Log.d("calculateAndUpdateTaskProgress", "Task progress updated to: $averageProgress")
+                        onSuccess()
+                    }
+                    .addOnFailureListener { exception ->
+                        Log.e("calculateAndUpdateTaskProgress", "Error updating task progress: ${exception.message}")
+
+                    }
+            }
+            .addOnFailureListener { exception ->
+                Log.e("calculateAndUpdateTaskProgress", "Error getting subtasks: ${exception.message}")
+
+            }
     }
 
     companion object {

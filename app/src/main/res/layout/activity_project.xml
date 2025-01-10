@@ -213,10 +213,10 @@
             android:id="@+id/linearLayoutPerTask"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="vertical"
             android:layout_marginStart="20dp"
             android:layout_marginEnd="15dp"
-            android:background="@drawable/rouded_square">
+            android:background="@drawable/rouded_square"
+            android:orientation="vertical">
 
             <TextView
                 android:id="@+id/typeElenco"
@@ -232,8 +232,8 @@
                 android:id="@+id/noTasksTextView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Nessun task da visualizzare"
                 android:layout_gravity="center"
+                android:text="Nessun task da visualizzare"
                 android:visibility="gone" /> <!-- Inizialmente nascosto -->
 
             <androidx.recyclerview.widget.RecyclerView
@@ -249,9 +249,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom|end"
+                android:layout_marginTop="8dp"
                 android:background="@android:color/transparent"
-                android:src="@drawable/icona_piu_ios"
-                android:layout_marginTop="8dp"/> <!-- Aggiungi un margine in alto se necessario -->
+                android:src="@drawable/icona_piu_ios" /> <!-- Aggiungi un margine in alto se necessario -->
         </LinearLayout>
 
     </LinearLayout>
@@ -259,75 +259,40 @@
         android:id="@+id/seekbarLayout"
         android:layout_width="match_parent"
         android:layout_marginTop="20dp"
-        android:layout_height="500dp"
+        android:layout_height="200dp"
         android:orientation="vertical">
-
-        <TextView
-            android:id="@+id/progressLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Work Done: 0%"
-            android:textSize="18sp" />
-
-        <SeekBar
-            android:id="@+id/seekBar"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:max="100"
-            android:progress="0" />
+            android:layout_marginTop="20dp"
+            android:layout_height="55dp"
+            android:orientation="horizontal">
 
-        <Button
-            android:id="@+id/saveButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:text="Save Progress" />
-
+            <SeekBar
+                android:id="@+id/seekBar"
+                android:layout_width="350dp"
+                android:layout_height="wrap_content"
+                android:max="100"
+                android:progress="0" />
+            <TextView
+                android:id="@+id/progressLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0%"
+                android:textSize="18sp" />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:orientation="vertical"
+            android:layout_marginTop="10dp">
+            <Button
+                android:id="@+id/saveButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:text="Save Progress" />
+        </LinearLayout>
     </LinearLayout>
-  <!--<TextView
-        android:id="@+id/TaskHeaderTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Tasks:"
-        android:textStyle="bold"
-        android:layout_marginTop="25dp"/>
-
-    <LinearLayout
-        android:id="@+id/TaskListLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_marginTop="8dp"/>
-
-    <TextView
-        android:id="@+id/progressHeaderTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Progress:"
-        android:textStyle="bold"
-        android:layout_marginTop="16dp"/>
-    <SeekBar
-        android:id="@+id/progressSeekBar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"/>
-
-    <Button
-        android:id="@+id/buttonAssegnaSottottask"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="30dp"
-        android:text="assegna sottotask"
-        android:layout_gravity="center"/>
-
-    <Button
-        android:id="@+id/buttonSalvaAsseganmenti"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:text="salva"
-        android:layout_gravity="center"
-        android:visibility="invisible"/>-->
 
 
 </LinearLayout>
