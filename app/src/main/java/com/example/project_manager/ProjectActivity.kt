@@ -346,7 +346,23 @@ class ProjectActivity : AppCompatActivity() {
             val adapter = CustomAdapter(data)
             adapter.setOnItemClickListener(object : CustomAdapter.onItemClickListener {
                 override fun onItemClick(position: Int) {
-                    // Logica quando un elemento viene cliccato
+                    // Ottieni l'elemento cliccato
+                    val selectedItem = data[position]
+
+                    // Crea un intent per avviare ProjectActivity
+                    val intent = Intent(this@ProjectActivity, ProjectActivity::class.java)
+
+                    // Aggiungi informazioni necessarie per il passaggio dei dati
+                    intent.putExtra("projectId", selectedItem.projectId)
+                    intent.putExtra("taskId", selectedItem.taskId)
+                    intent.putExtra("subtaskId", selectedItem.subtaskId) // Se è un subtask
+                    intent.putExtra("role", role) // Mantieni il ruolo
+                    intent.putExtra("name", name) // Mantieni il nome utente
+
+                    Log.w("l'elemento cliccato è", selectedItem.toString())
+
+                    // Avvia la nuova attività
+                    startActivity(intent)
                 }
             })
             recyclerviewTask.adapter = adapter
