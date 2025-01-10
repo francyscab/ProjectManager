@@ -59,10 +59,11 @@ class NewProjectActivity : AppCompatActivity() {
                 //cerco i developer per lo spinner
                 spinner="Developer"
             }
-            else if(tipoForm=="task"){
+            else if(tipoForm=="progetto"){
                 //sto creando un nuovo progetto
+                Log.w(ContentValues.TAG, "STO cercando i developer")
                 val typeNewTextView = findViewById<TextView>(R.id.typeNew)
-                typeNewTextView.text = "NEW SUBTASK"
+                typeNewTextView.text = "NEW PROJECT"
                 //cerco i leader per lo spinner
                 spinner="Leader"
             }

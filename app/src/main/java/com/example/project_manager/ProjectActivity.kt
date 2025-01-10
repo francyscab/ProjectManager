@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.view.View.GONE
+import android.view.View.VISIBLE
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.LinearLayout
@@ -39,6 +40,9 @@ class ProjectActivity : AppCompatActivity() {
     private lateinit var role:String
     private lateinit var progLeaderCont:LinearLayout
     private lateinit var progLeaderTask:LinearLayout
+    private lateinit var tipoElenco:TextView
+    private lateinit var seekbarLayout:LinearLayout
+    private lateinit var seekbutton:Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,7 +55,7 @@ class ProjectActivity : AppCompatActivity() {
         projectDescriptionTextView=findViewById(R.id.descrizioneProgetto)
         projectAssignedTextView = findViewById(R.id.projectAssignedTextView)
         //TaskListLayout = findViewById(R.id.TaskListLayout)
-        //progressSeekBar = findViewById(R.id.progressSeekBar)
+
         //assegnaTask = findViewById(R.id.buttonAssegnaSottottask)
         //salvatask = findViewById(R.id.buttonSalvaAsseganmenti)
 
@@ -65,6 +69,11 @@ class ProjectActivity : AppCompatActivity() {
         Log.d(TAG, "PROJECT ACTIVITY, SONO STATA CHIAMATA DA $name CON PROJECTID $projectId TASKID $taskId SUBTASKID $subtaskId E ROLE $role")
 
         progLeaderTask= findViewById<LinearLayout>(R.id.progLeaderTask)
+        tipoElenco=findViewById(R.id.typeElenco)
+        seekbarLayout=findViewById(R.id.seekbarLayout)
+        progressSeekBar=findViewById(R.id.seekBar)
+        seekbutton=findViewById(R.id.saveButton)
+
 
         if (subtaskId.isNotEmpty()) {
             // Esegui la logica per il SOTTOTASK
@@ -129,6 +138,8 @@ class ProjectActivity : AppCompatActivity() {
                             projectCreatorTextView.text = projectCreator
                             projectAssignedTextView.text=projectLeader
                             progLeaderTask.visibility = View.VISIBLE
+                            seekbarLayout.visibility= View.GONE
+                            tipoElenco.text="Task"
                             projectNameTextView.text = projectName
                             projectDeadlineTextView.text = "$projectDeadline"
                             projectDescriptionTextView.text="$projectdescr"
@@ -139,6 +150,7 @@ class ProjectActivity : AppCompatActivity() {
                         } else if(role=="Manager") {
                             //TOLGO VISUALIZZAZIONE RECYCLER VIEW
                             progLeaderTask.visibility = View.GONE
+                            seekbarLayout.visibility= View.GONE
                             projectNameTextView.text = projectName
                             projectDeadlineTextView.text = "$projectDeadline"
                             projectCreatorTextView.text = "$projectCreator"
@@ -185,18 +197,27 @@ class ProjectActivity : AppCompatActivity() {
                         Log.d(TAG, "HO OTTENUTO LE SEGUENTI INFORMAZIONI: TASKNAME $taskName TASKDEADLINE $taskDeadline TASKDESCRIZIONE $taskdescr TASKDEV $taskDev ")
                         projectAssignedTextView.text = taskDev
                         progLeaderTask.visibility = View.VISIBLE
+                        seekbarLayout.visibility= View.GONE
+                        tipoElenco.text="Task"
                         projectNameTextView.text = taskName
                         projectDeadlineTextView.text = "$taskDeadline"
                         projectDescriptionTextView.text = "$taskdescr"
 
                         if(role=="Leader"){
                             Log.w(TAG,"Sono un leader e ho la recycler view gone")
+                            seekbarLayout.visibility= View.GONE
                             //sto visualizzando un task di un leader percio non devo visualizzare i sottotask
                             progLeaderTask.visibility = View.GONE
                         }else if(role=="Developer"){
                             Log.w(TAG,"Sono un developer e ho la recycler view visibile")
                             //sto visualizzando un task di un developer percio devo visualizzare i sottotask
                             progLeaderTask.visibility = View.VISIBLE
+
+                            //GESTISCO SELEZIONE E SALVATAGGIO DELLA SEEKBAR
+
+                            tipoElenco.text="Sottotask"
+                            seekbarLayout.visibility= View.GONE
+
                             findViewById<ImageButton>(R.id.aggiungiTaskButton).setOnClickListener {
                                 //aprire schermata per aggiungere task
                                 val intent =
@@ -264,6 +285,9 @@ class ProjectActivity : AppCompatActivity() {
                         findViewById<LinearLayout>(R.id.assignedCont).visibility = GONE
                         //visualizzo solo info sottotask da developer quindi tolgo recicler view e tolgo "assegnato a"
                         progLeaderTask.visibility = GONE
+                        seekbarLayout.visibility= View.VISIBLE
+
+                        val manageSeekbar=manageSubtaskProgress(projectId,taskId,subtaskId,role,progressSeekBar,seekbutton)
                         projectNameTextView.text = subtaskName
                         projectDeadlineTextView.text = "$subtaskDeadline"
                         projectDescriptionTextView.text = "$subtaskdescr"
@@ -300,7 +324,8 @@ class ProjectActivity : AppCompatActivity() {
                         val title = document.getString("titolo") ?: ""
                         val developer = document.getString("developer") ?: ""
                         val assegnato = false
-                        data.add(ItemsViewModel(title, developer, assegnato, projectId, taskId))
+                        //title dovrebbe rappresentare il task id
+                        data.add(ItemsViewModel(title, developer, assegnato, projectId, title))
                     }
                 } else if (role == "Developer") {
                     val subtaskDocuments = db.collection("progetti")
@@ -315,7 +340,8 @@ class ProjectActivity : AppCompatActivity() {
                         val title = document.getString("titolo") ?: ""
                         val developer = document.getString("developer") ?: ""
                         val assegnato = false
-                        data.add(ItemsViewModel(title, developer, assegnato, projectId, taskId))
+                        //il secondo title  rappresenta il subtask id
+                        data.add(ItemsViewModel(title, developer, assegnato, projectId, taskId,title))
                     }
                 }
 
@@ -348,6 +374,7 @@ class ProjectActivity : AppCompatActivity() {
                 override fun onItemClick(position: Int) {
                     // Ottieni l'elemento cliccato
                     val selectedItem = data[position]
+                    Log.w("l'elemento cliccato è", selectedItem.toString())
 
                     // Crea un intent per avviare ProjectActivity
                     val intent = Intent(this@ProjectActivity, ProjectActivity::class.java)
@@ -360,7 +387,7 @@ class ProjectActivity : AppCompatActivity() {
                     intent.putExtra("name", name) // Mantieni il nome utente
 
 
-                    Log.w("l'elemento cliccato è", selectedItem.toString())
+
 
                     // Avvia la nuova attività
                     startActivity(intent)
@@ -370,6 +397,57 @@ class ProjectActivity : AppCompatActivity() {
         }
     }
 
+    fun manageSubtaskProgress(
+        projectId: String,
+        taskId: String,
+        subtaskId: String,
+        role: String,
+        seekBar: SeekBar,
+        saveButton: Button,
+    ): Boolean {
+        // Check if the role is valid
+        if (role != "Developer") {
+            Log.e("manageSubtaskProgress", "Invalid role: $role. This function is only for Developers.")
+            return false
+        }
+
+        val db = FirebaseFirestore.getInstance()
+        val collectionPath = "progetti/$projectId/task/$taskId/subtask"
+
+        // Load the current progress from Firestore
+        db.collection(collectionPath)
+            .document(subtaskId)
+            .get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val currentProgress = document.getLong("progress")?.toInt() ?: 0
+                    seekBar.progress = currentProgress
+                } else {
+                    // Document doesn't exist, set progress to 0
+                    seekBar.progress = 0
+                }
+            }
+            .addOnFailureListener { exception ->
+                Log.e("manageSubtaskProgress", "Error loading progress: ${exception.message}")
+            }
+
+        // Set up the Save button click listener
+        saveButton.setOnClickListener {
+            val currentProgress = seekBar.progress
+
+            // Update the progress in Firestore
+            db.collection(collectionPath)
+                .document(subtaskId)
+                .update("progress", currentProgress)
+                .addOnSuccessListener {
+                    Log.d("manageSubtaskProgress", "Progress saved successfully: $currentProgress")
+                }
+                .addOnFailureListener { exception ->
+                    Log.e("manageSubtaskProgress", "Error saving progress: ${exception.message}")
+                }
+        }
+        return true
+    }
 
     companion object {
         private const val TAG = "ProjectDetailsActivity"

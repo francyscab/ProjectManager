@@ -4,10 +4,9 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/azzurro">
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:tools="http://schemas.android.com/tools"
     android:background="@color/azzurro"
     android:orientation="vertical">
 
@@ -222,12 +221,12 @@
             <TextView
                 android:id="@+id/typeElenco"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/task"
+                android:layout_height="16dp"
+                android:layout_gravity="center"
                 android:layout_marginTop="16dp"
-                android:textStyle="bold"
+                android:text="@string/task"
                 android:textSize="20sp"
-                android:layout_gravity="center"/>
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/noTasksTextView"
@@ -256,7 +255,35 @@
         </LinearLayout>
 
     </LinearLayout>
+    <LinearLayout
+        android:id="@+id/seekbarLayout"
+        android:layout_width="match_parent"
+        android:layout_marginTop="20dp"
+        android:layout_height="500dp"
+        android:orientation="vertical">
 
+        <TextView
+            android:id="@+id/progressLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Work Done: 0%"
+            android:textSize="18sp" />
+
+        <SeekBar
+            android:id="@+id/seekBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="100"
+            android:progress="0" />
+
+        <Button
+            android:id="@+id/saveButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:text="Save Progress" />
+
+    </LinearLayout>
   <!--<TextView
         android:id="@+id/TaskHeaderTextView"
         android:layout_width="wrap_content"
