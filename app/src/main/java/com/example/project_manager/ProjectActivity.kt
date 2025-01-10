@@ -359,6 +359,7 @@ class ProjectActivity : AppCompatActivity() {
                     intent.putExtra("role", role) // Mantieni il ruolo
                     intent.putExtra("name", name) // Mantieni il nome utente
 
+
                     Log.w("l'elemento cliccato è", selectedItem.toString())
 
                     // Avvia la nuova attività
