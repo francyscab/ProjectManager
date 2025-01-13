@@ -36,6 +36,7 @@ class ProjectActivity : AppCompatActivity() {
     private lateinit var projectAssignedTextView: TextView
     private lateinit var TaskListLayout: LinearLayout
     private lateinit var progressSeekBar: SeekBar
+    private lateinit var progressInfo: TextView
     private lateinit var assegnaTask: Button
     private lateinit var salvatask: Button
     private lateinit var role:String
@@ -56,10 +57,7 @@ class ProjectActivity : AppCompatActivity() {
         projectCreatorTextView = findViewById(R.id.projectCreatorTextView)
         projectDescriptionTextView=findViewById(R.id.descrizioneProgetto)
         projectAssignedTextView = findViewById(R.id.projectAssignedTextView)
-        //TaskListLayout = findViewById(R.id.TaskListLayout)
-
-        //assegnaTask = findViewById(R.id.buttonAssegnaSottottask)
-        //salvatask = findViewById(R.id.buttonSalvaAsseganmenti)
+        progressInfo=findViewById(R.id.projectProgressiTextView)
 
         // Ottieni INFORMAZIONI dall'intent
 
@@ -114,6 +112,7 @@ class ProjectActivity : AppCompatActivity() {
                         val projectName = document.getString("titolo")?.uppercase()
                         val projectDeadline = document.getString("scadenza")
                         val projectdescr=document.getString("descrizione")
+                        val projectprogress= document.getLong("progress")?.toInt() ?:0
                         val projectLeader = document.getString("leader")?.split(" ")?.joinToString(" ") {
                             it.replaceFirstChar {
                                 if (it.isLowerCase()) it.titlecase(
@@ -122,6 +121,7 @@ class ProjectActivity : AppCompatActivity() {
                             }
                         }
                         Log.d(TAG, "HO OTTENUTO LE SEGUENTI INFORMAZIONI: CREATOR$projectCreator  PROJECTNAME $projectName PROJECTDEADLINE $projectDeadline PROJECTDESCRIZIONE $projectdescr PROJECTLEADER $projectLeader ")
+                        progressInfo.text="$projectprogress%"
 
                         if (role=="Leader") {
                             //aggiungere lisener su bottone + per task
@@ -147,6 +147,7 @@ class ProjectActivity : AppCompatActivity() {
                             projectDeadlineTextView.text = "$projectDeadline"
                             projectDescriptionTextView.text="$projectdescr"
 
+
                             //carica i task
                             loadTask()
 
@@ -159,6 +160,7 @@ class ProjectActivity : AppCompatActivity() {
                             projectCreatorTextView.text = "$projectCreator"
                             projectAssignedTextView.text = "$projectLeader"
                             projectDescriptionTextView.text="$projectdescr"
+
                         }else{
                             //generare errore perche ruolo è errato
                         }
@@ -173,6 +175,7 @@ class ProjectActivity : AppCompatActivity() {
             Log.d(TAG, "LOAD DETAILS TASK")
             lifecycleScope.launch {
                 try {
+
                     val projectDocument = db.collection("progetti").document(projectId).get().await()
                     val projectLeader = projectDocument.getString("leader")
                     projectCreatorTextView.text = projectLeader
@@ -189,6 +192,7 @@ class ProjectActivity : AppCompatActivity() {
                         val taskDeadline = taskDocument.getString("scadenza")
                         val taskdescr = taskDocument.getString("descrizione")
                         val taskDev = taskDocument.getString("developer")
+                        val taskprogress= taskDocument.getLong("progress")?.toInt() ?:0
                         taskDocument.getString("developer")?.split(" ")?.joinToString(" ") {
                             it.replaceFirstChar {
                                 if (it.isLowerCase()) it.titlecase(
@@ -205,6 +209,7 @@ class ProjectActivity : AppCompatActivity() {
                         projectNameTextView.text = taskName
                         projectDeadlineTextView.text = "$taskDeadline"
                         projectDescriptionTextView.text = "$taskdescr"
+                        progressInfo.text="$taskprogress%"
 
                         if(role=="Leader"){
                             Log.w(TAG,"Sono un leader e ho la recycler view gone")
@@ -273,6 +278,7 @@ class ProjectActivity : AppCompatActivity() {
                         val subtaskDeadline = subtaskDocument.getString("scadenza")
                         val subtaskdescr = subtaskDocument.getString("descrizione")
                         val subtaskDev = subtaskDocument.getString("developer")
+                        val subtaskprogress= subtaskDocument.getLong("progress")?.toInt() ?:0
                         subtaskDocument.getString("developer")?.split(" ")?.joinToString(" ") {
                             it.replaceFirstChar {
                                 if (it.isLowerCase()) it.titlecase(
@@ -297,6 +303,8 @@ class ProjectActivity : AppCompatActivity() {
                         projectNameTextView.text = subtaskName
                         projectDeadlineTextView.text = "$subtaskDeadline"
                         projectDescriptionTextView.text = "$subtaskdescr"
+                        progressInfo.text="$subtaskprogress%"
+
                     }
                 } catch (e: Exception) {
                     Log.d(TAG, "get failed with ", e)
