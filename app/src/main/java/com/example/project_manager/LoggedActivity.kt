@@ -1,5 +1,6 @@
 package com.example.project_manager
 
+import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.ContentValues.TAG
 import android.content.Intent
@@ -7,11 +8,11 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import android.widget.Button
+
 import android.widget.ImageButton
-import android.widget.SeekBar
-import android.widget.TextView
-import android.widget.Toast
+
+import androidx.appcompat.app.AlertDialog
+
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -228,7 +229,21 @@ class LoggedActivity : AppCompatActivity() {
         return userTasks
     }
 
-
+    @SuppressLint("MissingSuperCall")
+    override fun onBackPressed() {
+        AlertDialog.Builder(this)
+            .setTitle("Confirm Exit")
+            .setMessage("Are you sure you want to exit the application?")
+            .setPositiveButton("Yes") { _, _ ->
+                // User confirmed, exit the application
+                finishAffinity() // Close all activities in the task
+            }
+            .setNegativeButton("No") { dialog, _ ->
+                // User canceled, dismiss the dialog
+                dialog.dismiss()
+            }
+            .show()
+    }
 
 
     override fun onResume() {

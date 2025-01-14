@@ -1,5 +1,6 @@
 package com.example.project_manager
 
+import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.Intent
 import android.graphics.drawable.Drawable
@@ -16,6 +17,7 @@ import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.google.firebase.firestore.FirebaseFirestore
@@ -268,5 +270,62 @@ class NewProjectActivity : AppCompatActivity() {
         val typedValue = TypedValue()
         theme.resolveAttribute(android.R.attr.selectableItemBackground, typedValue, true)
         return ContextCompat.getDrawable(this, typedValue.resourceId)
+    }
+
+    @SuppressLint("MissingSuperCall")
+    override fun onBackPressed() {
+        AlertDialog.Builder(this)
+            .setTitle("Confirm Navigation")
+            .setMessage("You have unsaved changes. Are you sure you want to go back?")
+            .setPositiveButton("Yes") { _, _ ->
+                handleBackNavigation() // Go back after confirmation
+            }
+            .setNegativeButton("No") { dialog, _ ->
+                dialog.dismiss() // Stay in the current activity
+            }
+            .show()
+
+    }
+
+    private fun handleBackNavigation() {
+        when (tipoForm) {
+            "task" -> {
+                // Navigate to the project view
+                Log.d(ContentValues.TAG, "Back from task to project")
+                val intent = Intent(this, ProjectActivity::class.java)
+                intent.putExtra("projectId", projectId)
+                intent.putExtra("role", role)
+                intent.putExtra("name", creator)
+                startActivity(intent)
+                finish()
+            }
+
+            "subtask" -> {
+                // Navigate to the task view
+                Log.d(ContentValues.TAG, "Back from subtask to task")
+                val intent = Intent(this, ProjectActivity::class.java)
+                intent.putExtra("projectId", projectId)
+                intent.putExtra("taskId", taskid)
+                intent.putExtra("role", role)
+                intent.putExtra("name", creator)
+                startActivity(intent)
+                finish()
+            }
+
+            "progetto" -> {
+                // Navigate to the LoggedActivity
+                Log.d(ContentValues.TAG, "Back from project to LoggedActivity")
+                val intent = Intent(this, LoggedActivity::class.java)
+                intent.putExtra("name", creator)
+                startActivity(intent)
+                finish()
+            }
+
+            else -> {
+                // Default behavior (shouldn't happen, but just in case)
+                Log.d(ContentValues.TAG, "Back default")
+                super.onBackPressed()
+            }
+        }
     }
 }

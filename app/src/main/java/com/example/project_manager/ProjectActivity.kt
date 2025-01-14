@@ -584,4 +584,42 @@ class ProjectActivity : AppCompatActivity() {
     companion object {
         private const val TAG = "ProjectDetailsActivity"
     }
+
+    override fun onBackPressed() {
+        // If we're viewing a subtask, go back to the task view
+        if (subtaskId.isNotEmpty()) {
+            Log.d(TAG, "Back from subtask to task")
+            val intent = Intent(this, ProjectActivity::class.java)
+            intent.putExtra("projectId", projectId)
+            intent.putExtra("taskId", taskId)
+            intent.putExtra("role", role)
+            intent.putExtra("name", name)
+            startActivity(intent)
+            finish() // Finish the current activity (the subtask view)
+        } else if (taskId.isNotEmpty() && role == "Leader") {
+            // If it's a task, go to the project view
+            Log.d(TAG, "Back from task to project")
+            val intent = Intent(this, ProjectActivity::class.java)
+            intent.putExtra("projectId", projectId)
+            intent.putExtra("role", role)
+            intent.putExtra("name", name)
+            startActivity(intent)
+            finish() // Finish the current activity (the task view)
+        }else if (taskId.isNotEmpty() && role == "Developer") {
+            // If it's a task and the role is Developer, go to the LoggedActivity
+            Log.d(TAG, "Back from task (Developer) to LoggedActivity")
+            val intent = Intent(this, LoggedActivity::class.java)
+            intent.putExtra("name", name)
+            startActivity(intent)
+            finish() // Finish the current activity (the task view) else if (projectId.isNotEmpty()) {
+            // If it's a project, go to the previous activity
+            Log.d(TAG, "Back from project to previous activity")
+            finish() // Finish the current activity (the project view)
+        } else {
+            // Default behavior (shouldn't happen, but just in case)
+            Log.d(TAG, "Back default")
+            super.onBackPressed()
+        }
+    }
 }
+
