@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.launch
@@ -25,9 +26,12 @@ import kotlinx.coroutines.tasks.await
 
 class LoggedActivity : AppCompatActivity() {
 
+    private lateinit var db: FirebaseFirestore
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_logged)
+        db = FirebaseFirestore.getInstance()
         loadRecycleView()
     }
 
@@ -57,6 +61,59 @@ class LoggedActivity : AppCompatActivity() {
 
             if (role == "Manager") {
                 Log.d(TAG, "SICCOME SONO IL MANAGER: $userName")
+
+                //ASCOLTO DB SE CI SONO MODIFICHE SU COMPLETAMENTO DI QUALCHE PROGETTO DI CUI SONO IL MANAGER.
+                val query = db.collection("progetti")
+                    .whereEqualTo("creator", userName)
+
+                query.get().addOnSuccessListener { documents ->
+                    if (documents.isEmpty) {
+                        Log.d("FirestoreQuery", "Nessun documento trovato per la query.")
+                    } else {
+                        for (document in documents) {
+                            Log.d("FirestoreQuery", "Documento trovato: ${document.id}, dati: ${document.data}")
+                        }
+                    }
+                }.addOnFailureListener { e ->
+                    Log.e("FirestoreQuery", "Errore durante l'esecuzione della query.", e)
+                }
+
+
+                query.addSnapshotListener { snapshots, e ->
+                    if (e != null) {
+                        Log.w("Firestore", "Errore nel listener: ", e)
+                        return@addSnapshotListener
+                    }
+
+                    if (snapshots != null) {
+                        for (change in snapshots.documentChanges) {
+                            if (change.type == DocumentChange.Type.MODIFIED) {
+                                val document = change.document
+                                val newProgress = document.get("progress") as? Int
+                                val oldProgress = change.oldIndex // In Firestore client SDK, può essere simulato.
+
+                                if (newProgress != oldProgress) {
+                                    Log.d("Firestore", "Progress aggiornato: $newProgress")
+                                    // Aggiungi logica per inviare una notifica
+                                }
+                            }
+                        }
+                    }
+                }
+
+                /*myref.addValueEventListener(object : ValueEventListener {
+                    override fun onDataChange(dataSnapshot: DataSnapshot) {
+                        // This method is called once with the initial value and again
+                        // whenever data at this location is updated.
+                        val value = dataSnapshot.getValue<String>()
+                        Log.d("REALTIME_DB", "Value is: $value")
+                    }
+                    override fun onCancelled(error: DatabaseError) {
+                        // Failed to read value
+                        Log.w("REALTIME_DB", "Failed to read value.", error.toException())
+                    }
+                })*/
+
 
                 //comportamento bottone nuovo progetto
                 newProject.setOnClickListener {
