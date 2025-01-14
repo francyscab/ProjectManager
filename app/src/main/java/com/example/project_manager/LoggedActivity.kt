@@ -79,6 +79,7 @@ class LoggedActivity : AppCompatActivity() {
                 }
 
 
+
                 query.addSnapshotListener { snapshots, e ->
                     if (e != null) {
                         Log.w("Firestore", "Errore nel listener: ", e)
