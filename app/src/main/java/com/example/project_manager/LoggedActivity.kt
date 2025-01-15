@@ -1,9 +1,15 @@
 package com.example.project_manager
 
 import android.annotation.SuppressLint
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.ContentValues
 import android.content.ContentValues.TAG
+import android.content.Context
 import android.content.Intent
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -12,6 +18,7 @@ import android.view.View
 import android.widget.ImageButton
 
 import androidx.appcompat.app.AlertDialog
+import androidx.core.app.NotificationCompat
 
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -24,13 +31,17 @@ import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
+
 class LoggedActivity : AppCompatActivity() {
 
     private lateinit var db: FirebaseFirestore
+    private var notificationManager: NotificationManager? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_logged)
+
+
         db = FirebaseFirestore.getInstance()
         loadRecycleView()
     }
@@ -61,10 +72,9 @@ class LoggedActivity : AppCompatActivity() {
 
             if (role == "Manager") {
                 Log.d(TAG, "SICCOME SONO IL MANAGER: $userName")
-
                 //ASCOLTO DB SE CI SONO MODIFICHE SU COMPLETAMENTO DI QUALCHE PROGETTO DI CUI SONO IL MANAGER.
                 val query = db.collection("progetti")
-                    .whereEqualTo("creator", userName)
+                    .whereEqualTo("creator", name)
 
                 query.get().addOnSuccessListener { documents ->
                     if (documents.isEmpty) {
@@ -90,12 +100,18 @@ class LoggedActivity : AppCompatActivity() {
                         for (change in snapshots.documentChanges) {
                             if (change.type == DocumentChange.Type.MODIFIED) {
                                 val document = change.document
-                                val newProgress = document.get("progress") as? Int
+                                val newProgress = document.get("progress")
                                 val oldProgress = change.oldIndex // In Firestore client SDK, può essere simulato.
 
                                 if (newProgress != oldProgress) {
                                     Log.d("Firestore", "Progress aggiornato: $newProgress")
                                     // Aggiungi logica per inviare una notifica
+                                }
+
+                                if (newProgress == 100) {
+                                    val projectId = document.id
+                                    sendNotification(
+                                    )
                                 }
                             }
                         }
@@ -309,5 +325,38 @@ class LoggedActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val data = loadProjectData()
         }
+    }
+
+    fun sendNotification(view: View) {
+
+        val notificationId = 1
+        val resultIntent = Intent(this, MainActivity::class.java)
+
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            0,
+            resultIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val channelID="it.manager.newprogress"
+
+        val notification= Notification.Builder(this,channelID)
+            .setContentTitle("exemple notification")
+            .setContentText("this is an exemple text")
+            .setChannelId(channelID)
+            .setContentIntent(pendingIntent)
+            .build()
+
+        notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+
+    }
+
+    private fun createNotificationChannel(id: String, nome: String, descrizione: String) {
+        val importance= NotificationManager.IMPORTANCE_LOW
+        val channel=NotificationChannel(id,nome,importance)
+
+        channel.description=descrizione
+        notificationManager?.createNotificationChannel(channel)
     }
 }
