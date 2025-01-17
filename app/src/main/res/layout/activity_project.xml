@@ -259,7 +259,7 @@
         android:id="@+id/seekbarLayout"
         android:layout_width="match_parent"
         android:layout_marginTop="20dp"
-        android:layout_height="200dp"
+        android:layout_height="300dp"
         android:orientation="vertical">
         <LinearLayout
             android:layout_width="match_parent"
@@ -292,6 +292,20 @@
                 android:layout_gravity="center_horizontal"
                 android:text="Save Progress" />
         </LinearLayout>
+
+    </LinearLayout>
+    <LinearLayout
+        android:id="@+id/sollecitaCont"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:orientation="vertical"
+        android:layout_marginTop="10dp">
+        <Button
+            android:id="@+id/sollecitaButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:text="sollecita" />
     </LinearLayout>
 
 

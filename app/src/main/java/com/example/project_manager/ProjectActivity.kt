@@ -6,14 +6,12 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.view.View.GONE
-import android.view.View.VISIBLE
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.get
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -46,6 +44,8 @@ class ProjectActivity : AppCompatActivity() {
     private lateinit var seekbarLayout:LinearLayout
     private lateinit var seekbutton:Button
     private lateinit var progressLabel:TextView
+    private lateinit var sollecitaCont:LinearLayout
+    private lateinit var sollecitaButton:Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,6 +58,8 @@ class ProjectActivity : AppCompatActivity() {
         projectDescriptionTextView=findViewById(R.id.descrizioneProgetto)
         projectAssignedTextView = findViewById(R.id.projectAssignedTextView)
         progressInfo=findViewById(R.id.projectProgressiTextView)
+        sollecitaCont=findViewById(R.id.sollecitaCont)
+        sollecitaButton=findViewById(R.id.sollecitaButton)
 
         // Ottieni INFORMAZIONI dall'intent
 
@@ -75,26 +77,28 @@ class ProjectActivity : AppCompatActivity() {
         seekbutton=findViewById(R.id.saveButton)
         progressLabel=findViewById(R.id.progressLabel)
 
+        val notificationHelper = NotificationHelper(this, FirebaseFirestore.getInstance())
+
 
         if (subtaskId.isNotEmpty()) {
             // Esegui la logica per il SOTTOTASK
             Log.d(TAG, " E' UN SUBTASK")
-            loadDetails("subtask")
+            loadDetails("subtask",notificationHelper)
         } else if (taskId.isNotEmpty()) {
             Log.d(TAG, "E' UNTASK")
             // Esegui la logica per il task
-            loadDetails("task")
+            loadDetails("task",notificationHelper)
         } else if (projectId.isNotEmpty()) {
             Log.d(TAG, "E' UN PROJECT")
             // Esegui la logica per il PROGETTO
-            loadDetails("progetto")
+            loadDetails("progetto",notificationHelper)
         }else {
             // Gestisci il caso in cui nessun ID sia passato
             Log.w(TAG, "Nessun ID del progetto o del task fornito.")
         }
     }
 
-    private fun loadDetails(tipo : String) {
+    private fun loadDetails(tipo: String, notificationHelper: NotificationHelper) {
         val db = FirebaseFirestore.getInstance()
 
         //devo capire se si tratta di un task, un progetto o di un sottotask
@@ -146,12 +150,20 @@ class ProjectActivity : AppCompatActivity() {
                             projectNameTextView.text = projectName
                             projectDeadlineTextView.text = "$projectDeadline"
                             projectDescriptionTextView.text="$projectdescr"
+                            sollecitaCont.visibility=View.GONE
 
 
                             //carica i task
                             loadTask()
 
                         } else if(role=="Manager") {
+                            //visualizza sollecita button che invia sollecito a leader progetto
+                            sollecitaCont.visibility=View.VISIBLE
+                            sollecitaButton.setOnClickListener {
+                                Log.d(TAG,"STO cliccando su SOLLECITO")
+                                notificationHelper.notification(role,name,"sollecito")
+                            }
+
                             //TOLGO VISUALIZZAZIONE RECYCLER VIEW
                             progLeaderTask.visibility = View.GONE
                             seekbarLayout.visibility= View.GONE
@@ -212,11 +224,17 @@ class ProjectActivity : AppCompatActivity() {
                         progressInfo.text="$taskprogress%"
 
                         if(role=="Leader"){
+                            sollecitaCont.visibility=View.VISIBLE
+                            sollecitaButton.setOnClickListener {
+                                Log.d(TAG,"STO cliccando su SOLLECITO")
+                                notificationHelper.notification(role,name,"sollecito")
+                            }
                             Log.w(TAG,"Sono un leader e ho la recycler view gone")
                             seekbarLayout.visibility= View.GONE
                             //sto visualizzando un task di un leader percio non devo visualizzare i sottotask
                             progLeaderTask.visibility = View.GONE
                         }else if(role=="Developer"){
+                            sollecitaCont.visibility=View.GONE
                             Log.w(TAG,"Sono un developer e ho la recycler view visibile")
                             //sto visualizzando un task di un developer percio devo visualizzare i sottotask
                             progLeaderTask.visibility = View.VISIBLE
@@ -304,6 +322,7 @@ class ProjectActivity : AppCompatActivity() {
                         projectDeadlineTextView.text = "$subtaskDeadline"
                         projectDescriptionTextView.text = "$subtaskdescr"
                         progressInfo.text="$subtaskprogress%"
+                        sollecitaCont.visibility=View.GONE
 
                     }
                 } catch (e: Exception) {

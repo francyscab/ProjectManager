@@ -1,15 +1,9 @@
 package com.example.project_manager
 
 import android.annotation.SuppressLint
-import android.app.Notification
-import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.app.PendingIntent
-import android.content.ContentValues
 import android.content.ContentValues.TAG
-import android.content.Context
 import android.content.Intent
-import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -18,14 +12,12 @@ import android.view.View
 import android.widget.ImageButton
 
 import androidx.appcompat.app.AlertDialog
-import androidx.core.app.NotificationCompat
 
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.launch
@@ -61,6 +53,8 @@ class LoggedActivity : AppCompatActivity() {
         //recycleview
         val recyclerview = findViewById<RecyclerView>(R.id.recyclerview)
         recyclerview.layoutManager = LinearLayoutManager(this)
+        val notificationHelper = NotificationHelper(this, FirebaseFirestore.getInstance())
+
 
 
         lifecycleScope.launch {
@@ -70,7 +64,7 @@ class LoggedActivity : AppCompatActivity() {
             name=getName(userName)
             Log.d(TAG,"SONO IN LOGGED ACTIVITY E SONO username=$userName ruolo=$role e mi chiamo=$name")
 
-            notification(role,name)
+            notificationHelper.notification(role, name, "progresso")
             if (role == "Manager") {
                 Log.d(TAG, "SICCOME SONO IL MANAGER: $userName")
                 //comportamento bottone nuovo progetto
@@ -113,83 +107,6 @@ class LoggedActivity : AppCompatActivity() {
 
         }
     }
-
-    private fun notification(role: String, name: String) {
-        val query = when (role) {
-            "Manager" -> db.collection("progetti").whereEqualTo("creator", name)
-            "Leader" -> db.collection("progetti").whereEqualTo("leader", name)
-            else -> null
-        }
-
-        query?.get()?.addOnSuccessListener { documents ->
-            if (documents.isEmpty) {
-                Log.d("FirestoreQuery", "Nessun documento trovato per il ruolo $role.")
-            } else {
-                for (document in documents) {
-                    val projectId = document.id
-                    Log.d("FirestoreQuery", "Documento trovato: $projectId, dati: ${document.data}")
-
-                    // Aggiungi listener per i progetti (Manager) o i task (Leader)
-                    if (role == "Manager") {
-                        addProjectListener(projectId)
-                    } else if (role == "Leader") {
-                        addTaskListener(projectId)
-                    }
-                }
-            }
-        }?.addOnFailureListener { e ->
-            Log.e("FirestoreQuery", "Errore durante l'esecuzione della query per il ruolo $role.", e)
-        }
-    }
-
-    private fun addProjectListener(projectId: String) {
-        val projectQuery = db.collection("progetti").document(projectId)
-
-        projectQuery.addSnapshotListener { snapshot, e ->
-            if (e != null) {
-                Log.e("ProjectListener", "Errore durante l'ascolto del progetto $projectId.", e)
-                return@addSnapshotListener
-            }
-
-            snapshot?.let {
-                val newProgress = it.get("progress")
-                if (newProgress.toString() == "100") {
-                    Log.d("Firestore", "Il progetto $projectId è completo.")
-                    sendNotification()
-                } else {
-                    Log.d("Firestore", "Progress del progetto aggiornato: $newProgress")
-                }
-            }
-        }
-    }
-
-    private fun addTaskListener(projectId: String) {
-        val taskQuery = db.collection("progetti").document(projectId).collection("task")
-
-        taskQuery.addSnapshotListener { taskSnapshots, e ->
-            if (e != null) {
-                Log.e("TaskListener", "Errore durante l'ascolto dei task per il progetto $projectId.", e)
-                return@addSnapshotListener
-            }
-
-            taskSnapshots?.let {
-                for (taskChange in it.documentChanges) {
-                    if (taskChange.type == DocumentChange.Type.MODIFIED) {
-                        val task = taskChange.document
-                        val newProgress = task.get("progress")
-                        if (newProgress.toString() == "100") {
-                            Log.d("Firestore", "Il task ${task.id} del progetto $projectId è completo.")
-                            sendNotification()
-                        } else {
-                            Log.d("Firestore", "Progress del task aggiornato: $newProgress")
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-
 
     private fun visualizza(recyclerView: RecyclerView, data: List<ItemsViewModel>, role: String,name:String) {
         Log.d(TAG, "SONO IN VISUALIZZA CON DATA= $data E ROLE= $role E NAME= $name")
@@ -341,51 +258,6 @@ class LoggedActivity : AppCompatActivity() {
         super.onResume()
         lifecycleScope.launch {
             val data = loadProjectData()
-        }
-    }
-
-    fun sendNotification() {
-        val channelID = "it.newprogress"
-        val channelName = "Progress Notification"
-        val channelDescription = "Notifiche per il completamento dei progetti"
-
-        // Creazione del canale di notifica (solo per Android 8.0+)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            createNotificationChannel(channelID, channelName, channelDescription)
-        }
-
-        // Intent per aprire l'app quando si clicca sulla notifica
-        val resultIntent = Intent(this, MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(
-            this,
-            0,
-            resultIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        // Creazione della notifica
-        val notification = NotificationCompat.Builder(this, channelID)
-            .setSmallIcon(R.drawable.username) // Sostituisci con l'icona della tua app
-            .setContentTitle("Progetto completato")
-            .setContentText("Uno dei tuoi progetti ha raggiunto il 100% di completamento.")
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setContentIntent(pendingIntent)
-            .setAutoCancel(true) // La notifica scompare quando viene cliccata
-            .build()
-
-        // Invio della notifica
-        notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager?.notify(1, notification)
-    }
-
-    private fun createNotificationChannel(id: String, name: String, description: String) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val importance = NotificationManager.IMPORTANCE_HIGH
-            val channel = NotificationChannel(id, name, importance).apply {
-                this.description = description
-            }
-            notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager?.createNotificationChannel(channel)
         }
     }
 }
