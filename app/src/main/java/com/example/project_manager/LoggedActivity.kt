@@ -70,68 +70,9 @@ class LoggedActivity : AppCompatActivity() {
             name=getName(userName)
             Log.d(TAG,"SONO IN LOGGED ACTIVITY E SONO username=$userName ruolo=$role e mi chiamo=$name")
 
+            notification(role,name)
             if (role == "Manager") {
                 Log.d(TAG, "SICCOME SONO IL MANAGER: $userName")
-                //ASCOLTO DB SE CI SONO MODIFICHE SU COMPLETAMENTO DI QUALCHE PROGETTO DI CUI SONO IL MANAGER.
-                val query = db.collection("progetti")
-                    .whereEqualTo("creator", name)
-
-                query.get().addOnSuccessListener { documents ->
-                    if (documents.isEmpty) {
-                        Log.d("FirestoreQuery", "Nessun documento trovato per la query.")
-                    } else {
-                        for (document in documents) {
-                            Log.d("FirestoreQuery", "Documento trovato: ${document.id}, dati: ${document.data}")
-                        }
-                    }
-                }.addOnFailureListener { e ->
-                    Log.e("FirestoreQuery", "Errore durante l'esecuzione della query.", e)
-                }
-
-
-
-                query.addSnapshotListener { snapshots, e ->
-                    if (e != null) {
-                        Log.w("Firestore", "Errore nel listener: ", e)
-                        return@addSnapshotListener
-                    }
-
-                    if (snapshots != null) {
-                        for (change in snapshots.documentChanges) {
-                            if (change.type == DocumentChange.Type.MODIFIED) {
-                                val document = change.document
-                                val newProgress = document.get("progress")
-                                val oldProgress = change.oldIndex // In Firestore client SDK, può essere simulato.
-
-                                if (newProgress != oldProgress) {
-                                    Log.d("Firestore", "Progress aggiornato: $newProgress")
-                                    // Aggiungi logica per inviare una notifica
-                                }
-
-                                if (newProgress == 100) {
-                                    val projectId = document.id
-                                    sendNotification(
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-
-                /*myref.addValueEventListener(object : ValueEventListener {
-                    override fun onDataChange(dataSnapshot: DataSnapshot) {
-                        // This method is called once with the initial value and again
-                        // whenever data at this location is updated.
-                        val value = dataSnapshot.getValue<String>()
-                        Log.d("REALTIME_DB", "Value is: $value")
-                    }
-                    override fun onCancelled(error: DatabaseError) {
-                        // Failed to read value
-                        Log.w("REALTIME_DB", "Failed to read value.", error.toException())
-                    }
-                })*/
-
-
                 //comportamento bottone nuovo progetto
                 newProject.setOnClickListener {
                     val intent = Intent(this@LoggedActivity, NewProjectActivity::class.java)
@@ -172,6 +113,82 @@ class LoggedActivity : AppCompatActivity() {
 
         }
     }
+
+    private fun notification(role: String, name: String) {
+        val query = when (role) {
+            "Manager" -> db.collection("progetti").whereEqualTo("creator", name)
+            "Leader" -> db.collection("progetti").whereEqualTo("leader", name)
+            else -> null
+        }
+
+        query?.get()?.addOnSuccessListener { documents ->
+            if (documents.isEmpty) {
+                Log.d("FirestoreQuery", "Nessun documento trovato per il ruolo $role.")
+            } else {
+                for (document in documents) {
+                    val projectId = document.id
+                    Log.d("FirestoreQuery", "Documento trovato: $projectId, dati: ${document.data}")
+
+                    // Aggiungi listener per i progetti (Manager) o i task (Leader)
+                    if (role == "Manager") {
+                        addProjectListener(projectId)
+                    } else if (role == "Leader") {
+                        addTaskListener(projectId)
+                    }
+                }
+            }
+        }?.addOnFailureListener { e ->
+            Log.e("FirestoreQuery", "Errore durante l'esecuzione della query per il ruolo $role.", e)
+        }
+    }
+
+    private fun addProjectListener(projectId: String) {
+        val projectQuery = db.collection("progetti").document(projectId)
+
+        projectQuery.addSnapshotListener { snapshot, e ->
+            if (e != null) {
+                Log.e("ProjectListener", "Errore durante l'ascolto del progetto $projectId.", e)
+                return@addSnapshotListener
+            }
+
+            snapshot?.let {
+                val newProgress = it.get("progress")
+                if (newProgress.toString() == "100") {
+                    Log.d("Firestore", "Il progetto $projectId è completo.")
+                    sendNotification()
+                } else {
+                    Log.d("Firestore", "Progress del progetto aggiornato: $newProgress")
+                }
+            }
+        }
+    }
+
+    private fun addTaskListener(projectId: String) {
+        val taskQuery = db.collection("progetti").document(projectId).collection("task")
+
+        taskQuery.addSnapshotListener { taskSnapshots, e ->
+            if (e != null) {
+                Log.e("TaskListener", "Errore durante l'ascolto dei task per il progetto $projectId.", e)
+                return@addSnapshotListener
+            }
+
+            taskSnapshots?.let {
+                for (taskChange in it.documentChanges) {
+                    if (taskChange.type == DocumentChange.Type.MODIFIED) {
+                        val task = taskChange.document
+                        val newProgress = task.get("progress")
+                        if (newProgress.toString() == "100") {
+                            Log.d("Firestore", "Il task ${task.id} del progetto $projectId è completo.")
+                            sendNotification()
+                        } else {
+                            Log.d("Firestore", "Progress del task aggiornato: $newProgress")
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 
 
     private fun visualizza(recyclerView: RecyclerView, data: List<ItemsViewModel>, role: String,name:String) {
@@ -327,36 +344,48 @@ class LoggedActivity : AppCompatActivity() {
         }
     }
 
-    fun sendNotification(view: View) {
+    fun sendNotification() {
+        val channelID = "it.newprogress"
+        val channelName = "Progress Notification"
+        val channelDescription = "Notifiche per il completamento dei progetti"
 
-        val notificationId = 1
+        // Creazione del canale di notifica (solo per Android 8.0+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            createNotificationChannel(channelID, channelName, channelDescription)
+        }
+
+        // Intent per aprire l'app quando si clicca sulla notifica
         val resultIntent = Intent(this, MainActivity::class.java)
-
         val pendingIntent = PendingIntent.getActivity(
             this,
             0,
             resultIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val channelID="it.manager.newprogress"
-
-        val notification= Notification.Builder(this,channelID)
-            .setContentTitle("exemple notification")
-            .setContentText("this is an exemple text")
-            .setChannelId(channelID)
+        // Creazione della notifica
+        val notification = NotificationCompat.Builder(this, channelID)
+            .setSmallIcon(R.drawable.username) // Sostituisci con l'icona della tua app
+            .setContentTitle("Progetto completato")
+            .setContentText("Uno dei tuoi progetti ha raggiunto il 100% di completamento.")
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(pendingIntent)
+            .setAutoCancel(true) // La notifica scompare quando viene cliccata
             .build()
 
-        notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-
+        // Invio della notifica
+        notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager?.notify(1, notification)
     }
 
-    private fun createNotificationChannel(id: String, nome: String, descrizione: String) {
-        val importance= NotificationManager.IMPORTANCE_LOW
-        val channel=NotificationChannel(id,nome,importance)
-
-        channel.description=descrizione
-        notificationManager?.createNotificationChannel(channel)
+    private fun createNotificationChannel(id: String, name: String, description: String) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val importance = NotificationManager.IMPORTANCE_HIGH
+            val channel = NotificationChannel(id, name, importance).apply {
+                this.description = description
+            }
+            notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager?.createNotificationChannel(channel)
+        }
     }
 }
