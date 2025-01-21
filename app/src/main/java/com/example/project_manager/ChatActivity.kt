@@ -83,22 +83,40 @@ class ChatActivity : AppCompatActivity() {
     private fun sendMessage() {
         if (chatId == null || editTextMessage.text.isEmpty()) return
         val message = Message(
-                senderId = FirebaseAuth.getInstance().currentUser?.uid.orEmpty(),
-                text = editTextMessage.text.toString(),
-                timestamp = System.currentTimeMillis()
+            senderId = FirebaseAuth.getInstance().currentUser?.uid.orEmpty(),
+            text = editTextMessage.text.toString(),
+            timestamp = System.currentTimeMillis()
         )
 
+        // Aggiungi il messaggio alla collezione "messages" della chat
         db.collection("chat")
-                .document(chatId!!)
+            .document(chatId!!)
             .collection("messages")
-                .add(message)
-                .addOnSuccessListener {
-            editTextMessage.text.clear()
-            recyclerViewMessages.scrollToPosition(messages.size - 1)
-        }
+            .add(message)
+            .addOnSuccessListener {
+                // Dopo aver aggiunto il messaggio, aggiorna il campo `lastMessage` nella chat
+                val chatUpdate = hashMapOf(
+                    "lastMessage" to message.text,
+                    "timestamp" to message.timestamp
+                )
+                Log.d("ChatActivity", "update lastMessage to ${message.text}")
+
+                db.collection("chat")
+                    .document(chatId!!)
+                    .update(chatUpdate as Map<String, Any>)
+                    .addOnSuccessListener {
+                        // Pulisci il campo di input e aggiorna la UI
+                        editTextMessage.text.clear()
+                        recyclerViewMessages.scrollToPosition(messages.size - 1)
+                    }
+                    .addOnFailureListener {
+                        Toast.makeText(this, "Errore durante l'aggiornamento del campo lastMessage", Toast.LENGTH_SHORT).show()
+                    }
+            }
             .addOnFailureListener {
-            Toast.makeText(this, "Errore durante l'invio del messaggio", Toast.LENGTH_SHORT).show()
-        }
+                Toast.makeText(this, "Errore durante l'invio del messaggio", Toast.LENGTH_SHORT).show()
+            }
     }
+
 
 }
