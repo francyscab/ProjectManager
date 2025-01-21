@@ -113,6 +113,51 @@ class ChatListActivity : AppCompatActivity() {
         return users
     }
 
+    private suspend fun getUsersWithRoleDeveloper(currentUserName: String): List<User> {
+        val users = mutableListOf<User>()
+        val userSet = mutableSetOf<String>() // Per tracciare i nomi univoci
+
+        try {
+            // Recupera gli utenti con ruolo "Developer"
+            val userDocuments = db.collection("utenti")
+                .whereEqualTo("role", "Developer")
+                .get()
+                .await()
+
+            for (userDocument in userDocuments) {
+                val name = userDocument.getString("name")
+                val email = userDocument.getString("email")
+
+                // Controlla che nome ed email siano validi e che il nome non sia duplicato
+                if (!name.isNullOrEmpty() && !email.isNullOrEmpty() && userSet.add(name)) {
+                    users.add(User(name, email))
+                }
+            }
+
+            // Recupera i progetti di cui l'utente è il leader
+            val projects = db.collection("progetti")
+                .whereEqualTo("leader", currentUserName)
+                .get()
+                .await()
+
+            // Aggiungi i manager dei progetti in cui l'utente è leader
+            for (project in projects) {
+                val managerName = project.getString("manager") // Recupera il nome del manager
+                val managerEmail = project.getString("managerEmail") // Recupera l'email del manager
+
+                // Aggiungi il manager se non è già presente nella lista
+                if (!managerName.isNullOrEmpty() && !managerEmail.isNullOrEmpty() && userSet.add(managerName)) {
+                    users.add(User(managerName, managerEmail))
+                }
+            }
+        } catch (e: Exception) {
+            Log.w("ChatListActivity", "Error fetching users with role Developer and project managers.", e)
+        }
+
+        return users
+    }
+
+
     private fun showUserSelectionDialog(users: List<User>) {
         val userNames = users.map { it.name } // Estrai solo i nomi
 
@@ -127,18 +172,27 @@ class ChatListActivity : AppCompatActivity() {
         builder.show()
     }
 
-    private fun showSelectUserDialogForDeveloper(role: String) {
+    private fun showSelectUserDialog(role: String) {
         lifecycleScope.launch {
             val currentUserEmail = FirebaseAuth.getInstance().currentUser?.email ?: ""
             val currentUserName = getUserNameByEmail(currentUserEmail)
             var users = listOf<User>()
 
-            if(role=="developer"){
+            if(role=="Developer"){
+                Log.d("ChatListActivity", "Sono un developer")
                 // Recupera gli utenti che sono developer nei miei stessi progetti e dei leader dei miei progetti
                 users = getDeveloperUsers(currentUserName)
+                Log.d("ChatListActivity", "Users: $users")
             }else if(role=="Leader") {
-                // Recupera gli utenti che sono developer
-                users = getLeaderUsers(currentUserName)
+                    Log.d("ChatListActivity", "Sono un leader")
+                // Recupera gli utenti che sono developer e i manager dei miei progetti
+                users = getUsersWithRoleDeveloper(currentUserName)
+                Log.d("ChatListActivity", "Users: $users")
+            }else if(role=="Manager"){
+                Log.d("ChatListActivity", "Sono un manager")
+                //recupera i leader
+                users = getUsersForManager()
+                Log.d("ChatListActivity", "Users: $users")
             }
             
 
@@ -147,8 +201,32 @@ class ChatListActivity : AppCompatActivity() {
         }
     }
 
-    private fun getLeaderUsers(currentUserName: String): List<User> {
+    private suspend fun getUsersForManager(): List<User> {
+        val users = mutableListOf<User>()
+        val userSet = mutableSetOf<String>() // Per tracciare i nomi univoci
 
+        try {
+            // Recupera tutti gli utenti con il ruolo di "leader"
+            val userDocuments = db.collection("utenti")
+                .whereEqualTo("role", "Leader")
+                .get()
+                .await()
+
+            // Aggiungi ogni leader alla lista, evitando duplicati
+            for (userDocument in userDocuments) {
+                val name = userDocument.getString("name")
+                val email = userDocument.getString("email")
+
+                // Controlla che il nome e l'email siano validi e che il nome non sia duplicato
+                if (!name.isNullOrEmpty() && !email.isNullOrEmpty() && userSet.add(name)) {
+                    users.add(User(name, email))
+                }
+            }
+        } catch (e: Exception) {
+            Log.w("ChatListActivity", "Error fetching leaders.", e)
+        }
+
+        return users
     }
     /*private fun showSelectUserDialog(role: String) {
         val currentUserEmail = FirebaseAuth.getInstance().currentUser?.email ?: ""
