@@ -13,10 +13,18 @@ class NotificationHelper(private val context: Context, private val db: FirebaseF
     private var notificationManager: NotificationManager? = null
     private val resultIntent: Intent = Intent(context, ProjectActivity::class.java)
 
-    fun notification(role: String, name: String, type: String) {
+    fun notification(role: String, name: String, type: String, data: List<String>? = null) {
         if (type == "sollecito") {
             // Se il tipo è "sollecito", invia subito la notifica senza aggiungere listener
-            sendNotification(type,name,role)
+            sendNotificationProgress(type,name,role)
+            return
+        }
+        if(type=="chat"){
+            Log.d("Notification", "sto mettendo listener sulle chat di $name")
+            if (data != null) {
+                Log.d("Notification", "dati ricevuti: $data")
+                addChatListener(type,name,role,data)
+            }
             return
         }
 
@@ -47,6 +55,34 @@ class NotificationHelper(private val context: Context, private val db: FirebaseF
     }
 
 
+    private fun addChatListener( type: String, name: String, role: String,chatIds: List<String>) {
+        // Itera su ogni chatId nell'elenco
+        for (chatId in chatIds) {
+            val chatQuery = db.collection("chat").document(chatId)
+
+            chatQuery.addSnapshotListener { snapshot, e ->
+                if (e != null) {
+                    Log.e("ChatListener", "Errore durante l'ascolto della chat $chatId.", e)
+                    return@addSnapshotListener
+                }
+
+                snapshot?.let {
+                    val newMessage = it.get("lastMessage")
+                    val newTimestamp = it.get("timestamp")
+
+                    if (newMessage != null) {
+                        Log.d("Firestore", "Nuovo messaggio nella chat $chatId: $newMessage")
+
+                        // Invia una notifica in base al tipo e ai dettagli
+                        sendNotificationChat(type, name, role, chatId, newMessage.toString(), newTimestamp.toString())
+                    } else {
+                        Log.d("Firestore", "Nessun nuovo messaggio nella chat $chatId.")
+                    }
+                }
+            }
+        }
+    }
+
     private fun addProjectListener(projectId: String, type: String,name: String,role: String) {
         val projectQuery = db.collection("progetti").document(projectId)
 
@@ -60,7 +96,7 @@ class NotificationHelper(private val context: Context, private val db: FirebaseF
                 val newProgress = it.get("progress")
                 if (type == "progresso" && newProgress.toString() == "100") {
                     Log.d("Firestore", "Il progetto $projectId è completo.")
-                    sendNotification(type,name,role,projectId)
+                    sendNotificationProgress(type,name,role,projectId)
                 } else {
                     Log.d("Firestore", "Progress del progetto aggiornato: $newProgress")
                 }
@@ -86,10 +122,10 @@ class NotificationHelper(private val context: Context, private val db: FirebaseF
 
                         if (type == "progresso" && newProgress.toString() == "100") {
                             Log.d("Firestore", "Il task $taskId del progetto $projectId è completo.")
-                            sendNotification(type, name, role, projectId, taskId)  // Passa anche taskId
+                            sendNotificationProgress(type, name, role, projectId, taskId)  // Passa anche taskId
                         } else if (type == "sollecito") {
                             Log.d("Firestore", "Sollecito per il task $taskId del progetto $projectId.")
-                            sendNotification(type, name, role, projectId, taskId)  // Passa anche taskId
+                            sendNotificationProgress(type, name, role, projectId, taskId)  // Passa anche taskId
                         } else {
                             Log.d("Firestore", "Progress del task aggiornato: $newProgress")
                         }
@@ -99,7 +135,62 @@ class NotificationHelper(private val context: Context, private val db: FirebaseF
         }
     }
 
-    private fun sendNotification(type: String,name: String, role: String,projectID: String? = null,taskId:String?=null) {
+    private fun sendNotificationChat(type: String, name: String, role: String, chatId: String, message: String, timestamp: String) {
+        val channelID = "it.newchat"
+        val channelName = "Chat Notification"
+        val channelDescription = "Notifiche per nuove chat e messaggi"
+
+        Log.w("NotificationHelper", "Sending notification: type=$type, name=$name, role=$role, chatId=$chatId, message=$message, timestamp=$timestamp")
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            createNotificationChannel(channelID, channelName, channelDescription)
+        }
+
+        val resultIntent = Intent(context, ChatActivity::class.java).apply {
+            // Aggiungi qui i dati relativi alla chat, al ruolo e al nome
+            putExtra("chatId", chatId)
+            putExtra("role", role)
+            putExtra("name", name)
+        }
+
+        // Crea un PendingIntent che si attiverà quando l'utente clicca sulla notifica
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            0,
+            resultIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notificationTitle: String
+        val notificationText: String
+
+        when (type) {
+            "new_message" -> {
+                notificationTitle = "Nuovo messaggio"
+                notificationText = "Hai ricevuto un nuovo messaggio nella chat: $message"
+            }
+            else -> {
+                notificationTitle = "Notifica Chat"
+                notificationText = "Hai ricevuto un aggiornamento nella chat."
+            }
+        }
+
+        // Crea la notifica
+        val notification = NotificationCompat.Builder(context, channelID)
+            .setSmallIcon(R.drawable.username) // Sostituisci con l'icona della tua app
+            .setContentTitle(notificationTitle)
+            .setContentText(notificationText)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setContentIntent(pendingIntent) // Imposta l'intent da eseguire al clic
+            .setAutoCancel(true) // La notifica scompare quando viene cliccata
+            .build()
+
+        notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager?.notify(1, notification) // Mostra la notifica
+    }
+
+
+    private fun sendNotificationProgress(type: String, name: String, role: String, projectID: String? = null, taskId:String?=null) {
         val channelID = "it.newprogress"
         val channelName = "Progress Notification"
         val channelDescription = "Notifiche per il completamento dei progetti"

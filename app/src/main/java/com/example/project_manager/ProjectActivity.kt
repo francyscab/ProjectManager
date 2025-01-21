@@ -161,7 +161,7 @@ class ProjectActivity : AppCompatActivity() {
                             sollecitaCont.visibility=View.VISIBLE
                             sollecitaButton.setOnClickListener {
                                 Log.d(TAG,"STO cliccando su SOLLECITO")
-                                notificationHelper.notification(role,name,"sollecito")
+                                notificationHelper.notification(role, name, "sollecito")
                             }
 
                             //TOLGO VISUALIZZAZIONE RECYCLER VIEW
@@ -227,7 +227,7 @@ class ProjectActivity : AppCompatActivity() {
                             sollecitaCont.visibility=View.VISIBLE
                             sollecitaButton.setOnClickListener {
                                 Log.d(TAG,"STO cliccando su SOLLECITO")
-                                notificationHelper.notification(role,name,"sollecito")
+                                notificationHelper.notification(role, name, "sollecito")
                             }
                             Log.w(TAG,"Sono un leader e ho la recycler view gone")
                             seekbarLayout.visibility= View.GONE

@@ -19,6 +19,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -32,6 +33,7 @@ class LoggedActivity : AppCompatActivity() {
     private lateinit var userName: String
     private lateinit var role: String
     private lateinit var name: String
+    private lateinit var chat: List<String>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,12 +74,14 @@ class LoggedActivity : AppCompatActivity() {
             role = getRole(userName)
             data = loadProjectData()
             name=getName(userName)
+            chat=getMyChat(userName)
             Log.d(TAG,"SONO IN LOGGED ACTIVITY E SONO username=$userName ruolo=$role e mi chiamo=$name")
 
 
-            notificationHelper.notification(role, name, "progresso")
+            notificationHelper.notification( role, name, "progresso")
             if (role == "Manager") {
                 Log.d(TAG, "SICCOME SONO IL MANAGER: $userName")
+                notificationHelper.notification(role, name, "chat",chat)
                 //comportamento bottone nuovo progetto
                 newProject.setOnClickListener {
                     val intent = Intent(this@LoggedActivity, NewProjectActivity::class.java)
@@ -118,6 +122,65 @@ class LoggedActivity : AppCompatActivity() {
 
         }
     }
+
+    private suspend fun getMyChat(currentUserEmail: String): List<String> {
+        val chatIds = mutableListOf<String>()
+
+        Log.d("ChatListActivity", "Current User Email: $currentUserEmail")
+
+        // Recupera le chat dove l'utente è `user1`
+        val queryUser1 = db.collection("chat")
+            .whereEqualTo("user1", currentUserEmail)
+            .get() // Usa `get()` per una query sincrona
+
+        // Recupera le chat dove l'utente è `user2`
+        val queryUser2 = db.collection("chat")
+            .whereEqualTo("user2", currentUserEmail)
+            .get() // Usa `get()` per una query sincrona
+
+        try {
+            // Esegui entrambe le query in parallelo usando coroutines
+            val user1Snapshot = queryUser1.await()
+            val user2Snapshot = queryUser2.await()
+
+            // Debug: stampa il risultato di queryUser1
+            Log.d("ChatListActivity", "Results for user1 query:")
+            user1Snapshot.forEach { doc ->
+                Log.d("ChatListActivity", "User1 Chat ID: ${doc.getString("chatID")}, Last Message: ${doc.getString("lastMessage")}")
+            }
+
+            // Debug: stampa il risultato di queryUser2
+            Log.d("ChatListActivity", "Results for user2 query:")
+            user2Snapshot.forEach { doc ->
+                Log.d("ChatListActivity", "User2 Chat ID: ${doc.getString("chatID")}, Last Message: ${doc.getString("lastMessage")}")
+            }
+
+            // Estrai gli ID delle chat per `user1`
+            for (doc in user1Snapshot) {
+                val chatId = doc.getString("chatID") ?: ""
+                if (chatId.isNotEmpty() && !chatIds.contains(chatId)) {
+                    chatIds.add(chatId)
+                }
+            }
+
+            // Estrai gli ID delle chat per `user2`
+            for (doc in user2Snapshot) {
+                val chatId = doc.getString("chatID") ?: ""
+                if (chatId.isNotEmpty() && !chatIds.contains(chatId)) {
+                    chatIds.add(chatId)
+                }
+            }
+
+            // Debug: stampa l'array degli ID delle chat trovate
+            Log.d("ChatListActivity", "Chat IDs found: $chatIds")
+        } catch (e: Exception) {
+            Log.w("ChatListActivity", "Error fetching chat data", e)
+        }
+
+        return chatIds
+    }
+
+
 
     private fun visualizza(recyclerView: RecyclerView, data: List<ItemsViewModel>, role: String,name:String) {
         Log.d(TAG, "SONO IN VISUALIZZA CON DATA= $data E ROLE= $role E NAME= $name")
