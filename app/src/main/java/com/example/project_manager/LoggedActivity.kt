@@ -28,6 +28,10 @@ class LoggedActivity : AppCompatActivity() {
 
     private lateinit var db: FirebaseFirestore
     private var notificationManager: NotificationManager? = null
+    private lateinit var data: ArrayList<ItemsViewModel>
+    private lateinit var userName: String
+    private lateinit var role: String
+    private lateinit var name: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,10 +39,14 @@ class LoggedActivity : AppCompatActivity() {
 
 
         db = FirebaseFirestore.getInstance()
+
         loadRecycleView()
+
         val chatButton = findViewById<ImageButton>(R.id.button_chat)
         chatButton.setOnClickListener {
             val intent = Intent(this, ChatListActivity::class.java)
+            Log.d("LoggedActivity", "Role: $role")
+            intent.putExtra("role", role)
             startActivity(intent)
         }
     }
@@ -48,10 +56,7 @@ class LoggedActivity : AppCompatActivity() {
         Log.d(TAG, "LOADRECYCLEVIEW")
         //val db = FirebaseFirestore.getInstance()
 
-        var data= ArrayList<ItemsViewModel>()
-        var userName=""
-        var role=""
-        var name=""
+
         //val dataLeader= arrayListOf<ItemsViewModel>()
         val newProject = findViewById<ImageButton>(R.id.newProject)
 
@@ -68,6 +73,7 @@ class LoggedActivity : AppCompatActivity() {
             data = loadProjectData()
             name=getName(userName)
             Log.d(TAG,"SONO IN LOGGED ACTIVITY E SONO username=$userName ruolo=$role e mi chiamo=$name")
+
 
             notificationHelper.notification(role, name, "progresso")
             if (role == "Manager") {

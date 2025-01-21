@@ -60,8 +60,7 @@ class ChatActivity : AppCompatActivity() {
 
     private fun loadMessages() {
         if (chatId == null) return
-
-                db.collection("chat")
+        db.collection("chat")
                         .document(chatId!!)
             .collection("messages")
                 .orderBy("timestamp", Query.Direction.ASCENDING)
@@ -83,8 +82,7 @@ class ChatActivity : AppCompatActivity() {
 
     private fun sendMessage() {
         if (chatId == null || editTextMessage.text.isEmpty()) return
-
-                val message = Message(
+        val message = Message(
                 senderId = FirebaseAuth.getInstance().currentUser?.uid.orEmpty(),
                 text = editTextMessage.text.toString(),
                 timestamp = System.currentTimeMillis()
@@ -102,4 +100,5 @@ class ChatActivity : AppCompatActivity() {
             Toast.makeText(this, "Errore durante l'invio del messaggio", Toast.LENGTH_SHORT).show()
         }
     }
+
 }

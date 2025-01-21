@@ -22,7 +22,6 @@ class MessagesAdapter(private val messages: List<Message>) :
         val messageContainer: LinearLayout = itemView.findViewById(R.id.messageContainer) // Aggiungi questa riga
     }
 
-
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MessageViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_message, parent, false)
@@ -41,20 +40,21 @@ class MessagesAdapter(private val messages: List<Message>) :
         // Differenzia il layout: inviato (a destra) o ricevuto (a sinistra)
         val isSentByCurrentUser = message.senderId == FirebaseAuth.getInstance().currentUser?.uid
 
-        val layoutParams = holder.messageContainer.layoutParams as LinearLayout.LayoutParams
+        // Usa ConstraintLayout.LayoutParams se il contenitore è in un ConstraintLayout
+        val layoutParams = holder.messageContainer.layoutParams as ConstraintLayout.LayoutParams
         if (isSentByCurrentUser) {
             // Messaggio inviato: posiziona a destra
-            layoutParams.gravity = android.view.Gravity.END
+            layoutParams.startToStart = ConstraintLayout.LayoutParams.UNSET
+            layoutParams.endToEnd = ConstraintLayout.LayoutParams.PARENT_ID
             holder.messageContainer.background = ContextCompat.getDrawable(holder.itemView.context, R.drawable.sent_message_background)
         } else {
             // Messaggio ricevuto: posiziona a sinistra
-            layoutParams.gravity = android.view.Gravity.START
+            layoutParams.startToStart = ConstraintLayout.LayoutParams.PARENT_ID
+            layoutParams.endToEnd = ConstraintLayout.LayoutParams.UNSET
             holder.messageContainer.background = ContextCompat.getDrawable(holder.itemView.context, R.drawable.received_message_background)
         }
         holder.messageContainer.layoutParams = layoutParams
     }
-
-
 
     override fun getItemCount(): Int = messages.size
 }
