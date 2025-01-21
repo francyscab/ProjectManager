@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="8dp">
+
+    <!-- Foto profilo -->
+    <ImageView
+        android:id="@+id/imageViewProfile"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_alignParentStart="true"
+        android:layout_marginEnd="8dp"
+        android:src="@drawable/icona_user_ios"
+        android:scaleType="centerCrop" />
+
+    <!-- Nome chat -->
+    <TextView
+        android:id="@+id/textViewChatName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_toEndOf="@id/imageViewProfile"
+        android:layout_alignParentTop="true"
+        android:text="nome"
+        android:layout_marginEnd="80dp"
+        android:textStyle="bold"
+        android:textSize="16sp" />
+
+    <!-- Ultimo messaggio -->
+    <TextView
+        android:id="@+id/textViewLastMessage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/textViewChatName"
+        android:layout_toEndOf="@id/imageViewProfile"
+        android:text="esempio messaggio"
+        android:textColor="#888888"
+        android:textSize="14sp" />
+
+    <!-- Timestamp -->
+    <TextView
+        android:id="@+id/textViewTimestamp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentTop="true"
+        android:text="12:30"
+        android:textColor="#AAAAAA"
+        android:textSize="12sp" />
+
+    <!-- Badge numero messaggi non letti -->
+    <TextView
+        android:id="@+id/textViewUnreadCount"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_alignParentEnd="true"
+        android:layout_below="@id/textViewTimestamp"
+        android:gravity="center"
+        android:text="2"
+        android:textColor="#AAAAAA"
+        android:textSize="12sp"
+        android:visibility="visible" />
+</RelativeLayout>

@@ -121,5 +121,17 @@
             android:padding="8dp"
             android:layout_weight="1"
             android:scaleType="fitCenter" />
+
+        <ImageButton
+            android:id="@+id/button_chat"
+            android:layout_width="48dp"
+            android:layout_height="50dp"
+            android:src="@drawable/icon_chat"
+            android:contentDescription="@string/user"
+            android:background="?attr/selectableItemBackground"
+            android:padding="8dp"
+            android:layout_weight="1"
+            android:scaleType="fitCenter" />
+
     </LinearLayout>
 </LinearLayout>

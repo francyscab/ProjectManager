@@ -36,6 +36,11 @@ class LoggedActivity : AppCompatActivity() {
 
         db = FirebaseFirestore.getInstance()
         loadRecycleView()
+        val chatButton = findViewById<ImageButton>(R.id.button_chat)
+        chatButton.setOnClickListener {
+            val intent = Intent(this, ChatListActivity::class.java)
+            startActivity(intent)
+        }
     }
 
 
