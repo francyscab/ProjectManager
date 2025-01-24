@@ -9,8 +9,10 @@ import android.view.View.GONE
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.LinearLayout
+import android.widget.PopupMenu
 import android.widget.SeekBar
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -78,7 +80,7 @@ class ProjectActivity : AppCompatActivity() {
         progressLabel=findViewById(R.id.progressLabel)
 
         val notificationHelper = NotificationHelper(this, FirebaseFirestore.getInstance())
-
+        menu()
 
         if (subtaskId.isNotEmpty()) {
             // Esegui la logica per il SOTTOTASK
@@ -335,6 +337,96 @@ class ProjectActivity : AppCompatActivity() {
             //errore
         }
     }
+
+    private fun menu(){
+        val menuButton: ImageButton = findViewById(R.id.menuButton)
+        menuButton.setOnClickListener { view ->
+            // Crea il PopupMenu
+            val popupMenu = PopupMenu(this, view)
+
+            // Inflating the menu
+            val inflater = popupMenu.menuInflater
+            inflater.inflate(R.menu.menu_task_option, popupMenu.menu)
+
+            // Imposta listener per gli item del menu
+            popupMenu.setOnMenuItemClickListener { item ->
+                when (item.itemId) {
+                    R.id.menu_edit -> {
+                        // Azione per modificare il task
+                        true
+                    }
+                    R.id.menu_delete -> {
+                        deleteItem()
+                        // Azione per eliminare il task
+                        true
+                    }
+                    else -> false
+                }
+            }
+
+            // Mostra il menu
+            popupMenu.show()
+        }
+    }
+
+    fun deleteItem() {
+        val db = FirebaseFirestore.getInstance()
+
+        // Se c'è solo projectId
+        if (!projectId.isNullOrEmpty() && taskId.isNullOrEmpty() && subtaskId.isNullOrEmpty()) {
+            // Elimina il progetto dalla raccolta di progetti
+            db.collection("progetti")
+                .document(projectId)
+                .delete()
+                .addOnSuccessListener {
+                    // Conferma eliminazione del progetto
+                    Toast.makeText(this, "Progetto eliminato con successo", Toast.LENGTH_SHORT).show()
+                }
+                .addOnFailureListener { e ->
+                    // Gestisci eventuali errori
+                    Toast.makeText(this, "Errore durante l'eliminazione del progetto: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+        }
+
+        // Se c'è anche taskId
+        else if (!projectId.isNullOrEmpty() && !taskId.isNullOrEmpty() && subtaskId.isNullOrEmpty()) {
+            // Elimina il task nel progetto specificato
+            db.collection("progetti")
+                .document(projectId)
+                .collection("tasks")
+                .document(taskId)
+                .delete()
+                .addOnSuccessListener {
+                    // Conferma eliminazione del task
+                    Toast.makeText(this, "Task eliminato con successo", Toast.LENGTH_SHORT).show()
+                }
+                .addOnFailureListener { e ->
+                    // Gestisci eventuali errori
+                    Toast.makeText(this, "Errore durante l'eliminazione del task: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+        }
+
+        // Se c'è anche subTaskId
+        else if (!projectId.isNullOrEmpty() && !taskId.isNullOrEmpty() && !subtaskId.isNullOrEmpty()) {
+            // Elimina il sottotask nel task specificato del progetto
+            db.collection("progetti")
+                .document(projectId)
+                .collection("tasks")
+                .document(taskId)
+                .collection("subtasks")
+                .document(subtaskId)
+                .delete()
+                .addOnSuccessListener {
+                    // Conferma eliminazione del sottotask
+                    Toast.makeText(this, "Sottotask eliminato con successo", Toast.LENGTH_SHORT).show()
+                }
+                .addOnFailureListener { e ->
+                    // Gestisci eventuali errori
+                    Toast.makeText(this, "Errore durante l'eliminazione del sottotask: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+        }
+    }
+
 
     //funzione che carica i task o sottotask nella recycler view
     private fun loadTask() {
