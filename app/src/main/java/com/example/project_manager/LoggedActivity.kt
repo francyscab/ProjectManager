@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.Button
 
 import android.widget.ImageButton
 
@@ -51,6 +52,54 @@ class LoggedActivity : AppCompatActivity() {
             intent.putExtra("role", role)
             startActivity(intent)
         }
+
+        val buttonPerson = findViewById<ImageButton>(R.id.button_person)
+        buttonPerson.setOnClickListener {
+            val intent = Intent(this, UserProfileActivity::class.java)
+            startActivity(intent)
+        }
+    }
+
+    suspend fun filterTasksByProgress(
+        tasks: List<ItemsViewModel>,
+        filter: String // "completed" o "incompleted"
+    ): List<ItemsViewModel> {
+        val db = FirebaseFirestore.getInstance()
+        val filteredTasks = mutableListOf<ItemsViewModel>()
+
+        for (task in tasks) {
+            try {
+                val progress = if (task.taskId.isNullOrEmpty()) {
+                    // Caso: Solo projectId
+                    val projectDoc = db.collection("progetti")
+                        .document(task.projectId)
+                        .get()
+                        .await()
+                    projectDoc.getLong("progress")?.toInt()
+                } else {
+                    // Caso: projectId e taskId
+                    val taskDoc = db.collection("progetti")
+                        .document(task.projectId)
+                        .collection("task")
+                        .document(task.taskId)
+                        .get()
+                        .await()
+                    taskDoc.getLong("progress")?.toInt()
+                }
+
+                // Applica il filtro basato sulla stringa "completed" o "incompleted"
+                when (filter) {
+                    "completed" -> if (progress == 100) filteredTasks.add(task)
+                    "incompleted" -> if ((progress ?: 0) < 100) filteredTasks.add(task)
+                    else -> throw IllegalArgumentException("Filtro non valido: $filter. Usa 'completed' o 'incompleted'.")
+                }
+            } catch (e: Exception) {
+                // Gestione degli errori (ad esempio documento non trovato)
+                e.printStackTrace()
+            }
+        }
+
+        return filteredTasks
     }
 
 
@@ -79,6 +128,14 @@ class LoggedActivity : AppCompatActivity() {
 
 
             notificationHelper.notification( role, name, "progresso")
+
+            //listener su bottone per filtrare i progetti per progresso(completati)
+            setupFilterButtonCompleted(data, role, name,recyclerview)
+            //listener su bottone per filtrare i progetti per progresso(non completati)
+            setupFilterButtonIncompleted(data, role, name,recyclerview)
+            //listener su bottone per filtrare i progetti per progresso(tutti)
+            setupFilterButtonAll(data, role, name,recyclerview)
+
             if (role == "Manager") {
                 Log.d(TAG, "SICCOME SONO IL MANAGER: $userName")
                 notificationHelper.notification(role, name, "chat",chat)
@@ -123,6 +180,53 @@ class LoggedActivity : AppCompatActivity() {
         }
     }
 
+    private fun setupFilterButtonCompleted(data: List<ItemsViewModel>, role: String, name: String, recyclerview: RecyclerView) {
+        val filterConclusiButton = findViewById<Button>(R.id.buttonConclusi)
+        filterConclusiButton.setOnClickListener {
+            lifecycleScope.launch {
+                try {
+                    val filteredTasks = filterTasksByProgress(data, "completed")
+                    visualizza(recyclerview, filteredTasks, role, name)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Errore durante il filtraggio: ${e.message}", e)
+                }
+            }
+        }
+
+    }
+
+    private fun setupFilterButtonIncompleted(data: List<ItemsViewModel>, role: String, name: String, recyclerview: RecyclerView) {
+        val filterNonConclusiButton = findViewById<Button>(R.id.buttonInCorso)
+        filterNonConclusiButton.setOnClickListener {
+            lifecycleScope.launch {
+                try {
+                    val filteredTasks = filterTasksByProgress(data, "incompleted")
+                    visualizza(recyclerview, filteredTasks, role, name)
+                } catch (e: Exception) {
+                }
+
+            }
+        }
+    }
+
+    private fun setupFilterButtonAll(
+        data: List<ItemsViewModel>,
+        role: String,
+        name: String,
+        recyclerview: RecyclerView
+    ) {
+        val allButton = findViewById<Button>(R.id.buttonTutti)
+        allButton.setOnClickListener {
+            lifecycleScope.launch {
+                try {
+                    Log.d(TAG, "Bottone 'Tutti' cliccato. Ripristino la vista originale.")
+                    visualizza(recyclerview, data, role, name)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Errore durante il reset dei task: ${e.message}", e)
+                }
+            }
+        }
+    }
     private suspend fun getMyChat(currentUserEmail: String): List<String> {
         val chatIds = mutableListOf<String>()
 

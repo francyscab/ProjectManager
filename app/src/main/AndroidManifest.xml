@@ -15,8 +15,11 @@
         android:theme="@style/Theme.Project_manager"
         tools:targetApi="31">
         <activity
+            android:name=".UserProfileActivity"
+            android:exported="false" />
+        <activity
             android:name="com.example.project_manager.ChatActivity"
-            android:label="Chat Activity" />
+            android:exported="false" />
         <activity
             android:name=".ChatListActivity"
             android:exported="false"/>

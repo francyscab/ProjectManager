@@ -37,7 +37,9 @@ class ChatListActivity : AppCompatActivity() {
             showSelectUserDialog(role)
         }
 
-        chatListAdapter = ChatListAdapter(chats) { chat ->
+        val sortedChats = chats.sortedByDescending { chat -> chat.timestamp }
+
+        chatListAdapter = ChatListAdapter(sortedChats) { chat ->
             Log.d("ChatListActivity", "Chat selected with ID: ${chat.chatId}")
             openChat(chat)
         }
@@ -370,7 +372,6 @@ class ChatListActivity : AppCompatActivity() {
         // Inoltre, puoi aggiungere un'altra query per controllare se l'utente è `user2`
         db.collection("chat")
             .whereEqualTo("user2", currentUserEmail)
-            .orderBy("timestamp", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshots, e ->
                 if (e != null) {
                     Log.w("ChatListActivity", "Listen failed.", e)

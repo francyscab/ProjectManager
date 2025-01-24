@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/azzurro"
+    android:orientation="vertical"
+    tools:context=".UserProfileActivity">
+
+    <!-- Barra superiore con il nome dell'applicazione -->
+    <TextView
+        android:id="@+id/appName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/cadetblue"
+        android:padding="16dp"
+        android:text="@string/app_name"
+        android:textColor="@android:color/black"
+        android:textSize="17sp"
+        android:gravity="center" />
+
+    <!-- Immagine del profilo -->
+    <ImageView
+        android:id="@+id/profileImageView"
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:layout_marginTop="20dp"
+        android:layout_gravity="center_horizontal"
+        android:src="@drawable/icona_user_ios"
+        android:contentDescription="Profile Image"
+        android:background="@drawable/circle_background"
+        android:padding="8dp" />
+
+    <!-- Dettagli utente -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_marginLeft="50dp"
+            android:src="@drawable/name" />
+
+        <TextView
+            android:id="@+id/nameTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="20dp"
+            android:text="Name: "
+            android:textSize="20dp"
+            android:textColor="@android:color/black" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_marginLeft="50dp"
+            android:src="@drawable/role" />
+
+        <TextView
+            android:id="@+id/roleTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="20dp"
+            android:text="Role: "
+            android:textSize="20dp"
+            android:textColor="@android:color/black" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_marginLeft="50dp"
+            android:src="@drawable/mail" />
+
+        <TextView
+            android:id="@+id/emailTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="20dp"
+            android:text="Email: "
+            android:textSize="20dp"
+            android:textColor="@android:color/black" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/logout_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Logout"
+        android:layout_marginTop="20dp"
+        android:layout_gravity="center"
+        android:backgroundTint="@color/cadetblue"
+        android:textColor="@android:color/white"
+        android:textSize="18sp" />
+
+</LinearLayout>

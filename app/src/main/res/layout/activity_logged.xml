@@ -29,7 +29,7 @@
         android:gravity="center_vertical">
 
         <Button
-            android:id="@+id/button1"
+            android:id="@+id/buttonTutti"
             android:layout_width="0dp"
             android:layout_height="40dp"
             android:layout_weight="1"
@@ -41,7 +41,7 @@
             android:text="@string/tutti" />
 
         <Button
-            android:id="@+id/button2"
+            android:id="@+id/buttonInCorso"
             android:layout_width="0dp"
             android:layout_height="40dp"
             android:layout_weight="1"
@@ -53,7 +53,7 @@
             android:text="@string/inCorso" />
 
         <Button
-            android:id="@+id/button3"
+            android:id="@+id/buttonConclusi"
             android:layout_width="0dp"
             android:layout_height="40dp"
             android:layout_weight="1"
