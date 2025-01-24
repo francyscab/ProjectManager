@@ -25,22 +25,26 @@ import java.util.Locale
 class ProjectActivity : AppCompatActivity() {
 
     private lateinit var name: String //nome utente chiamante
-    private lateinit var creator : String
+    private lateinit var role:String
     private lateinit var projectId: String
     private lateinit var taskId: String
     private lateinit var subtaskId: String
+    private var titolo: String? = null
+    private var descrizione: String? = null
+    private var scadenza: String? = null
+    private var creator: String? = null
+    private var assignedTo: String? = null
+    private var leader: String? = null
+    private var developer: String? = null
+    private var progress: Int? = null
+
     private lateinit var projectNameTextView: TextView
     private lateinit var projectDescriptionTextView: TextView
     private lateinit var projectDeadlineTextView: TextView
     private lateinit var projectCreatorTextView: TextView
     private lateinit var projectAssignedTextView: TextView
-    private lateinit var TaskListLayout: LinearLayout
     private lateinit var progressSeekBar: SeekBar
     private lateinit var progressInfo: TextView
-    private lateinit var assegnaTask: Button
-    private lateinit var salvatask: Button
-    private lateinit var role:String
-    private lateinit var progLeaderCont:LinearLayout
     private lateinit var progLeaderTask:LinearLayout
     private lateinit var tipoElenco:TextView
     private lateinit var seekbarLayout:LinearLayout
@@ -80,7 +84,7 @@ class ProjectActivity : AppCompatActivity() {
         progressLabel=findViewById(R.id.progressLabel)
 
         val notificationHelper = NotificationHelper(this, FirebaseFirestore.getInstance())
-        menu()
+
 
         if (subtaskId.isNotEmpty()) {
             // Esegui la logica per il SOTTOTASK
@@ -98,6 +102,8 @@ class ProjectActivity : AppCompatActivity() {
             // Gestisci il caso in cui nessun ID sia passato
             Log.w(TAG, "Nessun ID del progetto o del task fornito.")
         }
+        Log.d(TAG, "$assignedTo")
+        menu()
     }
 
     private fun loadDetails(tipo: String, notificationHelper: NotificationHelper) {
@@ -114,20 +120,20 @@ class ProjectActivity : AppCompatActivity() {
             projectRef.get()
                 .addOnSuccessListener { document ->
                     if (document != null) {
-                        val projectCreator=document.getString("creator")
-                        val projectName = document.getString("titolo")?.uppercase()
-                        val projectDeadline = document.getString("scadenza")
-                        val projectdescr=document.getString("descrizione")
-                        val projectprogress= document.getLong("progress")?.toInt() ?:0
-                        val projectLeader = document.getString("leader")?.split(" ")?.joinToString(" ") {
+                        creator=document.getString("creator")
+                        titolo= document.getString("titolo")?.uppercase()
+                        scadenza = document.getString("scadenza")
+                        descrizione=document.getString("descrizione")
+                        progress= document.getLong("progress")?.toInt() ?:0
+                        assignedTo = document.getString("leader")?.split(" ")?.joinToString(" ") {
                             it.replaceFirstChar {
                                 if (it.isLowerCase()) it.titlecase(
                                     Locale.getDefault()
                                 ) else it.toString()
                             }
                         }
-                        Log.d(TAG, "HO OTTENUTO LE SEGUENTI INFORMAZIONI: CREATOR$projectCreator  PROJECTNAME $projectName PROJECTDEADLINE $projectDeadline PROJECTDESCRIZIONE $projectdescr PROJECTLEADER $projectLeader ")
-                        progressInfo.text="$projectprogress%"
+                        Log.d(TAG, "HO OTTENUTO LE SEGUENTI INFORMAZIONI: CREATOR$creator  PROJECTNAME $titolo PROJECTDEADLINE $scadenza PROJECTDESCRIZIONE $descrizione PROJECTLEADER $assignedTo ")
+                        progressInfo.text="$progress%"
 
                         if (role=="Leader") {
                             //aggiungere lisener su bottone + per task
@@ -144,14 +150,14 @@ class ProjectActivity : AppCompatActivity() {
                                 loadTask()
                             }
 
-                            projectCreatorTextView.text = projectCreator
-                            projectAssignedTextView.text=projectLeader
+                            projectCreatorTextView.text = creator
+                            projectAssignedTextView.text=assignedTo
                             progLeaderTask.visibility = View.VISIBLE
                             seekbarLayout.visibility= View.GONE
                             tipoElenco.text="Task"
-                            projectNameTextView.text = projectName
-                            projectDeadlineTextView.text = "$projectDeadline"
-                            projectDescriptionTextView.text="$projectdescr"
+                            projectNameTextView.text = titolo
+                            projectDeadlineTextView.text = "$scadenza"
+                            projectDescriptionTextView.text="$descrizione"
                             sollecitaCont.visibility=View.GONE
 
 
@@ -169,11 +175,11 @@ class ProjectActivity : AppCompatActivity() {
                             //TOLGO VISUALIZZAZIONE RECYCLER VIEW
                             progLeaderTask.visibility = View.GONE
                             seekbarLayout.visibility= View.GONE
-                            projectNameTextView.text = projectName
-                            projectDeadlineTextView.text = "$projectDeadline"
-                            projectCreatorTextView.text = "$projectCreator"
-                            projectAssignedTextView.text = "$projectLeader"
-                            projectDescriptionTextView.text="$projectdescr"
+                            projectNameTextView.text = titolo
+                            projectDeadlineTextView.text = "$scadenza"
+                            projectCreatorTextView.text = "$creator"
+                            projectAssignedTextView.text = "$assignedTo"
+                            projectDescriptionTextView.text="$descrizione"
 
                         }else{
                             //generare errore perche ruolo è errato
@@ -202,11 +208,11 @@ class ProjectActivity : AppCompatActivity() {
                         .await()
 
                     if (taskDocument != null) {
-                        val taskName = taskDocument.getString("titolo")?.uppercase()
-                        val taskDeadline = taskDocument.getString("scadenza")
-                        val taskdescr = taskDocument.getString("descrizione")
-                        val taskDev = taskDocument.getString("developer")
-                        val taskprogress= taskDocument.getLong("progress")?.toInt() ?:0
+                        titolo = taskDocument.getString("titolo")?.uppercase()
+                        scadenza = taskDocument.getString("scadenza")
+                        descrizione = taskDocument.getString("descrizione")
+                        developer = taskDocument.getString("developer")
+                        progress= taskDocument.getLong("progress")?.toInt() ?:0
                         taskDocument.getString("developer")?.split(" ")?.joinToString(" ") {
                             it.replaceFirstChar {
                                 if (it.isLowerCase()) it.titlecase(
@@ -215,15 +221,13 @@ class ProjectActivity : AppCompatActivity() {
                             }
                         }
 
-                        Log.d(TAG, "HO OTTENUTO LE SEGUENTI INFORMAZIONI: TASKNAME $taskName TASKDEADLINE $taskDeadline TASKDESCRIZIONE $taskdescr TASKDEV $taskDev ")
-                        projectAssignedTextView.text = taskDev
-                        progLeaderTask.visibility = View.VISIBLE
-                        seekbarLayout.visibility= View.GONE
+                        Log.d(TAG, "HO OTTENUTO LE SEGUENTI INFORMAZIONI: TASKNAME $titolo TASKDEADLINE $scadenza TASKDESCRIZIONE $descrizione TASKDEV $developer ")
+                        projectAssignedTextView.text = developer
                         tipoElenco.text="Task"
-                        projectNameTextView.text = taskName
-                        projectDeadlineTextView.text = "$taskDeadline"
-                        projectDescriptionTextView.text = "$taskdescr"
-                        progressInfo.text="$taskprogress%"
+                        projectNameTextView.text = titolo
+                        projectDeadlineTextView.text = "$scadenza"
+                        projectDescriptionTextView.text = "$descrizione"
+                        progressInfo.text="$progress%"
 
                         if(role=="Leader"){
                             sollecitaCont.visibility=View.VISIBLE
@@ -240,11 +244,7 @@ class ProjectActivity : AppCompatActivity() {
                             Log.w(TAG,"Sono un developer e ho la recycler view visibile")
                             //sto visualizzando un task di un developer percio devo visualizzare i sottotask
                             progLeaderTask.visibility = View.VISIBLE
-
-                            //GESTISCO SELEZIONE E SALVATAGGIO DELLA SEEKBAR
-
                             tipoElenco.text="Sottotask"
-                            seekbarLayout.visibility= View.GONE
 
                             findViewById<ImageButton>(R.id.aggiungiTaskButton).setOnClickListener {
                                 //aprire schermata per aggiungere task
@@ -294,11 +294,12 @@ class ProjectActivity : AppCompatActivity() {
                         .await()
 
                     if (subtaskDocument != null) {
-                        val subtaskName = subtaskDocument.getString("titolo")?.uppercase()
-                        val subtaskDeadline = subtaskDocument.getString("scadenza")
-                        val subtaskdescr = subtaskDocument.getString("descrizione")
-                        val subtaskDev = subtaskDocument.getString("developer")
-                        val subtaskprogress= subtaskDocument.getLong("progress")?.toInt() ?:0
+                        titolo = subtaskDocument.getString("titolo")?.uppercase()
+                        scadenza = subtaskDocument.getString("scadenza")
+                        descrizione = subtaskDocument.getString("descrizione")
+                        creator = subtaskDocument.getString("developer")
+                        assignedTo=subtaskDocument.getString("developer")
+                        progress= subtaskDocument.getLong("progress")?.toInt() ?:0
                         subtaskDocument.getString("developer")?.split(" ")?.joinToString(" ") {
                             it.replaceFirstChar {
                                 if (it.isLowerCase()) it.titlecase(
@@ -309,21 +310,21 @@ class ProjectActivity : AppCompatActivity() {
 
                         Log.d(
                             TAG,
-                            "HO OTTENUTO LE SEGUENTI INFORMAZIONI: SUBTASKNAME $subtaskName SUBTASKDEADLINE $subtaskDeadline TASKDESCRIZIONE $subtaskdescr TASKDEV $subtaskDev "
+                            "HO OTTENUTO LE SEGUENTI INFORMAZIONI: SUBTASKNAME $titolo SUBTASKDEADLINE $scadenza TASKDESCRIZIONE $descrizione TASKDEV $developer "
                         )
                         findViewById<LinearLayout>(R.id.assignedCont).visibility = GONE
                         //visualizzo solo info sottotask da developer quindi tolgo recicler view e tolgo "assegnato a"
                         progLeaderTask.visibility = GONE
                         seekbarLayout.visibility= View.VISIBLE
 
-                        val manageSeekbar=manageSubtaskProgress(projectId,taskId,subtaskId,role,progressSeekBar,seekbutton,progressLabel,
+                        manageSubtaskProgress(projectId,taskId,subtaskId,role,progressSeekBar,seekbutton,progressLabel,
                             { calculateAndUpdateTaskProgress(db,projectId,taskId,
                                 { calculateAndUpdateProjectProgress(projectId,db) }) })
 
-                        projectNameTextView.text = subtaskName
-                        projectDeadlineTextView.text = "$subtaskDeadline"
-                        projectDescriptionTextView.text = "$subtaskdescr"
-                        progressInfo.text="$subtaskprogress%"
+                        projectNameTextView.text = titolo
+                        projectDeadlineTextView.text = "$scadenza"
+                        projectDescriptionTextView.text = "$descrizione"
+                        progressInfo.text="$progress%"
                         sollecitaCont.visibility=View.GONE
 
                     }
@@ -340,33 +341,65 @@ class ProjectActivity : AppCompatActivity() {
 
     private fun menu(){
         val menuButton: ImageButton = findViewById(R.id.menuButton)
-        menuButton.setOnClickListener { view ->
-            // Crea il PopupMenu
-            val popupMenu = PopupMenu(this, view)
-
-            // Inflating the menu
-            val inflater = popupMenu.menuInflater
-            inflater.inflate(R.menu.menu_task_option, popupMenu.menu)
-
-            // Imposta listener per gli item del menu
-            popupMenu.setOnMenuItemClickListener { item ->
-                when (item.itemId) {
-                    R.id.menu_edit -> {
-                        // Azione per modificare il task
-                        true
-                    }
-                    R.id.menu_delete -> {
-                        deleteItem()
-                        // Azione per eliminare il task
-                        true
-                    }
-                    else -> false
-                }
-            }
-
-            // Mostra il menu
-            popupMenu.show()
+        //il leader non può modificare un progetto
+        if(role=="Leader" && (subtaskId.isEmpty()&& taskId.isEmpty())){
+            menuButton.visibility=View.GONE
+            return
         }
+        //il developer non puo modificare un task
+        else if(role=="Developer" && (subtaskId.isEmpty())){
+            menuButton.visibility=View.GONE
+            return
+        }else{
+            menuButton.visibility=View.VISIBLE
+            menuButton.setOnClickListener { view ->
+                // Crea il PopupMenu
+                val popupMenu = PopupMenu(this, view)
+
+                // Inflating the menu
+                val inflater = popupMenu.menuInflater
+                inflater.inflate(R.menu.menu_task_option, popupMenu.menu)
+
+                // Imposta listener per gli item del menu
+                popupMenu.setOnMenuItemClickListener { item ->
+                    when (item.itemId) {
+                        R.id.menu_edit -> {
+                            updateProject()
+                            // Azione per modificare il task
+                            true
+                        }
+                        R.id.menu_delete -> {
+                            deleteItem()
+                            //torna alla chermata precedente e ricarica
+                            val intent = Intent(this, LoggedActivity::class.java)
+                            startActivity(intent)
+                            true
+                        }
+                        else -> false
+                    }
+                }
+
+                // Mostra il menu
+                popupMenu.show()
+            }
+        }
+
+    }
+
+    fun updateProject() {
+        Log.d(TAG, "STO CHIAMANDO UPDATE PROJECT")
+        val intent = Intent(this, UpdateProjectActivity::class.java)
+        intent.putExtra("role", role)
+        intent.putExtra("projectId", projectId)
+        intent.putExtra("taskId", taskId)
+        intent.putExtra("subtaskId", subtaskId)
+        intent.putExtra("titolo", titolo)
+        intent.putExtra("descrizione", descrizione)
+        intent.putExtra("scadenza", scadenza)
+        intent.putExtra("assignedTo", assignedTo)
+        intent.putExtra("progress", progress)
+
+        startActivity(intent)
     }
 
     fun deleteItem() {
@@ -449,8 +482,8 @@ class ProjectActivity : AppCompatActivity() {
                         val title = document.getString("titolo") ?: ""
                         val developer = document.getString("developer") ?: ""
                         val assegnato = false
-                        //title dovrebbe rappresentare il task id
-                        data.add(ItemsViewModel(title, developer, assegnato, projectId, title))
+                        val taskId = document.id
+                        data.add(ItemsViewModel(title, developer, assegnato, projectId, taskId))
                     }
                 } else if (role == "Developer") {
                     val subtaskDocuments = db.collection("progetti")
@@ -465,8 +498,9 @@ class ProjectActivity : AppCompatActivity() {
                         val title = document.getString("titolo") ?: ""
                         val developer = document.getString("developer") ?: ""
                         val assegnato = false
+                        val subtaskId = document.id
                         //il secondo title  rappresenta il subtask id
-                        data.add(ItemsViewModel(title, developer, assegnato, projectId, taskId,title))
+                        data.add(ItemsViewModel(title, developer, assegnato, projectId, taskId,subtaskId))
                     }
                 }
 

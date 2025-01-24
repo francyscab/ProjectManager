@@ -29,7 +29,6 @@ import kotlinx.coroutines.tasks.await
 class LoggedActivity : AppCompatActivity() {
 
     private lateinit var db: FirebaseFirestore
-    private var notificationManager: NotificationManager? = null
     private lateinit var data: ArrayList<ItemsViewModel>
     private lateinit var userName: String
     private lateinit var role: String
@@ -115,9 +114,6 @@ class LoggedActivity : AppCompatActivity() {
         val recyclerview = findViewById<RecyclerView>(R.id.recyclerview)
         recyclerview.layoutManager = LinearLayoutManager(this)
         val notificationHelper = NotificationHelper(this, FirebaseFirestore.getInstance())
-
-
-
         lifecycleScope.launch {
             userName = getUser()
             role = getRole(userName)
@@ -135,6 +131,8 @@ class LoggedActivity : AppCompatActivity() {
             setupFilterButtonIncompleted(data, role, name,recyclerview)
             //listener su bottone per filtrare i progetti per progresso(tutti)
             setupFilterButtonAll(data, role, name,recyclerview)
+
+            Log.d(TAG,"L'ARRAY DATA PRIMA DI VEDERE CHE RUOLO SONO  È= $data")
 
             if (role == "Manager") {
                 Log.d(TAG, "SICCOME SONO IL MANAGER: $userName")
@@ -165,11 +163,12 @@ class LoggedActivity : AppCompatActivity() {
 
                 //togliere bottone per creare nuovo progetto
                 newProject.visibility = View.INVISIBLE
+                Log.d(TAG,"STO CHIAMANDO VISULAIZZA CON DATA= $data E ROLE= $role E NAME= $name")
 
                 //salvo array di task che hanno come developer quello attualmente loggato
                 var tasksForDeveloper = ArrayList<ItemsViewModel>()
                 tasksForDeveloper=loadTask(data, name)
-                Log.d(TAG,"STO CHIAMANDO VISULAIZZA CON DATA= $data E ROLE= $role E NAME= $name")
+                //Log.d(TAG,"STO CHIAMANDO VISULAIZZA CON DATA= $tasksForDeveloper E ROLE= $role E NAME= $name")
                 visualizza(recyclerview,tasksForDeveloper,role,name)
             }
             else{
@@ -380,42 +379,74 @@ class LoggedActivity : AppCompatActivity() {
             Log.w(TAG, "Error getting project.", exception)
         }
 
+        Log.d(TAG, "ho caricato data con= $data")
+
         return data
     }
 
+    //funzione che recupera i task assegnati a un utente
     private suspend fun loadTask(data: ArrayList<ItemsViewModel>, name: String): ArrayList<ItemsViewModel> {
+        Log.d(TAG, "loadTask started with data size: ${data.size} and name: $name")
+
         val userTasks = ArrayList<ItemsViewModel>()
         val db = FirebaseFirestore.getInstance()
 
         for (project in data) {
-            // Get the project document to retrieve the leader information
-            val projectDocument = db.collection("progetti").document(project.text).get().await()
-            val leader = projectDocument.getString("leader") ?: "" // Get leader from project document
+            Log.d(TAG, "Processing project: ${project.text}")
 
-            val result = db.collection("progetti")
-                .document(project.text)
-                .collection("task")
-                .whereEqualTo("developer", name) // Filter tasks assigned to the developer
-                .get()
-                .await()
+            try {
+                // Recupera il documento del progetto
+                val projectDocument = db.collection("progetti").document(project.text.toLowerCase()).get().await()
 
-            for (document in result) {
-                val title = document.getString("titolo") ?: ""
-                userTasks.add(
-                    ItemsViewModel(
-                        text = title, // Task title
-                        leader = leader, // Set leader information from project document
-                        assegnato = false, // You might need to fetch the assigned status
-                        projectId = project.projectId, // Project ID
-                        taskId = document.id // Task ID
-                    )
+                if (!projectDocument.exists()) {
+                    Log.w(TAG, "Project not found: ${project.text}")
+                    continue // Passa al prossimo progetto
+                }
+                // Ottieni il leader del progetto
+                val leader = projectDocument.getString("leader") ?: ""
+                Log.d(TAG, "Project leader: $leader")
+
+                // Cerca i task assegnati al developer specificato
+                val taskQuerySnapshot = db.collection("progetti")
+                    .document(project.text.toLowerCase())
+                    .collection("task")
+                    .whereEqualTo("developer", name)
+                    .get()
+                    .await()
+
+                Log.d(
+                    TAG,
+                    "Retrieved ${taskQuerySnapshot.size()} tasks for project: ${project.text}"
                 )
+
+                // Itera sui task trovati
+                for (taskDocument in taskQuerySnapshot) {
+                    val taskTitle = taskDocument.getString("titolo") ?: ""
+                    val taskId = taskDocument.id
+
+                    // Crea un nuovo elemento e aggiungilo alla lista
+                    userTasks.add(
+                        ItemsViewModel(
+                            text = taskTitle,
+                            leader = leader,
+                            assegnato = true,
+                            projectId = project.projectId,
+                            taskId = taskId
+                        )
+                    )
+                    Log.d(TAG, "Added task: $taskTitle (Task ID: $taskId) to userTasks")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error loading tasks for project: ${project.text}", e)
             }
         }
+
+        Log.d(TAG, "loadTask completed with userTasks size: ${userTasks.size}")
         return userTasks
     }
 
-    @SuppressLint("MissingSuperCall")
+
+        @SuppressLint("MissingSuperCall")
     override fun onBackPressed() {
         AlertDialog.Builder(this)
             .setTitle("Confirm Exit")

@@ -31,6 +31,12 @@ class NewProjectActivity : AppCompatActivity() {
     private lateinit var tipoForm: String
     private lateinit var err_spinner: TextView
 
+    private var titolo: String? = null
+    private var descrizione: String? = null
+    private var scadenza: String? = null
+    private var leader: String? = null
+    private var developer: String? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_new_project_form)
@@ -69,32 +75,16 @@ class NewProjectActivity : AppCompatActivity() {
                 //cerco i leader per lo spinner
                 spinner="Leader"
             }
-            val spinnerNames = ArrayList<String>()
-
-
-            //riempio lo spinner con i leader o con i developer
-            db.collection("utenti")
-                .get()
-                .addOnSuccessListener { documents ->
-                    for (document in documents) {
-                        val role = document.getString("role")
-                        if (role == spinner) {
-                            val name = document.getString("name").toString()
-                            spinnerNames.add(name)
-                        }
-                    }
-                    val spinnerAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, spinnerNames)
-                    spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-                    spinnerElement.adapter = spinnerAdapter
-                }
-                .addOnFailureListener { exception ->
-                    Log.w(ContentValues.TAG, "Error getting documents: ", exception)
-                }
         }
 
         val spinnerLayout = findViewById<LinearLayout>(R.id.spinnerLinearLayout)
-        //if(tipoForm=="progetto"|| tipoForm=="task"){spinnerLayout.visibility=GONE }
-        if(tipoForm=="progetto"|| tipoForm=="task"){spinnerLayout.visibility= VISIBLE}
+        if(tipoForm=="progetto"|| tipoForm=="task"){
+            spinnerLayout.visibility= VISIBLE
+            val spinnerNames = ArrayList<String>()
+            loadSpinnerData(db,spinner) { names ->
+                showDataInSpinner(spinnerElement, names)
+            }
+        }
         else{spinnerLayout.visibility=GONE }
         val buttonSave=findViewById<Button>(R.id.buttonSave)
 
@@ -163,8 +153,7 @@ class NewProjectActivity : AppCompatActivity() {
 
                     Log.d(ContentValues.TAG, "STO AGGIUNGENDO UN NUOVO $tipoForm= $nuovo")
                     db.collection("progetti")
-                        .document(title)
-                        .set(nuovo)
+                        .add(nuovo)
                         .addOnSuccessListener { documentReference ->
                             val batch = db.batch()
                             batch.commit().addOnSuccessListener {
@@ -172,11 +161,10 @@ class NewProjectActivity : AppCompatActivity() {
                                     baseContext,
                                     "$tipoForm creato con successo",
                                     Toast.LENGTH_SHORT
-                                ).show(
-                                )
+                                ).show()
                                 //dopo averlo creato apro la schermata del nuovo progetto
                                 val intent = Intent(this, ProjectActivity::class.java)
-                                intent.putExtra("projectId",title)
+                                intent.putExtra("projectId",documentReference.id)
                                 intent.putExtra("role",role )
                                 intent.putExtra("name",creator)
 
@@ -195,8 +183,7 @@ class NewProjectActivity : AppCompatActivity() {
                     db.collection("progetti")
                         .document(projectId)
                         .collection("task")
-                        .document(title)
-                        .set(nuovo)
+                        .add(nuovo)
                         .addOnSuccessListener { documentReference ->
                             val batch = db.batch()
                             batch.commit().addOnSuccessListener {
@@ -208,11 +195,11 @@ class NewProjectActivity : AppCompatActivity() {
                                 )
                                 //dopo averlo creato apro la schermata del nuovo task
                                 Log.w(ContentValues.TAG, "taskid $title")
-                                Log.w(ContentValues.TAG, "projectid $projectId")
+                                Log.w(ContentValues.TAG, "projectid $documentReference.id")
                                 Log.w(ContentValues.TAG, "calling new activity")
                                 Log.w(ContentValues.TAG, "role $role")
                                 val intent = Intent(this, ProjectActivity::class.java)
-                                intent.putExtra("taskId", title)
+                                intent.putExtra("taskId", documentReference.id)
                                 intent.putExtra("projectId", projectId)
                                 intent.putExtra("role",role )
                                 startActivity(intent)
@@ -229,8 +216,7 @@ class NewProjectActivity : AppCompatActivity() {
                         .collection("task")
                         .document(taskid)
                         .collection("subtask")
-                        .document(title)
-                        .set(nuovo)
+                        .add(nuovo)
                         .addOnSuccessListener { documentReference ->
                             val batch = db.batch()
                             batch.commit().addOnSuccessListener {
@@ -247,7 +233,7 @@ class NewProjectActivity : AppCompatActivity() {
                                 Log.w(ContentValues.TAG, "projectid $projectId")
 
                                 val intent = Intent(this, ProjectActivity::class.java)
-                                intent.putExtra("subtaskId", title)
+                                intent.putExtra("subtaskId", documentReference.id)
                                 intent.putExtra("taskId", taskid)
                                 intent.putExtra("projectId", projectId)
                                 intent.putExtra("role",role )
@@ -266,10 +252,33 @@ class NewProjectActivity : AppCompatActivity() {
 
     }
 
-    fun getSelectableItemBackground(): Drawable? {
-        val typedValue = TypedValue()
-        theme.resolveAttribute(android.R.attr.selectableItemBackground, typedValue, true)
-        return ContextCompat.getDrawable(this, typedValue.resourceId)
+    private fun showDataInSpinner(spinner: Spinner, names: List<String>) {
+        // Imposta l'adattatore per lo spinner con i nomi
+        val spinnerAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, names)
+        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinner.adapter = spinnerAdapter
+    }
+
+    private fun loadSpinnerData(db: FirebaseFirestore, spinnerRole: String, callback: (List<String>) -> Unit) {
+        val spinnerNames = mutableListOf<String>()
+
+        // Recupera i dati dalla raccolta "utenti"
+        db.collection("utenti")
+            .get()
+            .addOnSuccessListener { documents ->
+                for (document in documents) {
+                    val role = document.getString("role")
+                    if (role == spinnerRole) {
+                        val name = document.getString("name").toString()
+                        spinnerNames.add(name)
+                    }
+                }
+                // Passa la lista dei nomi alla funzione callback
+                callback(spinnerNames)
+            }
+            .addOnFailureListener { exception ->
+                Log.w(ContentValues.TAG, "Error getting documents: ", exception)
+            }
     }
 
     @SuppressLint("MissingSuperCall")
