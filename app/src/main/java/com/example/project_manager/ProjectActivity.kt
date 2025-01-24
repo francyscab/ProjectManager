@@ -211,7 +211,7 @@ class ProjectActivity : AppCompatActivity() {
                         titolo = taskDocument.getString("titolo")?.uppercase()
                         scadenza = taskDocument.getString("scadenza")
                         descrizione = taskDocument.getString("descrizione")
-                        developer = taskDocument.getString("developer")
+                        assignedTo = taskDocument.getString("developer")
                         progress= taskDocument.getLong("progress")?.toInt() ?:0
                         taskDocument.getString("developer")?.split(" ")?.joinToString(" ") {
                             it.replaceFirstChar {
@@ -221,8 +221,8 @@ class ProjectActivity : AppCompatActivity() {
                             }
                         }
 
-                        Log.d(TAG, "HO OTTENUTO LE SEGUENTI INFORMAZIONI: TASKNAME $titolo TASKDEADLINE $scadenza TASKDESCRIZIONE $descrizione TASKDEV $developer ")
-                        projectAssignedTextView.text = developer
+                        Log.d(TAG, "HO OTTENUTO LE SEGUENTI INFORMAZIONI: TASKNAME $titolo TASKDEADLINE $scadenza TASKDESCRIZIONE $descrizione TASKDEV $assignedTo ")
+                        projectAssignedTextView.text = assignedTo
                         tipoElenco.text="Task"
                         projectNameTextView.text = titolo
                         projectDeadlineTextView.text = "$scadenza"
@@ -542,8 +542,8 @@ class ProjectActivity : AppCompatActivity() {
                     intent.putExtra("projectId", selectedItem.projectId)
                     intent.putExtra("taskId", selectedItem.taskId)
                     intent.putExtra("subtaskId", selectedItem.subtaskId) // Se è un subtask
-                    intent.putExtra("role", role) // Mantieni il ruolo
-                    intent.putExtra("name", name) // Mantieni il nome utente
+                    intent.putExtra("role", role)
+                    intent.putExtra("name", name)
 
 
 

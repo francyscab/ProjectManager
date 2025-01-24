@@ -104,10 +104,7 @@ class LoggedActivity : AppCompatActivity() {
 
     private fun loadRecycleView() {
         Log.d(TAG, "LOADRECYCLEVIEW")
-        //val db = FirebaseFirestore.getInstance()
 
-
-        //val dataLeader= arrayListOf<ItemsViewModel>()
         val newProject = findViewById<ImageButton>(R.id.newProject)
 
         //recycleview
@@ -392,14 +389,14 @@ class LoggedActivity : AppCompatActivity() {
         val db = FirebaseFirestore.getInstance()
 
         for (project in data) {
-            Log.d(TAG, "Processing project: ${project.text}")
+            Log.d(TAG, "Processing project: ${project.projectId}")
 
             try {
                 // Recupera il documento del progetto
-                val projectDocument = db.collection("progetti").document(project.text.toLowerCase()).get().await()
+                val projectDocument = db.collection("progetti").document(project.projectId).get().await()
 
                 if (!projectDocument.exists()) {
-                    Log.w(TAG, "Project not found: ${project.text}")
+                    Log.w(TAG, "Project not found: ${project.projectId}")
                     continue // Passa al prossimo progetto
                 }
                 // Ottieni il leader del progetto
@@ -408,7 +405,7 @@ class LoggedActivity : AppCompatActivity() {
 
                 // Cerca i task assegnati al developer specificato
                 val taskQuerySnapshot = db.collection("progetti")
-                    .document(project.text.toLowerCase())
+                    .document(project.projectId)
                     .collection("task")
                     .whereEqualTo("developer", name)
                     .get()
@@ -437,7 +434,7 @@ class LoggedActivity : AppCompatActivity() {
                     Log.d(TAG, "Added task: $taskTitle (Task ID: $taskId) to userTasks")
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Error loading tasks for project: ${project.text}", e)
+                Log.e(TAG, "Error loading tasks for project: ${project.projectId}", e)
             }
         }
 
