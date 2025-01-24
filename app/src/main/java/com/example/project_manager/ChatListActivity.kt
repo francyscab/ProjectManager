@@ -29,7 +29,7 @@ class ChatListActivity : AppCompatActivity() {
 
         db = FirebaseFirestore.getInstance()
         recyclerView = findViewById(R.id.recyclerViewChatList)
-        val role=intent.getStringExtra("role")?:""
+        val role = intent.getStringExtra("role") ?: ""
         Log.d("ChatListActivity", "Role: $role")
 
         val startChatButton: Button = findViewById(R.id.buttonStartNewChat)
@@ -37,9 +37,8 @@ class ChatListActivity : AppCompatActivity() {
             showSelectUserDialog(role)
         }
 
-        val sortedChats = chats.sortedByDescending { chat -> chat.timestamp }
-
-        chatListAdapter = ChatListAdapter(sortedChats) { chat ->
+        // Inizializza l'adapter con una lista vuota
+        chatListAdapter = ChatListAdapter(chats) { chat ->
             Log.d("ChatListActivity", "Chat selected with ID: ${chat.chatId}")
             openChat(chat)
         }
@@ -47,9 +46,11 @@ class ChatListActivity : AppCompatActivity() {
         recyclerView.adapter = chatListAdapter
         recyclerView.layoutManager = LinearLayoutManager(this)
 
+        // Carica le chat
         loadChats()
     }
 
+    // Funzione per recuperare gli utenti con ruolo Developer all'interno dello stesso progetto
     private suspend fun getDeveloperUsers(currentUserName: String): List<User> {
         val users = mutableListOf<User>()
         val userSet = mutableSetOf<String>() // Per evitare duplicati
@@ -144,8 +145,9 @@ class ChatListActivity : AppCompatActivity() {
 
             // Aggiungi i manager dei progetti in cui l'utente è leader
             for (project in projects) {
-                val managerName = project.getString("manager") // Recupera il nome del manager
-                val managerEmail = project.getString("managerEmail") // Recupera l'email del manager
+                val managerName = project.getString("creator") // Recupera il nome del manager
+                // Recupera l'email del manager
+                val managerEmail = managerName?.let { getUserEmailByName(it) }
 
                 // Aggiungi il manager se non è già presente nella lista
                 if (!managerName.isNullOrEmpty() && !managerEmail.isNullOrEmpty() && userSet.add(managerName)) {
@@ -322,7 +324,6 @@ class ChatListActivity : AppCompatActivity() {
         // Modifica la query per filtrare solo le chat in cui l'utente loggato è user1 o user2
         db.collection("chat")
             .whereEqualTo("user1", currentUserEmail)
-            .orderBy("timestamp", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshots, e ->
                 if (e != null) {
                     Log.w("ChatListActivity", "Listen failed.", e)
@@ -335,7 +336,7 @@ class ChatListActivity : AppCompatActivity() {
                         // Stampa il contenuto del documento
                         Log.d("ChatListActivity", "Document ID: ${doc.id}, Data: ${doc.data}")
 
-                        // Estrai i dati manualmente dal documento Firestore
+                        // Estrai i dati
                         val chatId = doc.getString("chatID") ?: ""
                         val lastMessage = doc.getString("lastMessage") ?: ""
                         val timestamp = doc.getLong("timestamp") ?: 0L
@@ -365,11 +366,11 @@ class ChatListActivity : AppCompatActivity() {
                     Log.d("ChatListActivity", "No documents found.")
                 }
 
-                // Aggiorna l'adapter (decommenta quando serve)
+                chats.sortByDescending { it.timestamp }
                 chatListAdapter.notifyDataSetChanged()
             }
 
-        // Inoltre, puoi aggiungere un'altra query per controllare se l'utente è `user2`
+        // query per controllare se l'utente è `user2`
         db.collection("chat")
             .whereEqualTo("user2", currentUserEmail)
             .addSnapshotListener { snapshots, e ->

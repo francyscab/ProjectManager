@@ -7,16 +7,6 @@
     tools:context=".MainActivity"
     android:orientation="vertical">
     <!-- Barra superiore con il nome dell'applicazione -->
-    <TextView
-        android:id="@+id/appName"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/cadetblue"
-        android:padding="16dp"
-        android:text="@string/app_name"
-        android:textColor="@android:color/black"
-        android:textSize="17sp"
-        android:gravity="center" />
 
     <Button
         android:id="@+id/button_login"
@@ -26,7 +16,7 @@
         android:layout_marginTop="500dp"
         android:backgroundTint="@color/cadetblue"
         android:text="@string/login"
-        android:textColor="@color/black" />
+        android:textColor="@color/white" />
 
     <Button
         android:id="@+id/button_signin"
@@ -34,7 +24,7 @@
         android:layout_width="230dp"
         android:layout_height="60dp"
         android:backgroundTint="@color/cadetblue"
-        android:textColor="@color/black"
+        android:textColor="@color/white"
         android:text="@string/signin" />
 
 </LinearLayout>
