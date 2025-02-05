@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <array name="role">
-        <item>Leader</item>
-        <item>Manager</item>
-        <item>Developer</item>
+        <item>LEADER</item>
+        <item>MANAGER</item>
+        <item>DEVELOPER</item>
     </array>
 </resources>

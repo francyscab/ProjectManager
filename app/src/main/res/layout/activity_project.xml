@@ -11,17 +11,7 @@
     android:orientation="vertical">
 
 
-    <!-- Barra superiore con il nome dell'applicazione -->
-    <TextView
-        android:id="@+id/appName"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/cadetblue"
-        android:padding="16dp"
-        android:text="@string/app_name"
-        android:textColor="@android:color/black"
-        android:textSize="17sp"
-        android:gravity="center" />
+
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -85,7 +75,7 @@
                 android:layout_gravity="center"/>
 
             <TextView
-                android:id="@+id/projectProgressiTextView"
+                android:id="@+id/progressiTextView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
@@ -275,6 +265,24 @@
         </LinearLayout>
 
     </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/file"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:orientation="vertical">
+
+        <ImageButton
+            android:id="@+id/aggiungiFileButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_marginTop="8dp"
+            android:background="@android:color/transparent"
+            android:src="@drawable/icona_piu_ios" />
+
+    </LinearLayout>
     <LinearLayout
         android:id="@+id/seekbarLayout"
         android:layout_width="match_parent"
@@ -328,6 +336,49 @@
             android:text="sollecita" />
     </LinearLayout>
 
+    <LinearLayout
+        android:id="@+id/feedback"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:orientation="vertical"
+        android:layout_marginTop="10dp">
+        <Button
+            android:id="@+id/feedbackButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:text="@string/valuta" />
+    </LinearLayout>
 
+    <LinearLayout
+        android:id="@+id/feedbackLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_margin="20dp"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/feedbackScore"
+            android:layout_width="60dp"
+            android:layout_height="wrap_content"
+            android:hint="Voto"
+            android:inputType="number"
+            android:textSize="16sp"
+            android:gravity="center"
+            android:background="@drawable/circle_background"
+            android:padding="8dp" />
+
+        <TextView
+            android:id="@+id/feedbackComment"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Commento"
+            android:inputType="textMultiLine"
+            android:textSize="16sp"
+            android:padding="8dp" />
+
+    </LinearLayout>
 </LinearLayout>
 </ScrollView>

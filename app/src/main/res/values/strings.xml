@@ -1,5 +1,7 @@
 <resources>
     <string name="app_name">Project Manager</string>
+    <string name="cerca_progetti">Cerca progetti</string>
+    <string name="valuta">Valuta</string>
     <string name="conclusi">Conclusi</string>
     <string name="tutti">Tutti</string>
     <string name="inCorso">In Corso</string>
@@ -10,7 +12,27 @@
     <string name="signin">Iscriviti</string>
     <string name="scadenza">SCADENZA</string>
     <string name="progressi">AVANZAMENTO</string>
-    <string name="leader">LEADER</string>
+    <string name="leader">Leader</string>
     <string name="nuovo">NUOVO</string>
     <string name="task">TASK</string>
+    <string name="select_profile_image">Seleziona immagine profilo</string>
+    <string name="welcome_to">Benvenuto in</string>
+    <string name="project_manager">Project Manager</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="confirm_password">Conferma Password</string>
+    <string name="completati">Completati</string>
+    <string name="in_corso">In Corso</string>
+    <string name="priorita">Priorità</string>
+    <string name="alta">Alta</string>
+    <string name="media">Media</string>
+    <string name="bassa">Bassa</string>
+    <string name="applica_filtri">Applica Filtri</string>
+    <string name="seleziona_data">Seleziona data</string>
+    <string name="rimuovi_data">Rimuovi data</string>
+    <string name="nessuna_data_selezionata">Nessuna data selezionata</string>
+    <string name="scadenza_prima_del">Scadenza prima del</string>
+    <string name="msg_token_fmt" >Token recuperato %s</string>
+    <string name="cognome">Cognome</string>
+    <string name="nome">Nome</string>
 </resources>

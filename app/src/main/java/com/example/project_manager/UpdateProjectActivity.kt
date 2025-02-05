@@ -1,22 +1,23 @@
 package com.example.project_manager
 
-import android.content.ContentValues
+import android.content.ContentValues.TAG
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import android.widget.ArrayAdapter
-import android.widget.Button
-import android.widget.EditText
-import android.widget.LinearLayout
-import android.widget.Spinner
-import android.widget.TextView
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import com.google.firebase.firestore.FirebaseFirestore
+import androidx.lifecycle.lifecycleScope
+import com.example.project_manager.models.ItemsViewModel
+import com.example.project_manager.models.Role
+import com.example.project_manager.models.User
+import com.example.project_manager.services.ProjectService
+import com.example.project_manager.services.SubTaskService
+import com.example.project_manager.services.TaskService
+import com.example.project_manager.services.UserService
+import kotlinx.coroutines.launch
 
 class UpdateProjectActivity : AppCompatActivity() {
-
-    // Variabili per i componenti dell'interfaccia
     private lateinit var titleNewProject: EditText
     private lateinit var descrizioneNewProject: EditText
     private lateinit var pickDate: Button
@@ -24,25 +25,37 @@ class UpdateProjectActivity : AppCompatActivity() {
     private lateinit var buttonSave: Button
     private lateinit var erroreDescrizione: TextView
     private lateinit var erroreTitolo: TextView
-    private lateinit var db: FirebaseFirestore
 
-    // Dati ricevuti dall'Intent
+    private var selectedUserId: String? = null
+
     private var taskId: String? = null
     private var projectId: String? = null
     private var subtaskId: String? = null
-    private var role: String? = null
-    private var titolo: String? = null
-    private var descrizione: String? = null
-    private var scadenza: String? = null
-    private var assignedTo: String? = null
+    private lateinit var role: Role
 
+    private val projectService = ProjectService()
+    private val taskService = TaskService()
+    private val subtaskService = SubTaskService()
+    private val userService = UserService()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_new_project_form)
 
-        db = FirebaseFirestore.getInstance()
+        initializeViews()
+        loadIntentData()
 
+        lifecycleScope.launch {
+            role = userService.getCurrentUserRole() ?: throw IllegalStateException("Role not found")
+            val type = getItemType()
+            loadAndDisplayItem(type)
+            setupSaveButton(type)
+        }
+
+
+    }
+
+    private fun initializeViews() {
         titleNewProject = findViewById(R.id.titleNewProject)
         descrizioneNewProject = findViewById(R.id.descrizioneNewProject)
         pickDate = findViewById(R.id.pickDate)
@@ -50,182 +63,159 @@ class UpdateProjectActivity : AppCompatActivity() {
         buttonSave = findViewById(R.id.buttonSave)
         erroreDescrizione = findViewById(R.id.errore_descrizione)
         erroreTitolo = findViewById(R.id.errore_titolo)
+    }
 
+    private fun loadIntentData() {
         taskId = intent.getStringExtra("taskId")
         projectId = intent.getStringExtra("projectId")
         subtaskId = intent.getStringExtra("subtaskId")
-        role = intent.getStringExtra("role")
-        titolo = intent.getStringExtra("titolo")
-        descrizione = intent.getStringExtra("descrizione")
-        scadenza = intent.getStringExtra("scadenza")
-        assignedTo = intent.getStringExtra("assignedTo")
+    }
 
-        Log.d("UpdateProjectActivity", "dati ricevuti: $taskId, $projectId, $subtaskId, $role, $titolo, $descrizione, $scadenza, $assignedTo")
-
-        title = "Update Project"
-
-        //popola i campi con i dati ricevuti
-        titleNewProject.setText(titolo)
-        descrizioneNewProject.setText(descrizione)
-
-        // Impedisce la modifica dei campi non editabili
-        titleNewProject.isEnabled = true
-        descrizioneNewProject.isEnabled = true
-
-
-
-        // Mostra i dati non modificabili
-        if (role=="Manager") {
-            Log.d("UpdateProjectActivity", "leader ricevuto: $assignedTo")
-            loadSpinnerData(db,"Leader") { names ->
-                showDataInSpinner(projectElementSpinner,names,assignedTo)
-            }
-
-
-        } else if (role=="Leader") {
-            Log.d("UpdateProjectActivity", "developer ricevuto: $assignedTo")
-            loadSpinnerData(db,"Developer") { names ->
-                showDataInSpinner(projectElementSpinner,names, assignedTo)
-            }
-        }else if(role=="Developer"){
-            findViewById<LinearLayout>(R.id.spinnerLinearLayout).visibility = View.GONE
+    private fun getItemType(): String {
+        return when {
+            !subtaskId.isNullOrEmpty() -> "subtask"
+            !taskId.isNullOrEmpty() -> "task"
+            !projectId.isNullOrEmpty() -> "progetto"
+            else -> throw IllegalArgumentException("No valid ID provided")
         }
+    }
 
-        pickDate.text = scadenza
+    private suspend fun loadAndDisplayItem(type: String) {
+        if (projectId == null) throw IllegalStateException("Project ID is required")
+
+        val item = when(type) {
+            "progetto" -> projectService.getProjectById(projectId!!)
+            "task" -> {
+                if (taskId == null) throw IllegalStateException("Task ID is required")
+                taskService.getTaskById(projectId!!, taskId!!)
+            }
+            "subtask" -> {
+                if (taskId == null) throw IllegalStateException("Task ID is required")
+                if (subtaskId == null) throw IllegalStateException("Subtask ID is required")
+                subtaskService.getSubTaskById(projectId!!, taskId!!, subtaskId!!)
+            }
+            else -> throw IllegalStateException("Invalid type")
+        } ?: throw IllegalStateException("Failed to load item")
+
+        setData(item, role)
+    }
+
+    private suspend fun setData(item: ItemsViewModel, role: Role) {
+        titleNewProject.setText(item.title)
+        descrizioneNewProject.setText(item.description)
+        pickDate.text = item.deadline
         pickDate.isEnabled = false
 
-        // Aggiungi l'azione per il bottone di salvataggio
-        buttonSave.setOnClickListener {
-            // Verifica se i campi sono validi
-            val titoloText = titleNewProject.text.toString()
-            val descrizioneText = descrizioneNewProject.text.toString()
-
-            if (titoloText.isBlank()) {
-                erroreTitolo.text = "Il titolo non può essere vuoto"
-            } else {
-                erroreTitolo.text = ""
+        when (role) {
+            Role.Manager -> {
+                val users = loadSpinnerData(Role.Leader)
+                showDataInSpinner(projectElementSpinner, users, item.assignedTo, role)
             }
-
-            if (descrizioneText.isBlank()) {
-                erroreDescrizione.text = "La descrizione non può essere vuota"
-            } else {
-                erroreDescrizione.text = ""
+            Role.Leader -> {
+                val users = loadSpinnerData(Role.Developer)
+                showDataInSpinner(projectElementSpinner, users, item.assignedTo, role)
             }
-
-            // Se non ci sono errori, salva le modifiche
-            if (erroreTitolo.text.isEmpty() && erroreDescrizione.text.isEmpty()) {
-                // Salva il progetto aggiornato nel database
-                updateProject(titoloText, descrizioneText)
-
-                // Torna a LoggedActivity
-                val intent = Intent(this, LoggedActivity::class.java)
-                startActivity(intent)
-                finish()
+            Role.Developer -> {
+                findViewById<LinearLayout>(R.id.spinnerLinearLayout).visibility = View.GONE
             }
         }
     }
 
-    private fun showDataInSpinner(spinner: Spinner, names: List<String>, selectedValue: String?) {
-        // Imposta l'adattatore per lo spinner con i nomi
-        val spinnerAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, names)
-        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinner.adapter = spinnerAdapter
+    private fun showDataInSpinner(spinner: Spinner, users: ArrayList<User>, selectedValue: String?, role: Role) {
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item,
+            users.map { "${it.name} ${it.surname}" })
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinner.adapter = adapter
 
-        // Se il valore selezionato non è null, imposta la selezione
-        selectedValue?.let {
-            val position = names.indexOf(it)
+        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                selectedUserId = users[position].uid
+            }
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                selectedUserId = null
+            }
+        }
+
+        selectedValue?.let { value ->
+            val position = users.indexOfFirst { it.uid == value }
             if (position >= 0) {
                 spinner.setSelection(position)
+                selectedUserId = users[position].uid
             }
         }
 
-        val isEditable = if (role == "Leader") true else false
-        spinner.isEnabled = isEditable
+        spinner.isEnabled = role == Role.Manager
     }
 
-    private fun loadSpinnerData(db: FirebaseFirestore, spinnerRole: String, callback: (List<String>) -> Unit) {
-        val spinnerNames = mutableListOf<String>()
-
-        // Recupera i dati dalla raccolta "utenti"
-        db.collection("utenti")
-            .get()
-            .addOnSuccessListener { documents ->
-                for (document in documents) {
-                    val role = document.getString("role")
-                    if (role == spinnerRole) {
-                        val name = document.getString("name").toString()
-                        spinnerNames.add(name)
-                    }
-                }
-                // Passa la lista dei nomi alla funzione callback
-                callback(spinnerNames)
-            }
-            .addOnFailureListener { exception ->
-                Log.w(ContentValues.TAG, "Error getting documents: ", exception)
-            }
-    }
-
-    // Funzione per aggiornare il progetto nel database
-    private fun updateProject(titolo: String, descrizione: String) {
-        Log.d("UpdateProjectActivity", "$projectId, $taskId, $subtaskId")
-        if (projectId == null) {
-            Log.e("UpdateProjectActivity", "Impossibile aggiornare: ID del progetto non fornito")
-            return
+    private suspend fun loadSpinnerData(role: Role): ArrayList<User> {
+        return try {
+            userService.getUsersByRole(role)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error loading spinner data", e)
+            ArrayList()
         }
+    }
 
-        if (taskId.isNullOrEmpty() && subtaskId.isNullOrEmpty()) {
-            // Caso progetto
-            Log.d("UpdateProjectActivity", "Aggiornamento diretto del progetto con ID $projectId")
-            val projectRef = db.collection("progetti").document(projectId!!)
+    private fun setupSaveButton(tipo:String) {
+        buttonSave.setOnClickListener {
+            val title = titleNewProject.text.toString()
+            val description = descrizioneNewProject.text.toString()
 
-            projectRef.update("titolo", titolo, "descrizione", descrizione)
-                .addOnSuccessListener {
-                    Log.d("UpdateProjectActivity", "Progetto aggiornato con successo")
+            if (validateInputs(title, description)) {
+                lifecycleScope.launch {
+                    updateItem(title, description,tipo)
+                    navigateBack()
                 }
-                .addOnFailureListener { exception ->
-                    Log.e("UpdateProjectActivity", "Errore durante l'aggiornamento del progetto", exception)
-                }
-        } else if(taskId!!.isNotEmpty() && subtaskId.isNullOrEmpty()){
-            // Caso task
-            Log.d("UpdateProjectActivity", "Aggiornamento del task con ID $taskId nel progetto con ID $projectId")
-            val taskRef = db.collection("progetti").document(projectId!!)
-                .collection("task").document(taskId!!)
-
-            val selectedDeveloper = projectElementSpinner.selectedItem?.toString()
-
-            val taskUpdates = hashMapOf(
-                "titolo" to titolo,
-                "descrizione" to descrizione
-            )
-            if (selectedDeveloper != null) {
-                taskUpdates["developer"] = selectedDeveloper
             }
+        }
+    }
 
-            taskRef.update(taskUpdates as Map<String, Any>)
-                .addOnSuccessListener {
-                    Log.d("UpdateProjectActivity", "Task aggiornato con successo")
-                }
-                .addOnFailureListener { exception ->
-                    Log.e("UpdateProjectActivity", "Errore durante l'aggiornamento del task", exception)
-                }
-        } else if (taskId != null && subtaskId != null) {
-            // Caso  subtask
-            Log.d("UpdateProjectActivity", "Aggiornamento del subtask con ID $subtaskId nel task con ID $taskId appartenente al progetto con ID $projectId")
-            val subtaskRef = db.collection("progetti").document(projectId!!)
-                .collection("task").document(taskId!!)
-                .collection("subtask").document(subtaskId!!)
+    private fun validateInputs(title: String, description: String): Boolean {
+        var isValid = true
 
-            subtaskRef.update("titolo", titolo, "descrizione", descrizione)
-                .addOnSuccessListener {
-                    Log.d("UpdateProjectActivity", "Subtask aggiornato con successo")
-                }
-                .addOnFailureListener { exception ->
-                    Log.e("UpdateProjectActivity", "Errore durante l'aggiornamento del subtask", exception)
-                }
+        if (title.isBlank()) {
+            erroreTitolo.text = "Title cannot be empty"
+            isValid = false
         } else {
-            Log.e("UpdateProjectActivity", "Condizione non gestita")
+            erroreTitolo.text = ""
+        }
+
+        if (description.isBlank()) {
+            erroreDescrizione.text = "Description cannot be empty"
+            isValid = false
+        } else {
+            erroreDescrizione.text = ""
+        }
+
+        return isValid
+    }
+
+    private suspend fun updateItem(title: String, description: String,tipo:String) {
+        try {
+            when (tipo) {
+                "progetto" -> {
+                    projectService.updateProject(projectId!!, title, description, selectedUserId!!)
+                }
+                "task" -> {
+                    taskService.updateTask(projectId!!, taskId!!, title, description)
+                }
+                "subtask" -> {
+                    //subtaskService.updateSubTask(projectId!!, taskId!!, subtaskId!!, title,description)
+                }
+            }
+            Toast.makeText(this, "Update successful", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Toast.makeText(this, "Update failed: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
 
-
+    private fun navigateBack() {
+        val intent = Intent(this, ItemActivity::class.java).apply {
+            putExtra("projectId", projectId)
+            putExtra("taskId", taskId)
+            putExtra("subtaskId", subtaskId)
+        }
+        startActivity(intent)
+        finish()
+    }
 }

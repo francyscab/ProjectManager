@@ -1,289 +1,355 @@
 package com.example.project_manager
 
 import android.annotation.SuppressLint
-import android.app.NotificationManager
+import android.app.DatePickerDialog
 import android.content.ContentValues.TAG
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Button
-
+import android.widget.CheckBox
 import android.widget.ImageButton
-
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.SearchView
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
-
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.GravityCompat
+import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.firebase.Firebase
-import com.google.firebase.auth.FirebaseAuth
+import com.example.project_manager.models.ItemsViewModel
+import com.example.project_manager.models.Role
+import com.example.project_manager.models.User
+import com.example.project_manager.services.ChatService
+import com.example.project_manager.services.ProjectService
+import com.example.project_manager.services.TaskService
+import com.example.project_manager.services.UserService
+import com.example.project_manager.utils.NotificationHelper
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
-import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 
 
 class LoggedActivity : AppCompatActivity() {
 
-    private lateinit var db: FirebaseFirestore
+    val projectService= ProjectService()
+    val userService= UserService()
+    val taskService= TaskService()
+    val chatService= ChatService()
+
     private lateinit var data: ArrayList<ItemsViewModel>
-    private lateinit var userName: String
-    private lateinit var role: String
-    private lateinit var name: String
-    private lateinit var chat: List<String>
+    private lateinit var role: Role
+    private lateinit var filteredDataByStatus: ArrayList<ItemsViewModel>
+    private lateinit var buttonApplyFilters: Button
+
+
+    private lateinit var drawerLayout: DrawerLayout
+    private var startDate: Long = -1L
+    private var endDate: Long = -1L
+
+    private lateinit var newProject: ImageButton
+
+
+    private lateinit var startDateText: TextView
+    private lateinit var endDateText: TextView
+    private val calendar = Calendar.getInstance()
+
+    val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_logged)
 
+        loadData()
+        deadlineFilterHandler()
 
-        db = FirebaseFirestore.getInstance()
+        chatButtonHandler()
+        profileButtonHandler()
+        statistticButtonHandler()
 
-        loadRecycleView()
+        //barra laterale per filtri
+        drawerLayout = findViewById<DrawerLayout>(R.id.drawer_layout)
+        val iconButton = findViewById<ImageView>(R.id.icon)
 
-        val chatButton = findViewById<ImageButton>(R.id.button_chat)
-        chatButton.setOnClickListener {
-            val intent = Intent(this, ChatListActivity::class.java)
-            Log.d("LoggedActivity", "Role: $role")
-            intent.putExtra("role", role)
-            startActivity(intent)
-        }
-
-        val buttonPerson = findViewById<ImageButton>(R.id.button_person)
-        buttonPerson.setOnClickListener {
-            val intent = Intent(this, UserProfileActivity::class.java)
-            startActivity(intent)
-        }
-    }
-
-    suspend fun filterTasksByProgress(
-        tasks: List<ItemsViewModel>,
-        filter: String // "completed" o "incompleted"
-    ): List<ItemsViewModel> {
-        val db = FirebaseFirestore.getInstance()
-        val filteredTasks = mutableListOf<ItemsViewModel>()
-
-        for (task in tasks) {
-            try {
-                val progress = if (task.taskId.isNullOrEmpty()) {
-                    // Caso: Solo projectId
-                    val projectDoc = db.collection("progetti")
-                        .document(task.projectId)
-                        .get()
-                        .await()
-                    projectDoc.getLong("progress")?.toInt()
-                } else {
-                    // Caso: projectId e taskId
-                    val taskDoc = db.collection("progetti")
-                        .document(task.projectId)
-                        .collection("task")
-                        .document(task.taskId)
-                        .get()
-                        .await()
-                    taskDoc.getLong("progress")?.toInt()
-                }
-
-                // Applica il filtro basato sulla stringa "completed" o "incompleted"
-                when (filter) {
-                    "completed" -> if (progress == 100) filteredTasks.add(task)
-                    "incompleted" -> if ((progress ?: 0) < 100) filteredTasks.add(task)
-                    else -> throw IllegalArgumentException("Filtro non valido: $filter. Usa 'completed' o 'incompleted'.")
-                }
-            } catch (e: Exception) {
-                // Gestione degli errori (ad esempio documento non trovato)
-                e.printStackTrace()
+        iconButton.setOnClickListener {
+            if (drawerLayout.isDrawerOpen(GravityCompat.END)) {
+                drawerLayout.closeDrawer(GravityCompat.END)
+            } else {
+                drawerLayout.openDrawer(GravityCompat.END)
             }
         }
 
-        return filteredTasks
+        //barra di ricerca
+        val searchView = findViewById<SearchView>(R.id.searchView)
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                //cosa fare quando l'utente preme invio.
+                return false
+            }
+            override fun onQueryTextChange(newText: String?): Boolean {
+                // Filtro la RecyclerView in base al testo inserito
+                filterProjects(newText,data)
+                return true
+            }
+        })
     }
 
 
-    private fun loadRecycleView() {
-        Log.d(TAG, "LOADRECYCLEVIEW")
 
-        val newProject = findViewById<ImageButton>(R.id.newProject)
+    //barra di ricerca
+    private fun filterProjects(query: String?,data: ArrayList<ItemsViewModel>) {
+        val filteredData= projectService.filterProjects(query,data)
+        visualizza(findViewById(R.id.recyclerview), filteredData)
+    }
 
-        //recycleview
+
+
+    private fun applyFilters(role:Role) {
+        val completedCheckBox = findViewById<CheckBox>(R.id.filter_completati)
+        val inProgressCheckBox = findViewById<CheckBox>(R.id.filter_in_corso)
+        val highPriorityCheckBox = findViewById<CheckBox>(R.id.filter_alta)
+        val mediumPriorityCheckBox = findViewById<CheckBox>(R.id.filter_media)
+        val lowPriorityCheckBox = findViewById<CheckBox>(R.id.filter_bassa)
+
+        Log.d(TAG, "applyFilters started")
+        // Filtraggio basato sullo stato (completati/incompleti)
+        lifecycleScope.launch {
+            loadUsersFilter()
+
+            filteredDataByStatus = data
+
+            if (completedCheckBox.isChecked && !inProgressCheckBox.isChecked) {
+                filteredDataByStatus=filterDataByProgress(role, data, "completed")
+            } else if(inProgressCheckBox.isChecked && !completedCheckBox.isChecked) {
+                filteredDataByStatus=filterDataByProgress(role, data, "incompleted")
+            } else{
+                filteredDataByStatus=data
+            }
+
+            //filtro per scadenza
+            var filteredDataByDeadline: ArrayList<ItemsViewModel>
+            if (startDate == -1L && endDate == -1L) {
+                filteredDataByDeadline=filteredDataByStatus
+            } else {
+                filteredDataByDeadline = filterByDeadline(filteredDataByStatus, startDate, endDate, dateFormat)
+            }
+
+            val leaderContainer = findViewById<LinearLayout>(R.id.leader_container)
+            val selectedLeaders = mutableListOf<String>()
+            for (i in 0 until leaderContainer.childCount) {
+                val checkBox = leaderContainer.getChildAt(i) as? CheckBox
+                if (checkBox?.isChecked == true) {
+                    selectedLeaders.add(checkBox.text.toString())
+                }
+            }
+            Log.d(TAG, "Selected leaders: $selectedLeaders")
+
+            //filtra sulla base dei leader
+            val filteredDataByLeader = if (selectedLeaders.isNotEmpty()) {
+                filteredDataByDeadline.filter { item -> selectedLeaders.contains(item.assignedTo) }
+                    .toCollection(ArrayList()) // Conversione in ArrayList
+            } else {
+                ArrayList(filteredDataByDeadline) // Assicura che il risultato sia un ArrayList
+            }
+            Log.d(TAG, "filteredDataByLeader: $filteredDataByLeader")
+
+// Filtraggio basato sulla priorità
+            val filteredDataByPriority = when {
+                !highPriorityCheckBox.isChecked && !mediumPriorityCheckBox.isChecked && !lowPriorityCheckBox.isChecked -> {
+                    filteredDataByLeader // Nessuna priorità selezionata, mostra i dati senza filtro
+                }
+                else -> {
+                    filteredDataByLeader.filter { item ->
+                        when {
+                            highPriorityCheckBox.isChecked && item.priority.contains("High") -> true
+                            mediumPriorityCheckBox.isChecked && item.priority.contains("Medium") -> true
+                            lowPriorityCheckBox.isChecked && item.priority.contains("Low") -> true
+                            else -> false
+                        }
+                    }.toCollection(ArrayList()) // Conversione in ArrayList
+                }
+            }
+
+            Log.d(TAG, "filteredDataByPriority: $filteredDataByPriority")
+
+            Log.d(TAG, "sto chiamado visualizza con data= $filteredDataByPriority")
+            visualizza(findViewById(R.id.recyclerview), filteredDataByPriority)
+        }
+    }
+
+    private suspend fun filterDataByProgress(role: Role, data: ArrayList<ItemsViewModel>, s: String): ArrayList<ItemsViewModel> {
+        return when (role) {
+            Role.Manager -> projectService.filterProjectByProgress(data, s)
+            Role.Leader -> projectService.filterProjectByProgress(data, s)
+            Role.Developer -> taskService.filterTasksByProgress(data, s)
+            else -> throw IllegalArgumentException("Ruolo non supportato per il filtraggio dei progressi")
+        }
+    }
+
+    fun filterByDeadline(
+        item: ArrayList<ItemsViewModel>,
+        startDate: Long,
+        endDate: Long,
+        dateFormat: SimpleDateFormat
+    ): ArrayList<ItemsViewModel> {
+        return item.filter { item ->
+            val taskDate: Long = try {
+                val deadlineDate = dateFormat.parse(item.deadline)
+                deadlineDate?.time ?: -1L
+            } catch (e: Exception) {
+                -1L
+            }
+
+            if (taskDate == -1L) return@filter false
+
+            when {
+                startDate != -1L && endDate != -1L -> taskDate in startDate..endDate
+                startDate != -1L -> taskDate >= startDate
+                endDate != -1L -> taskDate <= endDate
+                else -> true
+            }
+        } as ArrayList<ItemsViewModel>
+    }
+
+    private fun deadlineFilterHandler(){
+        startDateText = findViewById(R.id.text_start_date)
+        endDateText = findViewById(R.id.text_end_date)
+        val buttonSelectStartDate = findViewById<Button>(R.id.button_select_start_date)
+        val buttonSelectEndDate = findViewById<Button>(R.id.button_select_end_date)
+        val buttonClearStartDate = findViewById<Button>(R.id.button_clear_start_date)
+        val buttonClearEndDate = findViewById<Button>(R.id.button_clear_end_date)
+
+        buttonClearStartDate.setOnClickListener {
+            startDateText.text = "Nessuna data selezionata"
+            startDate = -1L
+        }
+        buttonClearEndDate.setOnClickListener {
+            endDateText.text = "Nessuna data selezionata"
+            endDate = -1L
+        }
+
+        buttonSelectStartDate.setOnClickListener { showDatePickerDialog(true) }
+        buttonSelectEndDate.setOnClickListener { showDatePickerDialog(false) }
+    }
+
+    private fun showDatePickerDialog(isStartDate: Boolean) {
+        val datePicker = DatePickerDialog(
+            this,
+            { _, year, month, dayOfMonth ->
+                val selectedDate = Calendar.getInstance()
+                selectedDate.set(year, month, dayOfMonth)
+                val formattedDate = dateFormat.format(selectedDate.time)
+
+                if (isStartDate) {
+                    startDate = selectedDate.timeInMillis // Salva la data di inizio in millisecondi
+                    startDateText.text = formattedDate
+                } else {
+                    endDate = selectedDate.timeInMillis // Salva la data di fine in millisecondi
+                    endDateText.text = formattedDate
+                }
+            },
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH),
+            calendar.get(Calendar.DAY_OF_MONTH)
+        )
+        datePicker.show()
+    }
+
+
+    private suspend fun loadUsersFilter() {
+        val leaderContainer = findViewById<LinearLayout>(R.id.leader_container)
+
+        val leaderNames = loadFilterName(Role.Leader) // Ora è una chiamata diretta e sospesa
+
+        leaderContainer.removeAllViews() // Pulisce la lista prima di riempirla
+
+        for (user in leaderNames) {
+            val checkBox = CheckBox(leaderContainer.context) // Usa il contesto del container
+            checkBox.text = user.name + "" + user.surname
+            checkBox.tag=user.uid
+            checkBox.layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            leaderContainer.addView(checkBox) // Aggiunge il CheckBox alla sidebar
+        }
+    }
+
+
+    private suspend fun loadFilterName(itemRole: Role): ArrayList<User> {
+        var filteredNames = ArrayList<User>()
+        filteredNames = userService.getUsersByRole(itemRole)
+        return filteredNames
+    }
+
+    private fun loadData() {
         val recyclerview = findViewById<RecyclerView>(R.id.recyclerview)
         recyclerview.layoutManager = LinearLayoutManager(this)
+        newProject = findViewById(R.id.newProject)
         val notificationHelper = NotificationHelper(this, FirebaseFirestore.getInstance())
         lifecycleScope.launch {
-            userName = getUser()
-            role = getRole(userName)
-            data = loadProjectData()
-            name=getName(userName)
-            chat=getMyChat(userName)
-            Log.d(TAG,"SONO IN LOGGED ACTIVITY E SONO username=$userName ruolo=$role e mi chiamo=$name")
+            try {
+                role= userService.getCurrentUserRole()!!
+                val userId=userService.getCurrentUserId()
+                val chat=chatService.getCurrentUserChats()
 
-
-            notificationHelper.notification( role, name, "progresso")
-
-            //listener su bottone per filtrare i progetti per progresso(completati)
-            setupFilterButtonCompleted(data, role, name,recyclerview)
-            //listener su bottone per filtrare i progetti per progresso(non completati)
-            setupFilterButtonIncompleted(data, role, name,recyclerview)
-            //listener su bottone per filtrare i progetti per progresso(tutti)
-            setupFilterButtonAll(data, role, name,recyclerview)
-
-            Log.d(TAG,"L'ARRAY DATA PRIMA DI VEDERE CHE RUOLO SONO  È= $data")
-
-            if (role == "Manager") {
-                Log.d(TAG, "SICCOME SONO IL MANAGER: $userName")
-                notificationHelper.notification(role, name, "chat",chat)
-                //comportamento bottone nuovo progetto
-                newProject.setOnClickListener {
-                    val intent = Intent(this@LoggedActivity, NewProjectActivity::class.java)
-                    intent.putExtra("tipo_form", "progetto")
-                    intent.putExtra("role", role)
-                    intent.putExtra("creator", name)
-                    Log.d(TAG,"STO CHIAMANDO NEWPROJECTACTIVITY con role= $role e creator= $name E TIPO FORM= progetto")
-                    startActivity(intent)
+            when (role) {
+                Role.Manager -> {
+                    Log.d(TAG, "sono in manager")
+                    data = projectService.loadProjectForUser(userId.toString())
+                    Log.d(TAG, "Data: $data")
+                    notificationHelper.handleNotification(role,userId!!, "chat",chat)
+                    managerView()
+                    newProjectButtonHandler()
+                    visualizza(recyclerview, data)
                 }
-                Log.d(TAG,"STO CHIAMANDO VISULAIZZA CON DATA= $data E ROLE= $role E NAME= $name")
-                visualizza(recyclerview, data, role,name)
-            } else if (role == "Leader") {
-                Log.d(TAG, "SICCOME SONO IL LEADER: $userName")
 
-                //togliere bottone per creare nuovo progetto
-                newProject.visibility = View.INVISIBLE
+                Role.Leader -> {
+                    data = projectService.loadProjectByLeader(userId.toString())
+                    notificationHelper.handleNotification( role, userId!! ,"progresso")
+                    notificationHelper.handleNotification(role,userId!!, "chat", chat)
+                    leaderView()
+                    visualizza(recyclerview, data)
+                }
 
-                //MOSTRARE SOLO I PROGETTI DI CUI SI È LEADER--modifico array data
-                data = data.filter { it.leader == name } as ArrayList<ItemsViewModel>
-                Log.d(TAG,"STO CHIAMANDO VISULAIZZA CON DATA= $data E ROLE= $role E NAME= $name")
-                visualizza(recyclerview, data, role,name)
-            } else if (role == "Developer") {
-                Log.d(TAG, "SICCOME SONO IL DEVELOPER: $userName")
+                Role.Developer -> {
+                    data = taskService.filterTaskByDeveloper(userId.toString())
+                    notificationHelper.handleNotification(role,userId!!, "chat", chat)
+                    notificationHelper.handleNotification( role, userId!! ,"progresso")
+                    developerView()
+                    visualizza(recyclerview, data)
+                }
 
-                //togliere bottone per creare nuovo progetto
-                newProject.visibility = View.INVISIBLE
-                Log.d(TAG,"STO CHIAMANDO VISULAIZZA CON DATA= $data E ROLE= $role E NAME= $name")
-
-                //salvo array di task che hanno come developer quello attualmente loggato
-                var tasksForDeveloper = ArrayList<ItemsViewModel>()
-                tasksForDeveloper=loadTask(data, name)
-                //Log.d(TAG,"STO CHIAMANDO VISULAIZZA CON DATA= $tasksForDeveloper E ROLE= $role E NAME= $name")
-                visualizza(recyclerview,tasksForDeveloper,role,name)
-            }
-            else{
-                //errore
+                else -> throw Exception("Role or user not found")
             }
 
 
-        }
-    }
-
-    private fun setupFilterButtonCompleted(data: List<ItemsViewModel>, role: String, name: String, recyclerview: RecyclerView) {
-        val filterConclusiButton = findViewById<Button>(R.id.buttonConclusi)
-        filterConclusiButton.setOnClickListener {
-            lifecycleScope.launch {
-                try {
-                    val filteredTasks = filterTasksByProgress(data, "completed")
-                    visualizza(recyclerview, filteredTasks, role, name)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Errore durante il filtraggio: ${e.message}", e)
-                }
+            buttonApplyFilters = findViewById(R.id.apply_filters)
+            buttonApplyFilters.setOnClickListener {
+                applyFilters(role)
+                drawerLayout.closeDrawer(GravityCompat.END)
             }
-        }
 
-    }
-
-    private fun setupFilterButtonIncompleted(data: List<ItemsViewModel>, role: String, name: String, recyclerview: RecyclerView) {
-        val filterNonConclusiButton = findViewById<Button>(R.id.buttonInCorso)
-        filterNonConclusiButton.setOnClickListener {
-            lifecycleScope.launch {
-                try {
-                    val filteredTasks = filterTasksByProgress(data, "incompleted")
-                    visualizza(recyclerview, filteredTasks, role, name)
-                } catch (e: Exception) {
-                }
-
+            }catch (e:Exception){
+                Log.e("Auth", "Errore nel recuperare il ruolo", e)
+                return@launch
             }
         }
     }
 
-    private fun setupFilterButtonAll(
-        data: List<ItemsViewModel>,
-        role: String,
-        name: String,
-        recyclerview: RecyclerView
-    ) {
-        val allButton = findViewById<Button>(R.id.buttonTutti)
-        allButton.setOnClickListener {
-            lifecycleScope.launch {
-                try {
-                    Log.d(TAG, "Bottone 'Tutti' cliccato. Ripristino la vista originale.")
-                    visualizza(recyclerview, data, role, name)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Errore durante il reset dei task: ${e.message}", e)
-                }
-            }
-        }
-    }
-    private suspend fun getMyChat(currentUserEmail: String): List<String> {
-        val chatIds = mutableListOf<String>()
-
-        Log.d("ChatListActivity", "Current User Email: $currentUserEmail")
-
-        // Recupera le chat dove l'utente è `user1`
-        val queryUser1 = db.collection("chat")
-            .whereEqualTo("user1", currentUserEmail)
-            .get() // Usa `get()` per una query sincrona
-
-        // Recupera le chat dove l'utente è `user2`
-        val queryUser2 = db.collection("chat")
-            .whereEqualTo("user2", currentUserEmail)
-            .get() // Usa `get()` per una query sincrona
-
-        try {
-            // Esegui entrambe le query in parallelo usando coroutines
-            val user1Snapshot = queryUser1.await()
-            val user2Snapshot = queryUser2.await()
-
-            // Debug: stampa il risultato di queryUser1
-            Log.d("ChatListActivity", "Results for user1 query:")
-            user1Snapshot.forEach { doc ->
-                Log.d("ChatListActivity", "User1 Chat ID: ${doc.getString("chatID")}, Last Message: ${doc.getString("lastMessage")}")
-            }
-
-            // Debug: stampa il risultato di queryUser2
-            Log.d("ChatListActivity", "Results for user2 query:")
-            user2Snapshot.forEach { doc ->
-                Log.d("ChatListActivity", "User2 Chat ID: ${doc.getString("chatID")}, Last Message: ${doc.getString("lastMessage")}")
-            }
-
-            // Estrai gli ID delle chat per `user1`
-            for (doc in user1Snapshot) {
-                val chatId = doc.getString("chatID") ?: ""
-                if (chatId.isNotEmpty() && !chatIds.contains(chatId)) {
-                    chatIds.add(chatId)
-                }
-            }
-
-            // Estrai gli ID delle chat per `user2`
-            for (doc in user2Snapshot) {
-                val chatId = doc.getString("chatID") ?: ""
-                if (chatId.isNotEmpty() && !chatIds.contains(chatId)) {
-                    chatIds.add(chatId)
-                }
-            }
-
-            // Debug: stampa l'array degli ID delle chat trovate
-            Log.d("ChatListActivity", "Chat IDs found: $chatIds")
-        } catch (e: Exception) {
-            Log.w("ChatListActivity", "Error fetching chat data", e)
-        }
-
-        return chatIds
-    }
 
 
 
-    private fun visualizza(recyclerView: RecyclerView, data: List<ItemsViewModel>, role: String,name:String) {
-        Log.d(TAG, "SONO IN VISUALIZZA CON DATA= $data E ROLE= $role E NAME= $name")
+
+    //visualizza l'array nella reciclerView
+    private fun visualizza(recyclerView: RecyclerView, data: ArrayList<ItemsViewModel>) {
+        Log.d(TAG, "visualizza con data= $data")
         val adapter = CustomAdapter(data)
         recyclerView.adapter = adapter
 
@@ -293,164 +359,64 @@ class LoggedActivity : AppCompatActivity() {
                 Log.d(TAG, "hai cliccato su $clickedItem")
                 Log.d(TAG,"projectid=${clickedItem.projectId} taskid=${clickedItem.taskId} subtaskid=${clickedItem.subtaskId}")
 
-                val intent = Intent(this@LoggedActivity, ProjectActivity::class.java)
+                val intent = Intent(this@LoggedActivity, ItemActivity::class.java)
                 intent.putExtra("projectId", clickedItem.projectId)
                 intent.putExtra("taskId", clickedItem.taskId)
                 intent.putExtra("subtaskId", clickedItem.subtaskId)
-                intent.putExtra("role", role) // Passa il ruolo
-                intent.putExtra("name", name)
-                Log.d(TAG,"STO CHIAMANDO PROJECT ACTIVITY CON ROLE= $role E NAME= $name PROJECTID= ${clickedItem.projectId} TASKID= ${clickedItem.taskId} SUBTASKID= ${clickedItem.subtaskId}")
                 startActivity(intent)
             }
         })
     }
 
-    //ricavo user e in particolare username
-    private suspend fun getUser(): String {
-        val user = FirebaseAuth.getInstance().currentUser
-        return if (user != null) {
-            val userName = user.email.toString()
-            Log.d(TAG, "user: $userName")
-            userName
-        } else {
-            Log.w(TAG, "Error current user")
-            "" // Restituisci una stringa vuota se non c'è un utente corrente
+    private fun newProjectButtonHandler(){
+        findViewById<ImageButton>(R.id.newProject).setOnClickListener {
+            val intent = Intent(this@LoggedActivity, NewItemActivity::class.java)
+            intent.putExtra("tipoForm", "progetto")
+            startActivity(intent)
         }
     }
 
-    //ricavo ruolo dell'utente
-    private suspend fun getRole(userName: String): String {
-        val db = FirebaseFirestore.getInstance()
-        var role = ""
-
-        try {
-            val result = db.collection("utenti").get().await() // Usa await() per attendere il completamento
-            for (document in result) {
-                val email = document.getString("email")
-                if (email == userName) {
-                    role = document.getString("role") ?: "" // Ottieni il ruolo e gestisci i null
-                    break
-                }
-            }
-        } catch (exception: Exception) {
-            Log.w(TAG, "Error getting role.", exception)
+    private fun chatButtonHandler(){
+        findViewById<ImageButton>(R.id.button_chat).setOnClickListener {
+            val intent = Intent(this, ChatListActivity::class.java)
+            startActivity(intent)
         }
-
-        return role
     }
 
-    //ricavo nome dell'utente
-    private suspend fun getName(userName: String): String {
-        val db = FirebaseFirestore.getInstance()
-        var name = ""
-
-        try {
-            val result = db.collection("utenti").get().await() // Usa await() per attendere il completamento
-            for (document in result) {
-                val email = document.getString("email")
-                if (email == userName) {
-                    name = document.getString("name") ?: "" // Ottieni il nome e gestisci i null
-                    break
-                }
-            }
-        } catch (exception: Exception) {
-            Log.w(TAG, "Error getting name.", exception)
+    private fun profileButtonHandler(){
+        findViewById<ImageButton>(R.id.button_person).setOnClickListener {
+            val intent = Intent(this, UserProfileActivity::class.java)
+            startActivity(intent)
         }
-
-        return name
-    }
-    //carica tutti i progetti
-    private suspend fun loadProjectData(): ArrayList<ItemsViewModel> {
-        val db = Firebase.firestore
-        val data = ArrayList<ItemsViewModel>()
-
-        try {
-            val result = db.collection("progetti").get().await()
-            for (document in result) {
-                val title = document.getString("titolo") ?: "" // Ottieni il titolo
-                val leader = document.getString("leader") ?: "" // Ottieni il nome del leader
-                val assegnato = document.getString("assegnato") ?: "" // Ottieni il booleano assegnato
-                data.add(ItemsViewModel(title, leader, assegnato.toBoolean(), document.id))
-            }
-        } catch (exception: Exception) {
-            Log.w(TAG, "Error getting project.", exception)
-        }
-
-        Log.d(TAG, "ho caricato data con= $data")
-
-        return data
     }
 
-    //funzione che recupera i task assegnati a un utente
-    private suspend fun loadTask(data: ArrayList<ItemsViewModel>, name: String): ArrayList<ItemsViewModel> {
-        Log.d(TAG, "loadTask started with data size: ${data.size} and name: $name")
-
-        val userTasks = ArrayList<ItemsViewModel>()
-        val db = FirebaseFirestore.getInstance()
-
-        for (project in data) {
-            Log.d(TAG, "Processing project: ${project.projectId}")
-
-            try {
-                // Recupera il documento del progetto
-                val projectDocument = db.collection("progetti").document(project.projectId).get().await()
-
-                if (!projectDocument.exists()) {
-                    Log.w(TAG, "Project not found: ${project.projectId}")
-                    continue // Passa al prossimo progetto
-                }
-                // Ottieni il leader del progetto
-                val leader = projectDocument.getString("leader") ?: ""
-                Log.d(TAG, "Project leader: $leader")
-
-                // Cerca i task assegnati al developer specificato
-                val taskQuerySnapshot = db.collection("progetti")
-                    .document(project.projectId)
-                    .collection("task")
-                    .whereEqualTo("developer", name)
-                    .get()
-                    .await()
-
-                Log.d(
-                    TAG,
-                    "Retrieved ${taskQuerySnapshot.size()} tasks for project: ${project.text}"
-                )
-
-                // Itera sui task trovati
-                for (taskDocument in taskQuerySnapshot) {
-                    val taskTitle = taskDocument.getString("titolo") ?: ""
-                    val taskId = taskDocument.id
-
-                    // Crea un nuovo elemento e aggiungilo alla lista
-                    userTasks.add(
-                        ItemsViewModel(
-                            text = taskTitle,
-                            leader = leader,
-                            assegnato = true,
-                            projectId = project.projectId,
-                            taskId = taskId
-                        )
-                    )
-                    Log.d(TAG, "Added task: $taskTitle (Task ID: $taskId) to userTasks")
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error loading tasks for project: ${project.projectId}", e)
-            }
+    private fun statistticButtonHandler(){
+        findViewById<ImageButton>(R.id.button_statistiche).setOnClickListener {
+            val intent = Intent(this, StatisticheActivity::class.java)
+            startActivity(intent)
         }
-
-        Log.d(TAG, "loadTask completed with userTasks size: ${userTasks.size}")
-        return userTasks
     }
 
+    private fun managerView(){
+        Log.d(TAG,"managerView")
+        newProject.visibility = View.VISIBLE
+    }
+    private fun leaderView(){
+        newProject.visibility = View.INVISIBLE
+    }
 
-        @SuppressLint("MissingSuperCall")
+    private fun developerView(){
+        newProject.visibility = View.INVISIBLE
+    }
+
+    @SuppressLint("MissingSuperCall")
     override fun onBackPressed() {
         AlertDialog.Builder(this)
             .setTitle("Confirm Exit")
             .setMessage("Are you sure you want to exit the application?")
             .setPositiveButton("Yes") { _, _ ->
-                // User confirmed, exit the application
-                finishAffinity() // Close all activities in the task
+                // User confirmed, move the app to the background
+                moveTaskToBack(true) // Mette l'app in background senza chiuderla
             }
             .setNegativeButton("No") { dialog, _ ->
                 // User canceled, dismiss the dialog
@@ -459,11 +425,9 @@ class LoggedActivity : AppCompatActivity() {
             .show()
     }
 
-
     override fun onResume() {
         super.onResume()
         lifecycleScope.launch {
-            val data = loadProjectData()
         }
     }
 }

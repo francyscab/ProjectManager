@@ -8,9 +8,10 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
+import com.example.project_manager.models.ItemsViewModel
 
 
-class CustomAdapter(private val mList: List<ItemsViewModel>) : RecyclerView.Adapter<CustomAdapter.ViewHolder>() {
+class CustomAdapter(private val mList: ArrayList<ItemsViewModel>) : RecyclerView.Adapter<CustomAdapter.ViewHolder>() {
 
     // create new views
 
@@ -31,6 +32,7 @@ class CustomAdapter(private val mList: List<ItemsViewModel>) : RecyclerView.Adap
 
         return ViewHolder(view,mListener)
     }
+
     // binds the list items to a view
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
 
@@ -39,19 +41,25 @@ class CustomAdapter(private val mList: List<ItemsViewModel>) : RecyclerView.Adap
         Log.d(ContentValues.TAG,"ITEMVIEWMODEL: $ItemsViewModel")
 
         // sets the text to the textview from our itemHolder class
-        holder.textView.text = ItemsViewModel.text
+        holder.textView.text = ItemsViewModel.title
         val labelNew: TextView=holder.itemView.findViewById(R.id.new_label)
 
         holder.projectId=ItemsViewModel.projectId.toString()
         holder.taskId=ItemsViewModel.taskId.toString()
         holder.subtaskId=ItemsViewModel.subtaskId.toString()
 
-        if(!ItemsViewModel.assegnato){
-            val context=holder.itemView.context
-            labelNew.visibility=View.VISIBLE
-        }else{
-            holder.itemView.background=null
+        val priorityIndicator: View = holder.itemView.findViewById(R.id.priorityIndicator)
+
+        val color = when (ItemsViewModel.priority) {
+            "High" -> ContextCompat.getColor(holder.itemView.context, R.color.red)
+            "Medium" -> ContextCompat.getColor(holder.itemView.context, R.color.yellow)
+            "Low" -> ContextCompat.getColor(holder.itemView.context, R.color.green)
+            else -> ContextCompat.getColor(holder.itemView.context, R.color.gray) // Default
         }
+
+        priorityIndicator.setBackgroundColor(color)
+
+
 
     }
     // return the number of the items in the list

@@ -1,15 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+
+<androidx.drawerlayout.widget.DrawerLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawer_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+
+<LinearLayout
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/azzurro"
     tools:context=".MainActivity">
-
-    <!-- Barra superiore con il nome dell'applicazione -->
-
 
     <!-- Barra con tre bottoni e un'icona -->
     <LinearLayout
@@ -20,41 +23,15 @@
         android:padding="8dp"
         android:gravity="center_vertical">
 
-        <Button
-            android:id="@+id/buttonTutti"
-            android:layout_width="0dp"
-            android:layout_height="40dp"
-            android:layout_weight="1"
-            android:layout_marginStart="8dp"
-            android:layout_marginEnd="8dp"
-            android:backgroundTint="@color/white"
-            android:textColor="@color/black"
-            android:textSize="10dp"
-            android:text="@string/tutti" />
-
-        <Button
-            android:id="@+id/buttonInCorso"
-            android:layout_width="0dp"
-            android:layout_height="40dp"
-            android:layout_weight="1"
-            android:layout_marginEnd="8dp"
-            android:layout_marginStart="8dp"
-            android:backgroundTint="@color/white"
-            android:textColor="@color/black"
-            android:textSize="10dp"
-            android:text="@string/inCorso" />
-
-        <Button
-            android:id="@+id/buttonConclusi"
-            android:layout_width="0dp"
-            android:layout_height="40dp"
-            android:layout_weight="1"
-            android:layout_marginEnd="8dp"
-            android:layout_marginStart="8dp"
-            android:backgroundTint="@color/white"
-            android:textColor="@color/black"
-            android:textSize="10dp"
-            android:text="@string/conclusi" />
+        <SearchView
+            android:id="@+id/searchView"
+            android:layout_width="330dp"
+            android:layout_height="wrap_content"
+            android:queryHint="@string/cerca_progetti"
+            android:iconifiedByDefault="false"
+            android:theme="@style/SearchViewStyle"
+            android:background="@drawable/rounded_search_view"
+            android:layout_margin="8dp" />
 
         <ImageView
             android:id="@+id/icon"
@@ -65,6 +42,8 @@
             android:layout_marginStart="8dp"
             android:scaleType="fitCenter" />
     </LinearLayout>
+
+
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerview"
@@ -79,8 +58,7 @@
         android:id="@+id/bottomBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:background="@color/cadetblue">
+        android:orientation="horizontal">
 
         <ImageButton
             android:id="@+id/button_book"
@@ -88,6 +66,17 @@
             android:layout_height="50dp"
             android:src="@drawable/icona_progetto_ios"
             android:contentDescription="@string/libro"
+            android:background="?attr/selectableItemBackground"
+            android:padding="8dp"
+            android:layout_weight="1"
+            android:scaleType="fitCenter" />
+
+        <ImageButton
+            android:id="@+id/button_chat"
+            android:layout_width="48dp"
+            android:layout_height="50dp"
+            android:src="@drawable/icon_chat"
+            android:contentDescription="@string/user"
             android:background="?attr/selectableItemBackground"
             android:padding="8dp"
             android:layout_weight="1"
@@ -105,6 +94,17 @@
             android:scaleType="fitCenter" />
 
         <ImageButton
+            android:id="@+id/button_statistiche"
+            android:layout_width="48dp"
+            android:layout_height="50dp"
+            android:src="@drawable/statistiche"
+            android:contentDescription="@string/user"
+            android:background="?attr/selectableItemBackground"
+            android:padding="8dp"
+            android:layout_weight="1"
+            android:scaleType="fitCenter" />
+
+        <ImageButton
             android:id="@+id/button_person"
             android:layout_width="48dp"
             android:layout_height="50dp"
@@ -115,16 +115,166 @@
             android:layout_weight="1"
             android:scaleType="fitCenter" />
 
-        <ImageButton
-            android:id="@+id/button_chat"
-            android:layout_width="48dp"
-            android:layout_height="50dp"
-            android:src="@drawable/icon_chat"
-            android:contentDescription="@string/user"
-            android:background="?attr/selectableItemBackground"
-            android:padding="8dp"
-            android:layout_weight="1"
-            android:scaleType="fitCenter" />
-
     </LinearLayout>
 </LinearLayout>
+
+    <!-- Sidebar (Banda laterale) -->
+    <LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/sidebar"
+        android:layout_width="250dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="end"
+        android:background="@android:color/white"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">        <!-- Titolo "Stato" -->
+        <TextView
+            android:text="Stato"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="10dp"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content" />
+
+        <CheckBox
+            android:id="@+id/filter_completati"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/completati" />
+
+        <CheckBox
+            android:id="@+id/filter_in_corso"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/in_corso" />
+
+        <!-- Titolo "Leader" -->
+        <TextView
+            android:text="@string/leader"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="10dp"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"/>
+
+        <LinearLayout
+            android:id="@+id/leader_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+            <!-- I nomi verranno aggiunti dinamicamente -->
+        </LinearLayout>
+
+        <!-- Titolo "Priorità" -->
+        <TextView
+            android:text="@string/priorita"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="10dp"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"/>
+
+        <CheckBox
+            android:id="@+id/filter_alta"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/alta" />
+
+        <CheckBox
+            android:id="@+id/filter_media"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/media" />
+
+        <CheckBox
+            android:id="@+id/filter_bassa"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/bassa" />
+
+        <!-- Titolo "Scadenza" -->
+        <TextView
+            android:text="Scadenza oltre il"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="10dp"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            />
+
+        <Button
+            android:id="@+id/button_select_start_date"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/seleziona_data" />
+
+        <Button
+            android:id="@+id/button_clear_start_date"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/rimuovi_data"
+            android:layout_marginTop="5dp"/>
+
+        <TextView
+            android:id="@+id/text_start_date"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/nessuna_data_selezionata"
+            android:textSize="14sp"
+            android:layout_marginTop="5dp"
+            android:gravity="center"/>
+
+        <TextView
+            android:text="@string/scadenza_prima_del"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="10dp"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"/>
+
+        <Button
+            android:id="@+id/button_select_end_date"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/seleziona_data" />
+
+        <Button
+            android:id="@+id/button_clear_end_date"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Rimuovi data"
+            android:layout_marginTop="5dp"/>
+
+        <TextView
+            android:id="@+id/text_end_date"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Nessuna data selezionata"
+            android:textSize="14sp"
+            android:layout_marginTop="5dp"
+            android:gravity="center"/>
+
+        <!-- Bottone per applicare i filtri -->
+        <Button
+            android:id="@+id/apply_filters"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/applica_filtri"
+            android:layout_marginTop="20dp"/>
+            </LinearLayout>
+        </ScrollView>
+    </LinearLayout>
+</androidx.drawerlayout.widget.DrawerLayout>

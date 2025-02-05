@@ -5,5 +5,12 @@
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
     </style>
 
+    <style name="SearchViewStyle" parent="ThemeOverlay.AppCompat.Light">
+        <item name="android:textColorHint">#808080</item>
+        <item name="android:queryBackground">@android:color/transparent</item>
+        <item name="android:background">@android:color/transparent</item>
+        <item name="android:focusable">false</item>
+    </style>
+
     <style name="Theme.Project_manager" parent="Base.Theme.Project_manager" />
 </resources>

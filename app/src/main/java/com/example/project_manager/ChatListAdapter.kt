@@ -6,19 +6,25 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.lifecycle.LifecycleCoroutineScope
 import androidx.recyclerview.widget.RecyclerView
+import com.example.project_manager.models.Chat
+import com.example.project_manager.models.User
+import com.example.project_manager.services.UserService
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 class ChatListAdapter(
     private val chats: List<Chat>,
+    private val lifecycleScope: LifecycleCoroutineScope,  // Passa lifecycleScope dal costruttore
     private val onChatSelected: (Chat) -> Unit
 ) : RecyclerView.Adapter<ChatListAdapter.ChatViewHolder>() {
 
-    private val db = FirebaseFirestore.getInstance()
+    private val userService = UserService()
 
     inner class ChatViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val imageViewProfile: ImageView = itemView.findViewById(R.id.imageViewProfile)
@@ -26,6 +32,45 @@ class ChatListAdapter(
         val textViewLastMessage: TextView = itemView.findViewById(R.id.textViewLastMessage)
         val textViewTimestamp: TextView = itemView.findViewById(R.id.textViewTimestamp)
         val textViewUnreadCount: TextView = itemView.findViewById(R.id.textViewUnreadCount)
+
+        fun bind(chat: Chat) {
+            lifecycleScope.launch {
+                try {
+                    val currentUserId = userService.getCurrentUserId()
+
+                    val chatPartnerId = if (chat.user1 == currentUserId) chat.user2 else chat.user1
+
+                    val chatPartner = userService.getUserById(chatPartnerId)
+                    chatPartner?.let { user ->
+                        textViewChatName.text = "${chatPartner.name} ${chatPartner.surname}"
+                    } ?: run {
+                        textViewChatName.text = "Unknown User"
+                    }
+                } catch (e: Exception) {
+                    Log.e("ChatListAdapter", "Error loading user details", e)
+                    textViewChatName.text = "Unknown User"
+                }
+            }
+
+            // Impostazioni non-suspend che possono stare fuori dalla coroutine
+            textViewLastMessage.text = chat.lastMessage
+
+            textViewTimestamp.text = SimpleDateFormat(
+                "dd/MM/yyyy HH:mm",
+                Locale.getDefault()
+            ).format(Date(chat.timestamp))
+
+            if (chat.unreadCount > 0) {
+                textViewUnreadCount.visibility = View.VISIBLE
+                textViewUnreadCount.text = chat.unreadCount.toString()
+            } else {
+                textViewUnreadCount.visibility = View.GONE
+            }
+
+            itemView.setOnClickListener {
+                onChatSelected(chat)
+            }
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChatViewHolder {
@@ -35,73 +80,8 @@ class ChatListAdapter(
     }
 
     override fun onBindViewHolder(holder: ChatViewHolder, position: Int) {
-        val chat = chats[position]
-
-        // Recupera l'email dell'utente loggato
-        val currentUserEmail = FirebaseAuth.getInstance().currentUser?.email ?: ""
-        Log.d("ChatListActivity", "Current User Email: $currentUserEmail")
-         val chatuser1 = chat.user1
-         val chatuser2 = chat.user2
-        Log.d("ChatListActivity", "Chat user1: $chatuser1")
-        Log.d("ChatListActivity", "Chat user2: $chatuser2")
-
-        // Mostra il nome dell'altro utente nella chat
-        val chatPartnerEmail = if (chat.user1 == currentUserEmail) chat.user2 else chat.user1
-        Log.d("ChatListActivity", "Chat Partner Email: $chatPartnerEmail")
-
-        // Carica il nome dell'altro utente dal database
-        getUserNameByEmail(chatPartnerEmail) { name ->
-            // Aggiorna la UI con il nome dell'altro utente
-            holder.textViewChatName.text = name
-        }
-
-        // Imposta l'ultimo messaggio
-        holder.textViewLastMessage.text = chat.lastMessage
-
-        // Imposta il timestamp
-        holder.textViewTimestamp.text =
-            SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date(chat.timestamp))
-
-        // Carica l'immagine del profilo
-        /*Glide.with(holder.itemView.context)
-            .load(chat.profileImageUrl)
-            .placeholder(R.drawable.ic_profile_placeholder)
-            .circleCrop()
-            .into(holder.imageViewProfile)*/
-
-        // Mostra il badge dei messaggi non letti (se > 0)
-        if (chat.unreadCount > 0) {
-            holder.textViewUnreadCount.visibility = View.VISIBLE
-            holder.textViewUnreadCount.text = chat.unreadCount.toString()
-        } else {
-            holder.textViewUnreadCount.visibility = View.GONE
-        }
-
-        holder.itemView.setOnClickListener {
-            onChatSelected(chat)
-        }
+        holder.bind(chats[position])
     }
 
     override fun getItemCount(): Int = chats.size
-
-    // Funzione per ottenere il nome dell'utente dall'email
-    private fun getUserNameByEmail(email: String, onComplete: (String) -> Unit) {
-        // Recupera il nome dell'utente dal database Firestore
-        db.collection("utenti")
-            .whereEqualTo("email", email)
-            .get()
-            .addOnSuccessListener { querySnapshot ->
-                if (!querySnapshot.isEmpty) {
-                    val document = querySnapshot.documents.first()
-                    val name = document.getString("name") ?: "Nome non trovato"
-                    onComplete(name)
-                } else {
-                    onComplete("Nome non trovato")
-                }
-            }
-            .addOnFailureListener { e ->
-                // In caso di errore, restituisci un valore predefinito
-                onComplete("Errore nel recupero del nome")
-            }
-    }
 }

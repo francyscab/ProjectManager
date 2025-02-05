@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Quanto sei soddisfatto?"
+        android:textSize="18sp" />
+
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scrollbars="none">
+
+        <RadioGroup
+            android:id="@+id/ratingRadioGroup"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <RadioButton android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="1" />
+            <RadioButton android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="2" />
+            <RadioButton android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="3" />
+            <RadioButton android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="4" />
+            <RadioButton android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="5" />
+            <RadioButton android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="6" />
+            <RadioButton android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="7" />
+            <RadioButton android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="8" />
+            <RadioButton android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="9" />
+            <RadioButton android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="10" />
+        </RadioGroup>
+    </HorizontalScrollView>
+
+    <EditText
+        android:id="@+id/commentEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Inserisci un commento"
+        android:layout_marginTop="16dp" />
+
+</LinearLayout>

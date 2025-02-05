@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/azzurro"
+    android:background="@color/white"
     tools:context=".SignInActivity">
 
 
@@ -14,17 +14,6 @@
     android:layout_height="match_parent"
     tools:context=".SignInActivity"
     android:orientation="vertical">
-    <!-- Barra superiore con il nome dell'applicazione -->
-    <TextView
-        android:id="@+id/appName"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/cadetblue"
-        android:padding="16dp"
-        android:text="@string/app_name"
-        android:textColor="@android:color/black"
-        android:textSize="17sp"
-        android:gravity="center" />
 
     <TextView
         android:id="@+id/typeNew"
@@ -161,57 +150,53 @@
         android:textColor="@color/red"
         android:layout_marginLeft="120dp"/>
 
-    <!--<LinearLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
         android:orientation="horizontal"
-        android:layout_marginTop="10dp">
+        android:gravity="center_vertical">
 
         <ImageView
             android:layout_width="50dp"
             android:layout_height="53dp"
-            android:src="@drawable/task"
-            android:layout_marginLeft="50dp"/>
+            android:layout_marginLeft="50dp"
+            android:src="@drawable/priority" />
 
-        <LinearLayout
-            android:id="@+id/linearLayout"
-            android:layout_width="243dp"
+        <RadioGroup
+            android:id="@+id/radioGroupPriority"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
             android:orientation="vertical">
 
-            <EditText
-                android:id="@+id/subTaskName"
-                android:layout_width="244dp"
+            <RadioButton
+                android:id="@+id/radioHigh"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:hint="Nome del task" />
+                android:text="Alta" />
 
-            <EditText
-                android:id="@+id/TaskDescription"
-                android:layout_width="244dp"
+            <RadioButton
+                android:id="@+id/radioMedium"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:hint="Descrizione del task" />
+                android:text="Media" />
 
-            <Button
-                android:id="@+id/pickDateTask"
-                android:layout_width="240dp"
+            <RadioButton
+                android:id="@+id/radioLow"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text=""
-                android:gravity="start"
-                android:background="?android:attr/selectableItemBackground"
-                android:textColor="@color/black"
-                />
+                android:text="Bassa" />
 
-            <Button
-                android:id="@+id/buttonAdd"
-                android:layout_width="70dp"
-                android:layout_height="wrap_content"
-                android:text=" +" />
-
-        </LinearLayout>
-
+        </RadioGroup>
     </LinearLayout>
-    -->
+
+    <TextView
+        android:id="@+id/errore_priorita"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="@color/red"
+        android:layout_marginLeft="120dp"/>
 
     <LinearLayout
         android:layout_width="match_parent"

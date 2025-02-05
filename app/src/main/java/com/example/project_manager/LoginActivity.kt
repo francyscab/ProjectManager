@@ -1,6 +1,5 @@
 package com.example.project_manager
 
-import android.content.ContentValues
 import android.content.ContentValues.TAG
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
@@ -10,66 +9,80 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
-import com.google.firebase.Firebase
+import com.example.project_manager.services.UserService
+import com.example.project_manager.utils.FileRepository
+import com.example.project_manager.utils.UserRepository
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
-import com.google.firebase.auth.FirebaseAuthInvalidUserException
-import com.google.firebase.auth.auth
 
 class LoginActivity : AppCompatActivity() {
 
-    lateinit var auth: FirebaseAuth;
+    private val userRepository = UserRepository()
+    private val userService = UserService()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
-
-        auth = Firebase.auth
-
     }
 
     override fun onStart() {
         super.onStart()
-        val currentUser = auth.currentUser
-        if (currentUser != null) {
+
+        // Check if user is already logged in
+        if (userRepository.isLogged()) {
             startActivity(Intent(this, LoggedActivity::class.java))
             finish()
+            return
         }
-        else {
-            val login = findViewById<Button>(R.id.button_login)
-            login.setOnClickListener {
-                val email = findViewById<EditText>(R.id.username_field).text.toString()
-                val password = findViewById<EditText>(R.id.password_field).text.toString()
-                auth.signInWithEmailAndPassword(email, password)
-                    .addOnCompleteListener(this) { task ->
-                        if (task.isSuccessful) {
-                            // Sign in success, update UI with the signed-in user's information
-                            Log.d(TAG, "signInWithEmail:success")
-                            val user = auth.currentUser
-                            startActivity(Intent(this, LoggedActivity::class.java))
-                        } else {
-                            // If sign in fails, display a message to the user.
-                            Log.w(TAG, "signInWithEmail:failure , user ", task.exception)
-                            findViewById<TextView>(R.id.errore_credenziali_login).setText("credenziali errate")
+
+        setupLoginButton()
+    }
+
+    private fun setupLoginButton() {
+        val loginButton = findViewById<Button>(R.id.button_login)
+        val emailField = findViewById<EditText>(R.id.username_field)
+        val passwordField = findViewById<EditText>(R.id.password_field)
+        val errorText = findViewById<TextView>(R.id.errore_credenziali_login)
+
+        loginButton.setOnClickListener {
+            val email = emailField.text.toString()
+            val password = passwordField.text.toString()
+            errorText.text = "" // Clear previous error messages
+
+            when {
+                email.isEmpty() -> {
+                    errorText.text = "Please enter your email"
+                }
+                password.isEmpty() -> {
+                    errorText.text = "Please enter your password"
+                }
+                else -> {
+                    // Attempt login
+                    userRepository.login(
+                        email,
+                        password,
+                        onSuccess = {
+                            // Only navigate to LoggedActivity on successful login
+                            val intent = Intent(this, LoggedActivity::class.java)
+                            startActivity(intent)
+                            finish()
+                        },
+                        onFailure = { exception ->
+                            // Show error message on failed login
+                            Log.e(TAG, "Login failed", exception)
+                            errorText.text = "Invalid email or password"
                             Toast.makeText(
-                                baseContext, "Authentication failed.",
+                                this,
+                                "Authentication failed",
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
-
-                    }
+                    )
+                }
             }
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        // Disconnetti l'utente da Firebase
-        FirebaseAuth.getInstance().signOut()
     }
-
-
-
-
-
 }

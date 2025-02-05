@@ -5,4 +5,7 @@
     <color name="red">#FF0000</color>
     <color name="cadetblue">#5f9ea0</color>
     <color name="azzurro">#e4eeef</color>
+    <color name="yellow">#FFD700</color>
+    <color name="green">#008000</color>
+    <color name="gray">#B0B0B0</color>
 </resources>

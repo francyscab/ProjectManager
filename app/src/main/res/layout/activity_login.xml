@@ -3,47 +3,21 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/azzurro"
+    android:background="@color/white"
     tools:context=".MainActivity"
     android:orientation="vertical">
-    <!-- Barra superiore con il nome dell'applicazione -->
-    <TextView
-        android:id="@+id/appName"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/cadetblue"
-        android:padding="16dp"
-        android:text="@string/app_name"
-        android:textColor="@android:color/black"
-        android:textSize="17sp"
-        android:gravity="center" />
-
-    <TextView
-        android:layout_marginTop="40dp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Welcome"
-        android:textSize="40dp"
-        android:layout_marginLeft="105dp"/>
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="140dp"
-        android:text="Back!"
-        android:textSize="40dp" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginTop="120dp">
+        android:layout_marginTop="250dp">
 
         <ImageView
             android:layout_marginLeft="75dp"
             android:layout_width="50dp"
             android:layout_height="53dp"
-            android:src="@drawable/icona_user_ios" />
+            android:src="@drawable/nome" />
 
         <EditText
             android:id="@+id/username_field"

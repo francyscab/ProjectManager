@@ -3,6 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
         android:allowBackup="true"
@@ -16,31 +18,31 @@
         tools:targetApi="31">
         <activity
             android:name=".UpdateProjectActivity"
-            android:exported="false" />
+            />
         <activity
             android:name=".UserProfileActivity"
-            android:exported="false" />
+             />
         <activity
             android:name="com.example.project_manager.ChatActivity"
-            android:exported="false" />
+             />
         <activity
             android:name=".ChatListActivity"
-            android:exported="false"/>
+            />
         <activity
             android:name=".LoggedActivity"
-            android:exported="false" />
+             />
         <activity
-            android:name=".ProjectActivity"
-            android:exported="false" />
+            android:name=".ItemActivity"
+             />
         <activity
             android:name=".SignInActivity"
-            android:exported="false" />
+             />
         <activity
             android:name=".LoginActivity"
-            android:exported="false" />
+             />
         <activity
-            android:name=".NewProjectActivity"
-            android:exported="false" />
+            android:name=".NewItemActivity"
+             />
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -50,6 +52,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".services.FrancescaMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>
