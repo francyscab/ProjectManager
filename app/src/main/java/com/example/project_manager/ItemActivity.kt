@@ -7,13 +7,20 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Button
+import android.widget.EditText
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.PopupMenu
+import android.widget.RadioButton
+import android.widget.RadioGroup
 import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.GravityCompat
+import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -74,6 +81,7 @@ class ItemActivity : AppCompatActivity() {
     private lateinit var buttonFile: ImageButton
     private lateinit var fileLayout: LinearLayout
     private lateinit var filesRecyclerView: RecyclerView
+    private lateinit var drawerLayout: DrawerLayout
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -86,12 +94,25 @@ class ItemActivity : AppCompatActivity() {
 
         tipo = getItemType(subtaskId, taskId, projectId)
 
+        drawerLayout = findViewById<DrawerLayout>(R.id.drawer_layout_item)
+        val iconButton = findViewById<ImageView>(R.id.filterButton)
+
+        iconButton.setOnClickListener {
+            if (drawerLayout.isDrawerOpen(GravityCompat.END)) {
+                drawerLayout.closeDrawer(GravityCompat.END)
+            } else {
+                drawerLayout.openDrawer(GravityCompat.END)
+            }
+        }
+
         lifecycleScope.launch {
             role = userService.getCurrentUserRole()!!
             loadDetails(tipo, notificationHelper)
             menu()
         }
     }
+
+
 
     private fun getIntentData() {
         projectId = intent.getStringExtra("projectId") ?: ""
@@ -134,55 +155,58 @@ class ItemActivity : AppCompatActivity() {
 
     private suspend fun loadDetails(tipo: String, notificationHelper: NotificationHelper) {
         when (tipo) {
-            "progetto" -> handleProjectDetails(notificationHelper) { feedback() }
-            "task" -> handleTaskDetails(notificationHelper) { feedback() }
-            "subtask" -> handleSubtaskDetails() { feedback() }
+            "progetto" -> {
+                lifecycleScope.launch {
+                    handleProjectDetails(notificationHelper)
+                    handleFeedback()
+                }
+
+            }
+            "task" -> {
+                lifecycleScope.launch{
+                    handleTaskDetails(notificationHelper)
+                    handleFeedback()
+                }
+
+            }
+            "subtask" -> {
+                lifecycleScope.launch {
+                    handleSubtaskDetails()
+                    handleFeedback()
+                }
+
+            }
             else -> Log.e(TAG, "Tipo non riconosciuto: $tipo")
         }
     }
 
-    private fun feedback() {
 
-    }
-
-    private suspend fun handleProjectDetails(
-        notificationHelper: NotificationHelper,
-        onComplete: (() -> Unit)? = null
-    ) {
+    private suspend fun handleProjectDetails(notificationHelper: NotificationHelper) {
         if (role == Role.Leader) {
             setupLeaderView(notificationHelper)
         } else if (role == Role.Manager) {
             setupManagerView(notificationHelper)
-
         } else {
             throw error("Ruolo non valido")
         }
-        onComplete?.invoke()
     }
 
-    private suspend fun handleTaskDetails(
-        notificationHelper: NotificationHelper,
-        onComplete: (() -> Unit)? = null
-    ) {
+    private suspend fun handleTaskDetails(notificationHelper: NotificationHelper) {
         try {
             if (role == Role.Leader) {
                 setupLeaderTaskView(notificationHelper)
             } else if (role == Role.Developer) {
                 setupDeveloperTaskView()
             }
-
-            onComplete?.invoke()
         } catch (e: Exception) {
             Log.e(TAG, "Errore durante il caricamento dei dettagli del task", e)
         }
     }
 
-    private suspend fun handleSubtaskDetails(onComplete: (() -> Unit)? = null) {
-
+    private suspend fun handleSubtaskDetails() {
         try {
             val subTask = subtaskService.getSubTaskById(projectId, taskId, subtaskId)
             setupDeveloperSubTaskView()
-
             setupProgressManagement(projectId, taskId, subtaskId, progressSeekBar, progressLabel)
         } catch (e: Exception) {
             Log.e(TAG, "Errore durante il caricamento dei dettagli del sottotask", e)
@@ -274,7 +298,7 @@ class ItemActivity : AppCompatActivity() {
         setupFileUpload()
         val filesRecyclerView = findViewById<RecyclerView>(R.id.filesRecyclerView)
         filesRecyclerView.layoutManager = LinearLayoutManager(this)
-        loadFiles() // Load existing files
+        loadFiles()
 
         tipoElenco.text = "Sottotask"
 
@@ -353,60 +377,88 @@ class ItemActivity : AppCompatActivity() {
     }
 
 
-    /*private fun feedback() {
-        //progetto aperto da leader
-        if (projectId.isNotEmpty() && taskId.isEmpty() && role == "Leader") {
-            feedback.visibility = View.GONE
-            feedbackLayout.visibility = View.GONE
+    private suspend fun handleFeedback() {
+        val currentItem = when (tipo) {
+            "progetto" -> projectService.getProjectById(projectId)
+            "task" -> taskService.getTaskById(projectId, taskId)
+            "subtask" -> subtaskService.getSubTaskById(projectId, taskId, subtaskId)
+            else -> null
         }
-        // progetto aperto da manager
-        else if (projectId.isNotEmpty() && taskId.isEmpty() && role == "Manager") {
-            if (progress == 100 && !isFeedbackGiven) {
-                Log.d(TAG, "non ho mai dato un feedback")
-                feedback.visibility = View.VISIBLE
-                feedbackLayout.visibility = View.GONE
-                openFeedbackForm("project")
-            } else if (isFeedbackGiven) {
-                Log.d(TAG, "ho gia dato un feedback lo devo solo visualizzare")
-                feedback.visibility = View.GONE
-                feedbackLayout.visibility = View.VISIBLE
-            } else if (progress != 100) {
-                Log.d(TAG, "non ho ancora terminato il progetto")
-                feedback.visibility = View.GONE
-                feedbackLayout.visibility = View.GONE
-            }
-        }
-        // task aperto da leader
-        else if (projectId.isNotEmpty() && taskId.isNotEmpty() && role == "Leader") {
-            Log.d(TAG, "sono qui")
-            if (progress == 100 && !isFeedbackGiven) {
-                Log.d(TAG, "non ho mai dato un feedback")
-                feedback.visibility = View.VISIBLE
-                feedbackLayout.visibility = View.GONE
-                openFeedbackForm("task")
-            } else if (isFeedbackGiven) {
-                Log.d(TAG, "ho gia dato un feedback lo devo solo visualizzare")
-                feedback.visibility = View.GONE
-                feedbackLayout.visibility = View.VISIBLE
-            } else if (progress != 100) {
-                Log.d(TAG, "non ho ancora terminato il task")
-                feedback.visibility = View.GONE
-                feedbackLayout.visibility = View.GONE
-            }
-        }
-        //per il momento tutti altri casi non lo vedono
-        else if(isFeedbackGiven) {
-            feedback.visibility=View.GONE
-            feedbackLayout.visibility=View.VISIBLE
-        }
-        else{
-            feedback.visibility=View.GONE
-            feedbackLayout.visibility=View.GONE
 
+        when {
+            // Project opened by leader
+            tipo == "progetto" && role == Role.Leader -> {
+                feedback.visibility = View.GONE
+                feedbackLayout.visibility = View.GONE
+            }
+
+            // Project opened by manager
+            tipo == "progetto" && role == Role.Manager -> {
+                currentItem?.let { item ->
+                    when {
+                        item.progress == 100 && !item.valutato -> {
+                            // Progetto completato ma non ancora valutato
+                            feedback.visibility = View.VISIBLE
+                            feedbackLayout.visibility = View.GONE
+                            setupFeedbackForm("progetto")
+                        }
+                        item.valutato -> {
+                            // Progetto già valutato, mostra il feedback esistente
+                            feedback.visibility = View.GONE
+                            feedbackLayout.visibility = View.VISIBLE
+                            displayFeedback(item.rating, item.comment)
+                        }
+                        else -> {
+                            // Progetto non completato
+                            feedback.visibility = View.GONE
+                            feedbackLayout.visibility = View.GONE
+                        }
+                    }
+                }
+            }
+
+            // Task opened by leader
+            tipo == "task" && role == Role.Leader -> {
+                currentItem?.let { item ->
+                    when {
+                        item.progress == 100 && !item.valutato -> {
+                            // Task completato ma non ancora valutato
+                            feedback.visibility = View.VISIBLE
+                            feedbackLayout.visibility = View.GONE
+                            setupFeedbackForm("task")
+                        }
+                        item.valutato -> {
+                            // Task già valutato, mostra il feedback esistente
+                            feedback.visibility = View.GONE
+                            feedbackLayout.visibility = View.VISIBLE
+                            displayFeedback(item.rating, item.comment)
+                        }
+                        else -> {
+                            // Task non completato
+                            feedback.visibility = View.GONE
+                            feedbackLayout.visibility = View.GONE
+                        }
+                    }
+                }
+            }
+
+            // Altri utenti possono solo vedere il feedback se esiste
+            else -> {
+                currentItem?.let { item ->
+                    if (item.valutato) {
+                        feedback.visibility = View.GONE
+                        feedbackLayout.visibility = View.VISIBLE
+                        displayFeedback(item.rating, item.comment)
+                    } else {
+                        feedback.visibility = View.GONE
+                        feedbackLayout.visibility = View.GONE
+                    }
+                }
+            }
         }
     }
 
-    fun openFeedbackForm(tipo: String) {
+    private fun setupFeedbackForm(type: String) {
         valuta.setOnClickListener {
             val dialogView = layoutInflater.inflate(R.layout.feedback_form, null)
             val radioGroup = dialogView.findViewById<RadioGroup>(R.id.ratingRadioGroup)
@@ -417,77 +469,47 @@ class ItemActivity : AppCompatActivity() {
                 .setView(dialogView)
                 .setPositiveButton("Salva") { _, _ ->
                     val selectedRatingId = radioGroup.checkedRadioButtonId
-                    val rating =
-                        dialogView.findViewById<RadioButton>(selectedRatingId)?.text?.toString()
-                            ?.toInt() ?: 0
+                    val rating = dialogView.findViewById<RadioButton>(selectedRatingId)?.text?.toString()?.toInt() ?: 0
                     val comment = commentEditText.text.toString()
 
-                    saveFeedbackToFirestore(tipo,rating, comment)
+                    lifecycleScope.launch {
+                        saveFeedback(type, rating, comment)
+                    }
                 }
                 .setNegativeButton("Annulla", null)
                 .show()
         }
     }
 
-    private fun saveFeedbackToFirestore(tipo: String, rating: Int, comment: String) {
-        // Crea un oggetto feedback
-        val feedbackData = hashMapOf(
-            "rating" to rating,
-            "comment" to comment,
-            "valutato" to true
-        )
+    private suspend fun saveFeedback(type: String, rating: Int, comment: String) {
+        val success = when (type) {
+            "progetto" -> projectService.saveFeedback(projectId, rating, comment)
+            "task" -> taskService.saveFeedback(projectId, taskId, rating, comment)
+            else -> false
+        }
 
-        when (tipo) {
-            "project" -> {
-                // Aggiungi il feedback al documento "feedback" del progetto
-                db!!.collection("progetti").document(projectId)
-                    .update(feedbackData as Map<String, Any>)  // Usa update() per aggiungere i campi senza sovrascrivere
-                    .addOnSuccessListener {
-                        // Gestisci il successo
-                        handleFeedbackSuccess(rating, comment)
-                    }
-                    .addOnFailureListener { exception ->
-                        // Gestisci gli errori
-                        Log.e(TAG, "Errore durante l'aggiornamento del feedback del progetto", exception)
-                        handleFeedbackError()
-                    }
-            }
-            "task" -> {
-                Log.d(TAG, "salvo task")
-                // Aggiungi il feedback al documento "feedback" del task
-                db!!.collection("progetti").document(projectId)
-                    .collection("task").document(taskId)
-                    .update(feedbackData as Map<String, Any>)
-                    .addOnSuccessListener {
-                        // Gestisci il successo
-                        handleFeedbackSuccess(rating, comment)
-                    }
-                    .addOnFailureListener { exception ->
-                        // Gestisci gli errori
-                        Log.e(TAG, "Errore durante l'aggiornamento del feedback del task", exception)
-                        handleFeedbackError()
-                    }
-            }
-            else -> {
-                // Gestisci l'errore in caso di tipo non valido
-                Toast.makeText(this, "Tipo non valido: $tipo", Toast.LENGTH_SHORT).show()
-            }
+        if (success) {
+            handleFeedbackSuccess(rating, comment)
+        } else {
+            handleFeedbackError()
         }
     }
 
+    private fun displayFeedback(rating: Int, comment: String) {
+        feedbackScore.text = rating.toString()
+        feedbackComment.text = comment
+    }
 
     private fun handleFeedbackSuccess(rating: Int, comment: String) {
         valuta.visibility = View.GONE
         feedbackLayout.visibility = View.VISIBLE
-        feedbackScore.text = "$rating"
-        feedbackComment.text = "$comment"
-        isFeedbackGiven = true
+        displayFeedback(rating, comment)
     }
 
     private fun handleFeedbackError() {
         Toast.makeText(this, "Errore durante il salvataggio del feedback", Toast.LENGTH_SHORT).show()
     }
-*/
+
 
 
     private fun menu() {

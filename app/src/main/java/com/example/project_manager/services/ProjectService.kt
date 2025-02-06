@@ -126,4 +126,12 @@ class ProjectService {
             false
         }
     }
+
+    suspend fun saveFeedback(projectId: String, rating: Int, comment: String): Boolean {
+        return projectRepository.saveFeedback(projectId, rating, comment)
+    }
+
+    suspend fun getFeedback(projectId: String): Triple<Int, String, Boolean>? {
+        return projectRepository.getFeedback(projectId)
+    }
 }

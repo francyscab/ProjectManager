@@ -35,8 +35,9 @@ class ProjectRepository {
                 val progress = document.getLong("progress")?.toInt() ?: 0
                 val comment = document.getString("comment") ?: ""
                 val rating = document.getLong("rating")?.toInt() ?: 0
+                val valutato = document.getBoolean("valutato") ?: false
 
-                data.add(ItemsViewModel(title, leader,creator, deadline,priority,description,progress,comment,rating,document.id))
+                data.add(ItemsViewModel(title, leader,creator, deadline,priority,description,progress,comment,rating,valutato,document.id))
             }
         } catch (exception: Exception) {
             Log.w(TAG, "Error getting project.", exception)
@@ -77,8 +78,9 @@ class ProjectRepository {
                 val progress = document.getLong("progress")?.toInt() ?: 0
                 val comment = document.getString("comment") ?: ""
                 val rating = document.getLong("rating")?.toInt() ?: 0
+                val valutato = document.getBoolean("valutato") ?: false
 
-                ItemsViewModel(title, assignedTo, creator, deadline, priority, description,progress,comment, rating,document.id)
+                ItemsViewModel(title, assignedTo, creator, deadline, priority, description,progress,comment, rating,valutato,document.id)
             } else {
                 throw NoSuchElementException("Project non trovato con ID: $projectId")
             }
@@ -113,4 +115,43 @@ class ProjectRepository {
             throw e
         }
     }
+
+    suspend fun saveFeedback(projectId: String, rating: Int, comment: String): Boolean {
+        return try {
+            val feedbackData = mapOf(
+                "rating" to rating,
+                "comment" to comment,
+                "valutato" to true
+            )
+            db.collection("progetti")
+                .document(projectId)
+                .update(feedbackData)
+                .await()
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Error saving project feedback", e)
+            false
+        }
+    }
+
+    suspend fun getFeedback(projectId: String): Triple<Int, String, Boolean>? {
+        return try {
+            val doc = db.collection("progetti")
+                .document(projectId)
+                .get()
+                .await()
+
+            if (doc.exists()) {
+                Triple(
+                    doc.getLong("rating")?.toInt() ?: 0,
+                    doc.getString("comment") ?: "",
+                    doc.getBoolean("valutato") ?: false
+                )
+            } else null
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting project feedback", e)
+            null
+        }
+    }
+
 }

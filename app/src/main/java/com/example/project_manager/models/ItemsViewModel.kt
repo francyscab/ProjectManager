@@ -12,6 +12,7 @@ data class ItemsViewModel(
     val progress: Int,
     val comment: String,
     val rating: Int,
+    val valutato: Boolean,
     val projectId: String,
     val taskId: String? = null, // Changed to optional String
     val subtaskId: String? = null, // Changed to optional String

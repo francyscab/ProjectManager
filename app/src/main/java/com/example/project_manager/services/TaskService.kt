@@ -172,5 +172,13 @@ class TaskService {
 
         return developerIds
     }
+
+    suspend fun saveFeedback(projectId: String, taskId: String, rating: Int, comment: String): Boolean {
+        return taskRepository.saveFeedback(projectId, taskId, rating, comment)
+    }
+
+    suspend fun getFeedback(projectId: String, taskId: String): Triple<Int, String, Boolean>? {
+        return taskRepository.getFeedback(projectId, taskId)
+    }
 }
 

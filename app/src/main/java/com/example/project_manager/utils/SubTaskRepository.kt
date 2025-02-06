@@ -69,6 +69,7 @@ class SubTaskRepository {
                 val progress = document.getLong("progress")?.toInt() ?: 0
                 val comment = document.getString("comment") ?: ""
                 val rating = document.getLong("rating")?.toInt() ?: 0
+                val valutato = document.getBoolean("valutato") ?: false
 
                 subTasks.add(
                     ItemsViewModel(
@@ -81,6 +82,7 @@ class SubTaskRepository {
                         progress,
                         comment,
                         rating,
+                        valutato,
                         projectId,
                         taskId,
                         document.id
@@ -118,6 +120,7 @@ class SubTaskRepository {
                 val progress = subtaskDoc.getLong("progress")?.toInt() ?: 0
                 val comment = subtaskDoc.getString("comment") ?: ""
                 val rating = subtaskDoc.getLong("rating")?.toInt() ?: 0
+                val valutato = subtaskDoc.getBoolean("valutato") ?: false
 
                 ItemsViewModel(
                     title,
@@ -129,6 +132,7 @@ class SubTaskRepository {
                     progress,
                     comment,
                     rating,
+                    valutato,
                     projectId,
                     subtaskDoc.id
                 )

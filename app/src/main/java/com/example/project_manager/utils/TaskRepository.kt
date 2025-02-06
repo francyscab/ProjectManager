@@ -10,6 +10,7 @@ class TaskRepository {
 
     val db=FirebaseFirestore.getInstance()
     val projectRepository = ProjectRepository()
+
     suspend fun uploadTask(projectId: String, taskData: Map<String, Any>): String {
         return try {
             val documentReference = db.collection("progetti")
@@ -48,8 +49,9 @@ class TaskRepository {
                 val progress = document.getLong("progress")?.toInt() ?: 0
                 val comment = document.getString("comment") ?: ""
                 val rating = document.getLong("rating")?.toInt() ?: 0
+                val valutato = document.getBoolean("valutato") ?: false
 
-                tasks.add(ItemsViewModel(title, assignedTo,creator, deadline, priority,description,progress ,comment,rating, projectId, document.id))
+                tasks.add(ItemsViewModel(title, assignedTo,creator, deadline, priority,description,progress ,comment,rating,valutato, projectId, document.id))
             }
         } catch (exception: Exception) {
             Log.e(TAG, "Error getting tasks for project: $projectId", exception)
@@ -91,8 +93,9 @@ class TaskRepository {
                 val progress = taskDoc.getLong("progress")?.toInt() ?: 0
                 val comment = taskDoc.getString("comment") ?: ""
                 val rating = taskDoc.getLong("rating")?.toInt() ?: 0
+                val valutato = taskDoc.getBoolean("valutato") ?: false
 
-                ItemsViewModel(title, assignedTo, creator, deadline, priority,description, progress,comment,rating, projectId, taskDoc.id)
+                ItemsViewModel(title, assignedTo, creator, deadline, priority,description, progress,comment,rating,valutato, projectId, taskDoc.id)
             } else {
                 Log.w("Firestore", "Task non trovato: $taskId")
                 throw NoSuchElementException("Task non trovato con ID: $taskId")
@@ -169,6 +172,7 @@ class TaskRepository {
                             progress = taskDoc.getLong("progress")?.toInt() ?: 0,
                             comment = taskDoc.getString("comment") ?: "",
                             rating = taskDoc.getLong("rating")?.toInt() ?: 0,
+                            valutato = taskDoc.getBoolean("valutato") ?: false,
                             projectId = project.projectId,
                             taskId = taskDoc.id
                         )
@@ -187,6 +191,48 @@ class TaskRepository {
         return tasks
     }
 
+    suspend fun saveFeedback(projectId: String, taskId: String, rating: Int, comment: String): Boolean {
+        return try {
+            val feedbackData = mapOf(
+                "rating" to rating,
+                "comment" to comment,
+                "valutato" to true
+            )
+            db.collection("progetti")
+                .document(projectId)
+                .collection("task")
+                .document(taskId)
+                .update(feedbackData)
+                .await()
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Error saving task feedback", e)
+            false
+        }
+    }
 
+    suspend fun getFeedback(projectId: String, taskId: String): Triple<Int, String, Boolean>? {
+        return try {
+            val doc = db.collection("progetti")
+                .document(projectId)
+                .collection("task")
+                .document(taskId)
+                .get()
+                .await()
 
+            if (doc.exists()) {
+                Triple(
+                    doc.getLong("rating")?.toInt() ?: 0,
+                    doc.getString("comment") ?: "",
+                    doc.getBoolean("valutato") ?: false
+                )
+            } else null
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting task feedback", e)
+            null
+        }
+    }
 }
+
+
+

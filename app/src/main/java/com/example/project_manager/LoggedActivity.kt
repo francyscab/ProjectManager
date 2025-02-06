@@ -74,8 +74,8 @@ class LoggedActivity : AppCompatActivity() {
         statistticButtonHandler()
 
         //barra laterale per filtri
-        drawerLayout = findViewById<DrawerLayout>(R.id.drawer_layout)
-        val iconButton = findViewById<ImageView>(R.id.icon)
+        drawerLayout = findViewById<DrawerLayout>(R.id.drawer_layout_logged)
+        val iconButton = findViewById<ImageView>(R.id.icon_logged)
 
         iconButton.setOnClickListener {
             if (drawerLayout.isDrawerOpen(GravityCompat.END)) {
