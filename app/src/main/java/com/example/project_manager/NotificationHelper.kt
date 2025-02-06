@@ -11,7 +11,7 @@ import com.google.firebase.firestore.*
 class NotificationHelper(private val context: Context, private val db: FirebaseFirestore) {
 
     private var notificationManager: NotificationManager? = null
-    private val resultIntent: Intent = Intent(context, ProjectActivity::class.java)
+    private val resultIntent: Intent = Intent(context, ItemActivity::class.java)
 
     fun notification(role: String, name: String, type: String, data: List<String>? = null) {
         if (type == "sollecito") {

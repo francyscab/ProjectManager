@@ -1,4 +1,4 @@
-package com.example.project_manager
+/*package com.example.project_manager
 
 import kotlinx.coroutines.*
 import android.content.Intent
@@ -768,3 +768,4 @@ class ProjectActivity : AppCompatActivity() {
     }
 }
 
+*/

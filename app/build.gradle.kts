@@ -51,6 +51,8 @@ dependencies {
     implementation("androidx.recyclerview:recyclerview:1.3.2")  // for adding recyclerview
     implementation("androidx.cardview:cardview:1.0.0")
     implementation("com.google.firebase:firebase-messaging-ktx:24.1.0")  // for adding cardview
+    implementation ("com.github.bumptech.glide:glide:4.12.0")
+    implementation ("com.google.firebase:firebase-storage-ktx")
     testImplementation("junit:junit:4.13.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")

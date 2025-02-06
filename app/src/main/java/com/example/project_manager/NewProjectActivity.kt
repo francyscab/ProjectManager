@@ -1,4 +1,4 @@
-package com.example.project_manager
+/*package com.example.project_manager
 
 import android.annotation.SuppressLint
 import android.content.ContentValues
@@ -163,7 +163,7 @@ class NewProjectActivity : AppCompatActivity() {
                                     Toast.LENGTH_SHORT
                                 ).show()
                                 //dopo averlo creato apro la schermata del nuovo progetto
-                                val intent = Intent(this, ProjectActivity::class.java)
+                                val intent = Intent(this, ItemActivity::class.java)
                                 intent.putExtra("projectId",documentReference.id)
                                 intent.putExtra("role",role )
                                 intent.putExtra("name",creator)
@@ -198,7 +198,7 @@ class NewProjectActivity : AppCompatActivity() {
                                 Log.w(ContentValues.TAG, "projectid $documentReference.id")
                                 Log.w(ContentValues.TAG, "calling new activity")
                                 Log.w(ContentValues.TAG, "role $role")
-                                val intent = Intent(this, ProjectActivity::class.java)
+                                val intent = Intent(this, ItemActivity::class.java)
                                 intent.putExtra("taskId", documentReference.id)
                                 intent.putExtra("projectId", projectId)
                                 intent.putExtra("role",role )
@@ -232,7 +232,7 @@ class NewProjectActivity : AppCompatActivity() {
                                 Log.w(ContentValues.TAG, "taskid $taskid")
                                 Log.w(ContentValues.TAG, "projectid $projectId")
 
-                                val intent = Intent(this, ProjectActivity::class.java)
+                                val intent = Intent(this, ItemActivity::class.java)
                                 intent.putExtra("subtaskId", documentReference.id)
                                 intent.putExtra("taskId", taskid)
                                 intent.putExtra("projectId", projectId)
@@ -301,7 +301,7 @@ class NewProjectActivity : AppCompatActivity() {
             "task" -> {
                 // Navigate to the project view
                 Log.d(ContentValues.TAG, "Back from task to project")
-                val intent = Intent(this, ProjectActivity::class.java)
+                val intent = Intent(this, ItemActivity::class.java)
                 intent.putExtra("projectId", projectId)
                 intent.putExtra("role", role)
                 intent.putExtra("name", creator)
@@ -312,7 +312,7 @@ class NewProjectActivity : AppCompatActivity() {
             "subtask" -> {
                 // Navigate to the task view
                 Log.d(ContentValues.TAG, "Back from subtask to task")
-                val intent = Intent(this, ProjectActivity::class.java)
+                val intent = Intent(this, ItemActivity::class.java)
                 intent.putExtra("projectId", projectId)
                 intent.putExtra("taskId", taskid)
                 intent.putExtra("role", role)
@@ -337,4 +337,4 @@ class NewProjectActivity : AppCompatActivity() {
             }
         }
     }
-}
+}*/
