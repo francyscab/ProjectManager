@@ -13,8 +13,11 @@ data class ItemsViewModel(
     val comment: String,
     val rating: Int,
     val valutato: Boolean,
+    val createdAt: Long = System.currentTimeMillis(),
+    val completedAt: Long,
+    val sollecitato: Boolean? = false,
     val projectId: String,
-    val taskId: String? = null, // Changed to optional String
+    val taskId: String? = null,
     val subtaskId: String? = null, // Changed to optional String
 ) {
 }

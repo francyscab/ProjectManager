@@ -44,6 +44,9 @@
             android:name=".NewItemActivity"
              />
         <activity
+            android:name=".StatisticheActivity"
+            />
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>

@@ -10,9 +10,7 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import com.example.project_manager.services.UserService
-import com.example.project_manager.utils.FileRepository
-import com.example.project_manager.utils.UserRepository
-import com.google.firebase.auth.FirebaseAuth
+import com.example.project_manager.repository.UserRepository
 
 class LoginActivity : AppCompatActivity() {
 

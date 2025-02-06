@@ -1,11 +1,9 @@
-package com.example.project_manager.utils
+package com.example.project_manager.repository
 
 import android.content.ContentValues.TAG
 import android.util.Log
 import com.example.project_manager.models.ItemsViewModel
-import com.google.firebase.Firebase
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.tasks.await
 
 class ProjectRepository {
@@ -28,7 +26,7 @@ class ProjectRepository {
             for (document in result) {
                 val creator = document.getString("creator") ?: ""
                 val title = document.getString("title") ?: ""
-                val leader = document.getString("leader") ?: ""
+                val leader = document.getString("assignedTo") ?: ""
                 val deadline = document.getString("deadline") ?: ""
                 val priority = document.getString("priority") ?: ""
                 val description = document.getString("description") ?: ""
@@ -36,8 +34,11 @@ class ProjectRepository {
                 val comment = document.getString("comment") ?: ""
                 val rating = document.getLong("rating")?.toInt() ?: 0
                 val valutato = document.getBoolean("valutato") ?: false
+                val createdAt = document.getLong("createdAt")?: 0
+                val completedAt = document.getLong("completedAt") ?:-1
+                val sollecitato = document.getBoolean("sollecitato") ?: false
 
-                data.add(ItemsViewModel(title, leader,creator, deadline,priority,description,progress,comment,rating,valutato,document.id))
+                data.add(ItemsViewModel(title, leader,creator, deadline,priority,description,progress,comment,rating,valutato,createdAt, completedAt,sollecitato,document.id))
             }
         } catch (exception: Exception) {
             Log.w(TAG, "Error getting project.", exception)
@@ -79,8 +80,11 @@ class ProjectRepository {
                 val comment = document.getString("comment") ?: ""
                 val rating = document.getLong("rating")?.toInt() ?: 0
                 val valutato = document.getBoolean("valutato") ?: false
+                val createdAt = document.getLong("createdAt")?:0
+                val completedAt = document.getLong("completedAt")?:-1
+                val sollecitato = document.getBoolean("sollecitato") ?: false
 
-                ItemsViewModel(title, assignedTo, creator, deadline, priority, description,progress,comment, rating,valutato,document.id)
+                ItemsViewModel(title, assignedTo, creator, deadline, priority, description,progress,comment, rating,valutato,createdAt,completedAt,sollecitato,document.id)
             } else {
                 throw NoSuchElementException("Project non trovato con ID: $projectId")
             }

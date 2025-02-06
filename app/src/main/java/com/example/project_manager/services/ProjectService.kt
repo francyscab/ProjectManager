@@ -3,7 +3,7 @@ package com.example.project_manager.services
 import android.content.ContentValues.TAG
 import android.util.Log
 import com.example.project_manager.models.ItemsViewModel
-import com.example.project_manager.utils.ProjectRepository
+import com.example.project_manager.repository.ProjectRepository
 
 class ProjectService {
     val projectRepository= ProjectRepository()
@@ -33,7 +33,10 @@ class ProjectService {
             "creator" to creator,
             "assignedTo" to assignedTo,
             "progress" to 0,
-            "valutato" to false
+            "valutato" to false,
+            "createdAt" to System.currentTimeMillis(),
+            "completedAt" to -1,
+            "sollecitato" to false
         )
         return try {
             projectRepository.uploadProject(projectData)

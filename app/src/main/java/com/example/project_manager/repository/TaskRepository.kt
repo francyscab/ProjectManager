@@ -1,4 +1,4 @@
-package com.example.project_manager.utils
+package com.example.project_manager.repository
 
 import android.content.ContentValues.TAG
 import android.util.Log
@@ -50,8 +50,11 @@ class TaskRepository {
                 val comment = document.getString("comment") ?: ""
                 val rating = document.getLong("rating")?.toInt() ?: 0
                 val valutato = document.getBoolean("valutato") ?: false
+                val createdAt = document.getLong("createdAt")?:0
+                val completedAt = document.getLong("completedAt")?:-1
+                val sollecitato = document.getBoolean("sollecitato") ?: false
 
-                tasks.add(ItemsViewModel(title, assignedTo,creator, deadline, priority,description,progress ,comment,rating,valutato, projectId, document.id))
+                tasks.add(ItemsViewModel(title, assignedTo,creator, deadline, priority,description,progress ,comment,rating,valutato, createdAt, completedAt,sollecitato,projectId, document.id))
             }
         } catch (exception: Exception) {
             Log.e(TAG, "Error getting tasks for project: $projectId", exception)
@@ -94,8 +97,11 @@ class TaskRepository {
                 val comment = taskDoc.getString("comment") ?: ""
                 val rating = taskDoc.getLong("rating")?.toInt() ?: 0
                 val valutato = taskDoc.getBoolean("valutato") ?: false
+                val createdAt = taskDoc.getLong("createdAt")?:0
+                val completedAt = taskDoc.getLong("completedAt")?:-1
+                val sollecitato = taskDoc.getBoolean("sollecitato") ?: false
 
-                ItemsViewModel(title, assignedTo, creator, deadline, priority,description, progress,comment,rating,valutato, projectId, taskDoc.id)
+                ItemsViewModel(title, assignedTo, creator, deadline, priority,description, progress,comment,rating,valutato,createdAt,completedAt,sollecitato, projectId, taskDoc.id)
             } else {
                 Log.w("Firestore", "Task non trovato: $taskId")
                 throw NoSuchElementException("Task non trovato con ID: $taskId")
@@ -173,8 +179,12 @@ class TaskRepository {
                             comment = taskDoc.getString("comment") ?: "",
                             rating = taskDoc.getLong("rating")?.toInt() ?: 0,
                             valutato = taskDoc.getBoolean("valutato") ?: false,
+                            createdAt = taskDoc.getLong("createdAt") ?: 0,
+                            completedAt = taskDoc.getLong("completedAt") ?: -1,
+                            sollecitato = taskDoc.getBoolean("sollecitato") ?: false,
                             projectId = project.projectId,
                             taskId = taskDoc.id
+
                         )
                         tasks.add(task)
                     }

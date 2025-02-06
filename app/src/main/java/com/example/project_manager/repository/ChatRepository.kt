@@ -1,4 +1,4 @@
-package com.example.project_manager.utils
+package com.example.project_manager.repository
 
 import android.util.Log
 import com.example.project_manager.models.Chat

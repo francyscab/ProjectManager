@@ -5,8 +5,8 @@ import android.net.Uri
 import android.util.Log
 import com.example.project_manager.models.Role
 import com.example.project_manager.models.User
-import com.example.project_manager.utils.FileRepository
-import com.example.project_manager.utils.UserRepository
+import com.example.project_manager.repository.FileRepository
+import com.example.project_manager.repository.UserRepository
 
 class UserService {
     val userRepository = UserRepository()

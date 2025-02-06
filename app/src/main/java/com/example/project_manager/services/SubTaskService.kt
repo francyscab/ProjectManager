@@ -3,9 +3,9 @@ package com.example.project_manager.services
 import android.content.ContentValues.TAG
 import android.util.Log
 import com.example.project_manager.models.ItemsViewModel
-import com.example.project_manager.utils.ProjectRepository
-import com.example.project_manager.utils.SubTaskRepository
-import com.example.project_manager.utils.TaskRepository
+import com.example.project_manager.repository.ProjectRepository
+import com.example.project_manager.repository.SubTaskRepository
+import com.example.project_manager.repository.TaskRepository
 
 class SubTaskService {
     val projectService = ProjectService()
@@ -51,7 +51,10 @@ class SubTaskService {
             "creator" to creator,
             "assignedTo" to assignedTo,
             "progress" to 0,
-            "valutato" to false
+            "valutato" to false,
+            "createdAt" to System.currentTimeMillis(),
+            "completedAt" to -1,
+            "sollecitato" to false
         )
         return try {
             subtaskRepository.uploadSubTask(projectId, taskId, subtaskData)

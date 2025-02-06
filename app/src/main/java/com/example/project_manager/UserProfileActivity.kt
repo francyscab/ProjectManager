@@ -10,7 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.project_manager.models.User
 import com.example.project_manager.services.UserService
-import com.example.project_manager.utils.FileRepository
+import com.example.project_manager.repository.FileRepository
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 

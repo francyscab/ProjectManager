@@ -2,7 +2,7 @@ package com.example.project_manager.services
 
 import com.example.project_manager.models.Chat
 import com.example.project_manager.models.Message
-import com.example.project_manager.utils.ChatRepository
+import com.example.project_manager.repository.ChatRepository
 
 
 class ChatService {

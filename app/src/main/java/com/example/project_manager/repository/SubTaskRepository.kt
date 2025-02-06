@@ -1,4 +1,4 @@
-package com.example.project_manager.utils
+package com.example.project_manager.repository
 
 import android.content.ContentValues.TAG
 import android.util.Log
@@ -70,6 +70,9 @@ class SubTaskRepository {
                 val comment = document.getString("comment") ?: ""
                 val rating = document.getLong("rating")?.toInt() ?: 0
                 val valutato = document.getBoolean("valutato") ?: false
+                val createdAt = document.getLong("createdAt")?:0
+                val completedAt = document.getLong("completedAt")?:-1
+                val sollecitato = document.getBoolean("sollecitato") ?: false
 
                 subTasks.add(
                     ItemsViewModel(
@@ -83,6 +86,9 @@ class SubTaskRepository {
                         comment,
                         rating,
                         valutato,
+                        createdAt,
+                        completedAt,
+                        sollecitato,
                         projectId,
                         taskId,
                         document.id
@@ -121,6 +127,9 @@ class SubTaskRepository {
                 val comment = subtaskDoc.getString("comment") ?: ""
                 val rating = subtaskDoc.getLong("rating")?.toInt() ?: 0
                 val valutato = subtaskDoc.getBoolean("valutato") ?: false
+                val createdAt = subtaskDoc.getLong("createdAt")?:0
+                val completedAt = subtaskDoc.getLong("completedAt")?:-1
+                val sollecitato = subtaskDoc.getBoolean("sollecitato") ?: false
 
                 ItemsViewModel(
                     title,
@@ -133,6 +142,9 @@ class SubTaskRepository {
                     comment,
                     rating,
                     valutato,
+                    createdAt,
+                    completedAt,
+                    sollecitato,
                     projectId,
                     subtaskDoc.id
                 )

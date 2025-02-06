@@ -1,16 +1,14 @@
-package com.example.project_manager.utils
+package com.example.project_manager.repository
 
 import android.content.ContentValues.TAG
 import android.net.Uri
 import android.util.Log
 import com.example.project_manager.models.Role
 import com.example.project_manager.models.User
-import com.example.project_manager.services.ProjectService
 import com.example.project_manager.services.TaskService
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.logger.Logger
-import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.tasks.await
 
 class UserRepository {
