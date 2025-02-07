@@ -48,6 +48,8 @@ class NewItemActivity : AppCompatActivity() {
     private lateinit var errorPriority: TextView
     private lateinit var errorSpinner: TextView
     private lateinit var saveButton: Button
+    private lateinit var priorityTextLayout: LinearLayout
+    private lateinit var priorityLayout: LinearLayout
 
     private val userMap = mutableMapOf<String, String>()
 
@@ -76,6 +78,8 @@ class NewItemActivity : AppCompatActivity() {
         errorPriority = findViewById(R.id.errore_priorita)
         errorSpinner = findViewById(R.id.errore_spinner)
         saveButton = findViewById(R.id.buttonSave)
+        priorityTextLayout = findViewById(R.id.priorityTextLayout)
+        priorityLayout = findViewById(R.id.priorityLayout)
     }
 
     private fun setupIntentData() {
@@ -93,6 +97,8 @@ class NewItemActivity : AppCompatActivity() {
     }
 
     private fun updateFormType(role:Role) {
+        priorityLayout.visibility= View.VISIBLE
+        priorityTextLayout.visibility= View.GONE
         val typeNewTextView = findViewById<TextView>(R.id.typeNew)
         val spinnerLayout = findViewById<LinearLayout>(R.id.spinnerLinearLayout)
 

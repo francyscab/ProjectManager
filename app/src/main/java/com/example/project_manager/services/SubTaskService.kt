@@ -94,4 +94,31 @@ class SubTaskService {
         subtaskRepository.updateSubTask(projectId, taskId,subtaskId, updates)
     }
 
+    suspend fun filterSubTasksByProgress(
+        subtasks: ArrayList<ItemsViewModel>,
+        filter: String // "completed" o "incompleted"
+    ): ArrayList<ItemsViewModel> {
+        val filteredSubTasks = ArrayList<ItemsViewModel>()
+
+        for (subtask in subtasks) {
+            try {
+                val progress: Int = if (!subtask.taskId.isNullOrEmpty()) {
+                    subtaskRepository.getSubTaskProgress( subtask.projectId,subtask.taskId,subtask.subtaskId!!)
+                } else {
+                    throw Exception("subtaskid mancante")
+                }
+
+                when (filter) {
+                    "completed" -> if (progress == 100) filteredSubTasks.add(subtask)
+                    "incompleted" -> if ((progress ?: 0) < 100) filteredSubTasks.add(subtask)
+                    else -> throw IllegalArgumentException("Filtro non valido: $filter. Usa 'completed' o 'incompleted'.")
+                }
+            } catch (e: Exception) {
+                throw Exception("Errore nel filtrare il task con ID: ${subtask.subtaskId}", e)
+            }
+        }
+
+        return filteredSubTasks
+    }
+
 }

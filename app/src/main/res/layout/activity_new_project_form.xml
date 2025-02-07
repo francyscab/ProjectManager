@@ -151,6 +151,7 @@
         android:layout_marginLeft="120dp"/>
 
     <LinearLayout
+        android:id="@+id/priorityLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
@@ -189,6 +190,29 @@
 
         </RadioGroup>
     </LinearLayout>
+    <LinearLayout
+        android:id="@+id/priorityTextLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <ImageView
+            android:layout_width="50dp"
+            android:layout_height="53dp"
+            android:layout_marginLeft="50dp"
+            android:src="@drawable/priority" />
+
+        <TextView
+            android:id="@+id/priorityTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:text="Priorità: Alta" />
+
+    </LinearLayout>
 
     <TextView
         android:id="@+id/errore_priorita"
@@ -213,6 +237,8 @@
             android:textColor="@color/black"
             android:text=" Salva" />
     </LinearLayout>
+
+
 
 </LinearLayout>
 

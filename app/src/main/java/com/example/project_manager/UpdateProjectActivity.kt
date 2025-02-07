@@ -106,6 +106,20 @@ class UpdateProjectActivity : AppCompatActivity() {
         pickDate.text = item.deadline
         pickDate.isEnabled = false
 
+        // Trova il layout contenente i RadioButton e nascondilo
+        val priorityLayout: LinearLayout = findViewById(R.id.priorityLayout)
+        priorityLayout.visibility = View.GONE
+
+        // Aggiungi un TextView per mostrare la priorità
+        val priorityTextView: TextView = findViewById(R.id.priorityTextView)
+        priorityTextView.visibility = View.VISIBLE
+        priorityTextView.text = "Priorità: ${item.priority}"
+
+        titleNewProject.setText(item.title)
+        descrizioneNewProject.setText(item.description)
+        pickDate.text = item.deadline
+        pickDate.isEnabled = false
+
         when (role) {
             Role.Manager -> {
                 val users = loadSpinnerData(Role.Leader)

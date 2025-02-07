@@ -46,16 +46,42 @@ class ChatListAdapter(
                         textViewChatName.text = "${user.name} ${user.surname}"
                         // Load profile image using FileRepository
                         loadProfileImage(user)
+                        // Gestione ultimo messaggio
+                        if (chat.lastMessage.isNotEmpty()) {
+                            textViewLastMessage.visibility = View.VISIBLE
+                            textViewLastMessage.text = chat.lastMessage
+                        } else {
+                            textViewLastMessage.visibility = View.GONE
+                        }
+
+                        // Gestione timestamp
+                        if (chat.timestamp > 0) {
+                            textViewTimestamp.visibility = View.VISIBLE
+                            textViewTimestamp.text = SimpleDateFormat(
+                                "dd/MM/yyyy HH:mm",
+                                Locale.getDefault()
+                            ).format(Date(chat.timestamp))
+                        } else {
+                            textViewTimestamp.visibility = View.GONE
+                        }
+
+                        // Gestione contatore messaggi non letti
+                        if (chat.unreadCount > 0 && chat.senderId != userService.getCurrentUserId()) {
+                            textViewUnreadCount.visibility = View.VISIBLE
+                            textViewUnreadCount.text = chat.unreadCount.toString()
+                            textViewUnreadCount.setBackgroundResource(R.drawable.badge_background)
+                            textViewLastMessage.setTypeface(null, android.graphics.Typeface.BOLD)
+                        } else {
+                            textViewUnreadCount.visibility = View.GONE
+                            textViewLastMessage.setTypeface(null, android.graphics.Typeface.NORMAL)
+                        }
+
+                        itemView.setOnClickListener {
+                            onChatSelected(chat)
+                        }
                     } ?: run {
                         textViewChatName.text = "Unknown User"
                         imageViewProfile.setImageResource(R.drawable.username)
-                    }
-
-                    if (chat.unreadCount > 0) {
-                        textViewUnreadCount.visibility = View.VISIBLE
-                        textViewUnreadCount.text = chat.unreadCount.toString()
-                    } else {
-                        textViewUnreadCount.visibility = View.GONE
                     }
 
                 } catch (e: Exception) {
@@ -65,39 +91,7 @@ class ChatListAdapter(
                 }
             }
 
-            // Gestione ultimo messaggio
-            if (chat.lastMessage.isNotEmpty()) {
-                textViewLastMessage.visibility = View.VISIBLE
-                textViewLastMessage.text = chat.lastMessage
-            } else {
-                textViewLastMessage.visibility = View.GONE
-            }
 
-            // Gestione timestamp
-            if (chat.timestamp > 0) {
-                textViewTimestamp.visibility = View.VISIBLE
-                textViewTimestamp.text = SimpleDateFormat(
-                    "dd/MM/yyyy HH:mm",
-                    Locale.getDefault()
-                ).format(Date(chat.timestamp))
-            } else {
-                textViewTimestamp.visibility = View.GONE
-            }
-
-            // Gestione contatore messaggi non letti
-            if (chat.unreadCount > 0 && chat.senderId != userService.getCurrentUserId()) {
-                textViewUnreadCount.visibility = View.VISIBLE
-                textViewUnreadCount.text = chat.unreadCount.toString()
-                textViewUnreadCount.setBackgroundResource(R.drawable.badge_background)
-                textViewLastMessage.setTypeface(null, android.graphics.Typeface.BOLD)
-            } else {
-                textViewUnreadCount.visibility = View.GONE
-                textViewLastMessage.setTypeface(null, android.graphics.Typeface.NORMAL)
-            }
-
-            itemView.setOnClickListener {
-                onChatSelected(chat)
-            }
         }
 
         private suspend fun loadProfileImage(user: User) {

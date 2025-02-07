@@ -1,5 +1,6 @@
 package com.example.project_manager
 
+import android.app.DatePickerDialog
 import android.app.ProgressDialog
 import android.content.Intent
 import android.net.Uri
@@ -7,6 +8,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.ImageView
@@ -37,6 +39,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
@@ -55,13 +58,7 @@ class ItemActivity : AppCompatActivity() {
     private val PICK_FILE_REQUEST_CODE = 2002
     private val fileService = FileService()
 
-    private lateinit var projectNameTextView: TextView
-    private lateinit var projectDescriptionTextView: TextView
-    private lateinit var projectDeadlineTextView: TextView
-    private lateinit var projectCreatorTextView: TextView
-    private lateinit var projectAssignedTextView: TextView
     private lateinit var progressSeekBar: SeekBar
-    private lateinit var progressInfo: TextView
     private lateinit var progLeaderTask: LinearLayout
     private lateinit var tipoElenco: TextView
     private lateinit var seekbarLayout: LinearLayout
@@ -72,7 +69,6 @@ class ItemActivity : AppCompatActivity() {
     private lateinit var feedbackLayout: LinearLayout
     private lateinit var feedback: LinearLayout
     private lateinit var valuta: Button
-    private var isFeedbackGiven: Boolean = false
     private lateinit var feedbackScore: TextView
     private lateinit var feedbackComment: TextView
     private lateinit var assignedCont: LinearLayout
@@ -81,6 +77,13 @@ class ItemActivity : AppCompatActivity() {
     private lateinit var fileLayout: LinearLayout
     private lateinit var filesRecyclerView: RecyclerView
     private lateinit var drawerLayout: DrawerLayout
+
+    private var startDate: Long = -1L
+    private var endDate: Long = -1L
+
+    private lateinit var filteredDataByStatus: ArrayList<ItemsViewModel>
+    val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -106,6 +109,7 @@ class ItemActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             role = userService.getCurrentUserRole()!!
+            loadUsersFilter(role)
             loadDetails(tipo, notificationHelper)
             menu(tipo)
         }
@@ -175,6 +179,7 @@ class ItemActivity : AppCompatActivity() {
                 }
 
             }
+
             else -> Log.e(TAG, "Tipo non riconosciuto: $tipo")
         }
     }
@@ -249,15 +254,6 @@ class ItemActivity : AppCompatActivity() {
         }
 
     }
-
-    private suspend fun setupDeveloperView() {
-        sollecitaCont.visibility = View.GONE
-        progLeaderTask.visibility = View.GONE
-        seekbarLayout.visibility = View.GONE
-
-        setData(tipo, taskId, projectId, subtaskId)
-    }
-
 
     private suspend fun setupDeveloperSubTaskView() {
         sollecitaCont.visibility = View.GONE
@@ -609,58 +605,48 @@ class ItemActivity : AppCompatActivity() {
         startActivity(intent)
     }
 
-    private fun deleteItem(tipo:String) {
-        AlertDialog.Builder(this)
-            .setTitle("Conferma eliminazione")
-            .setMessage("Sei sicuro di voler eliminare questo $tipo?")
-            .setPositiveButton("Elimina") { _, _ ->
-                // Procedi con l'eliminazione
-                lifecycleScope.launch {
-                    try {
-                        val success = when (tipo) {
-                            "progetto" -> projectService.deleteProject(projectId)
-                            "task" -> taskService.deleteTask(projectId, taskId)
-                            "subtask" -> subtaskService.deleteSubTask(projectId, taskId, subtaskId)
-                            else -> {
-                                Log.e(TAG, "Tipo non valido: $tipo")
-                                false
-                            }
-                        }
-
-                        if (success) {
-                            Toast.makeText(
-                                this@ItemActivity,
-                                "$tipo eliminato con successo",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            finish()
-                        } else {
-                            Toast.makeText(
-                                this@ItemActivity,
-                                "Errore durante l'eliminazione del $tipo",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Error during deletion", e)
-                        Toast.makeText(
-                            this@ItemActivity,
-                            "Errore durante l'eliminazione del $tipo: ${e.message}",
-                            Toast.LENGTH_SHORT
-                        ).show()
+    private fun deleteItem(tipo: String) {
+        lifecycleScope.launch {
+            try {
+                val success = when (tipo) {
+                    "progetto" -> projectService.deleteProject(projectId)
+                    "task" -> taskService.deleteTask(projectId, taskId)
+                    "subtask" -> subtaskService.deleteSubTask(projectId, taskId, subtaskId)
+                    else -> {
+                        Log.e(TAG, "Tipo non valido: $tipo")
+                        false
                     }
                 }
+
+                if (success) {
+                    Toast.makeText(
+                        this@ItemActivity,
+                        "$tipo eliminato con successo",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    finish()
+                } else {
+                    Toast.makeText(
+                        this@ItemActivity,
+                        "Errore durante l'eliminazione del $tipo",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error during deletion", e)
+                Toast.makeText(
+                    this@ItemActivity,
+                    "Errore durante l'eliminazione del $tipo: ${e.message}",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
-            .setNegativeButton("Annulla", null)
-            .show()
+        }
     }
 
 
     //funzione che carica i task o sottotask nella recycler view
     private fun loadTask() {
         var data = ArrayList<ItemsViewModel>()
-        val recyclerviewTask = findViewById<RecyclerView>(R.id.recyclerviewTask)
-        val noTasksTextView = findViewById<TextView>(R.id.noTasksTextView)
 
         // Avvia una Coroutine nel contesto del Main Thread
         CoroutineScope(Dispatchers.Main).launch {
@@ -670,30 +656,29 @@ class ItemActivity : AppCompatActivity() {
                 } else if (role == Role.Developer) {
                     data = subtaskService.getAllSubTaskByTaskId(projectId, taskId)
                 }
-                updateUI(data, recyclerviewTask, noTasksTextView)
+                updateUI(data)
             } catch (e: Exception) {
                 Log.e(TAG, "Error loading tasks: ", e)
-                updateUI(
-                    data,
-                    recyclerviewTask,
-                    noTasksTextView
-                ) // Anche in caso di errore, aggiorna la UI
+                updateUI(data) // Anche in caso di errore, aggiorna la UI
             }
+            setupFilterHandlers(data)
         }
+
     }
 
     private fun updateUI(
         data: ArrayList<ItemsViewModel>,
-        recyclerViewTask: RecyclerView,
-        noTasksTextView: TextView
     ) {
+        val recyclerviewTask = findViewById<RecyclerView>(R.id.recyclerviewTask)
+        val noTasksTextView = findViewById<TextView>(R.id.noTasksTextView)
+
         val hasData = data.isNotEmpty()
-        recyclerViewTask.visibility = if (hasData) View.VISIBLE else View.GONE
+        recyclerviewTask.visibility = if (hasData) View.VISIBLE else View.GONE
         noTasksTextView.visibility = if (hasData) View.GONE else View.VISIBLE
 
         if (hasData) {
             // Configure RecyclerView
-            recyclerViewTask.apply {
+            recyclerviewTask.apply {
                 layoutManager = LinearLayoutManager(context)
                 adapter = CustomAdapter(data).apply {
                     setOnItemClickListener(object : CustomAdapter.onItemClickListener {
@@ -810,42 +795,7 @@ class ItemActivity : AppCompatActivity() {
         private const val TAG = "ProjectDetailsActivity"
     }
 
-    /*override fun onBackPressed() {
-        // If we're viewing a subtask, go back to the task view
-        if (subtaskId.isNotEmpty()) {
-            Log.d(TAG, "Back from subtask to task")
-            val intent = Intent(this, ProjectActivity::class.java)
-            intent.putExtra("projectId", projectId)
-            intent.putExtra("taskId", taskId)
-            intent.putExtra("role", role)
-            intent.putExtra("name", name)
-            startActivity(intent)
-            finish() // Finish the current activity (the subtask view)
-        } else if (taskId.isNotEmpty() && role == "Leader") {
-            // If it's a task, go to the project view
-            Log.d(TAG, "Back from task to project")
-            val intent = Intent(this, ProjectActivity::class.java)
-            intent.putExtra("projectId", projectId)
-            intent.putExtra("role", role)
-            intent.putExtra("name", name)
-            startActivity(intent)
-            finish() // Finish the current activity (the task view)
-        }else if (taskId.isNotEmpty() && role == "Developer") {
-            // If it's a task and the role is Developer, go to the LoggedActivity
-            Log.d(TAG, "Back from task (Developer) to LoggedActivity")
-            //val intent = Intent(this, LoggedActivity::class.java)
-            intent.putExtra("name", name)
-            startActivity(intent)
-            finish() // Finish the current activity (the task view) else if (projectId.isNotEmpty()) {
-            // If it's a project, go to the previous activity
-            Log.d(TAG, "Back from project to previous activity")
-            finish() // Finish the current activity (the project view)
-        } else {
-            // Default behavior (shouldn't happen, but just in case)
-            Log.d(TAG, "Back default")
-            super.onBackPressed()
-        }
-    }*/
+
 
     private fun setupFileUpload() {
         buttonFile.setOnClickListener {
@@ -870,7 +820,6 @@ class ItemActivity : AppCompatActivity() {
         }
     }
 
-    // Add/Update onActivityResult method
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
@@ -920,6 +869,211 @@ class ItemActivity : AppCompatActivity() {
         val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
         val originalFileName = fileUri.lastPathSegment ?: "file"
         return "${timeStamp}_${originalFileName}"
+    }
+
+    private fun setupFilterHandlers(data: ArrayList<ItemsViewModel>) {
+
+        val buttonApplyFilters = findViewById<Button>(R.id.apply_filters)
+        buttonApplyFilters.setOnClickListener {
+            applyFilters(role,data)
+            drawerLayout.closeDrawer(GravityCompat.END)
+        }
+
+        deadlineFilterHandler()
+    }
+
+    private fun deadlineFilterHandler() {
+        val startDateText: TextView = findViewById(R.id.text_start_date)
+        val endDateText: TextView = findViewById(R.id.text_end_date)
+        val buttonSelectStartDate: Button = findViewById(R.id.button_select_start_date)
+        val buttonSelectEndDate: Button = findViewById(R.id.button_select_end_date)
+        val buttonClearStartDate: Button = findViewById(R.id.button_clear_start_date)
+        val buttonClearEndDate: Button = findViewById(R.id.button_clear_end_date)
+
+        buttonClearStartDate.setOnClickListener {
+            startDateText.text = "Nessuna data selezionata"
+            startDate = -1L
+        }
+        buttonClearEndDate.setOnClickListener {
+            endDateText.text = "Nessuna data selezionata"
+            endDate = -1L
+        }
+
+        buttonSelectStartDate.setOnClickListener { showDatePickerDialog(true) }
+        buttonSelectEndDate.setOnClickListener { showDatePickerDialog(false) }
+    }
+
+    private fun showDatePickerDialog(isStartDate: Boolean) {
+        val calendar = Calendar.getInstance()
+        val datePicker = DatePickerDialog(
+            this,
+            { _, year, month, dayOfMonth ->
+                val selectedDate = Calendar.getInstance()
+                selectedDate.set(year, month, dayOfMonth)
+                val formattedDate = dateFormat.format(selectedDate.time)
+
+                if (isStartDate) {
+                    startDate = selectedDate.timeInMillis
+                    findViewById<TextView>(R.id.text_start_date).text = formattedDate
+                } else {
+                    endDate = selectedDate.timeInMillis
+                    findViewById<TextView>(R.id.text_end_date).text = formattedDate
+                }
+            },
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH),
+            calendar.get(Calendar.DAY_OF_MONTH)
+        )
+        datePicker.show()
+    }
+
+    private suspend fun loadUsersFilter(role: Role) {
+        val leaderContainer: LinearLayout = findViewById(R.id.leader_container)
+        val leaderFilterTitle: TextView = findViewById(R.id.leader_filter_title) // Aggiungi questo ID nel layout XML
+
+        when (role) {
+            Role.Leader -> {
+                // Per il Leader, carica i Developer
+                val developerNames = userService.getUsersByRole(Role.Developer)
+
+                leaderContainer.removeAllViews()
+                leaderFilterTitle.text = "Developer" // Cambia il titolo
+
+                for (user in developerNames) {
+                    val checkBox = CheckBox(this)
+                    checkBox.text = "${user.name} ${user.surname}"
+                    checkBox.tag = user.uid
+                    checkBox.layoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    )
+                    leaderContainer.addView(checkBox)
+                }
+            }
+            Role.Developer -> {
+                // Per il Developer, nascondi l'intera sezione dei filtri per leader
+                val leaderFilterSection: LinearLayout = findViewById(R.id.leader_container)
+                leaderFilterSection.visibility = View.GONE
+            }
+            else -> {
+                // Per altri ruoli (es. Manager), lascia invariato
+                val developerNames = userService.getUsersByRole(Role.Leader)
+
+                leaderContainer.removeAllViews()
+                leaderFilterTitle.text = "Leader"
+
+                for (user in developerNames) {
+                    val checkBox = CheckBox(this)
+                    checkBox.text = "${user.name} ${user.surname}"
+                    checkBox.tag = user.uid
+                    checkBox.layoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    )
+                    leaderContainer.addView(checkBox)
+                }
+            }
+        }
+    }
+
+    private fun applyFilters(role: Role,data: ArrayList<ItemsViewModel>) {
+        val completedCheckBox: CheckBox = findViewById(R.id.filter_completati)
+        val inProgressCheckBox: CheckBox = findViewById(R.id.filter_in_corso)
+        val highPriorityCheckBox: CheckBox = findViewById(R.id.filter_alta)
+        val mediumPriorityCheckBox: CheckBox = findViewById(R.id.filter_media)
+        val lowPriorityCheckBox: CheckBox = findViewById(R.id.filter_bassa)
+
+        lifecycleScope.launch {
+            filteredDataByStatus = data
+
+            // Filtra per stato
+            if (completedCheckBox.isChecked && !inProgressCheckBox.isChecked) {
+                filteredDataByStatus = filterDataByProgress(role, data, "completed")
+            } else if (inProgressCheckBox.isChecked && !completedCheckBox.isChecked) {
+                filteredDataByStatus = filterDataByProgress(role, data, "incompleted")
+            }
+
+            // Filtra per scadenza
+            var filteredDataByDeadline = filteredDataByStatus
+            if (startDate != -1L || endDate != -1L) {
+                filteredDataByDeadline = filterByDeadline(filteredDataByStatus, startDate, endDate, dateFormat)
+            }
+
+            // Filtra per leader
+            val leaderContainer: LinearLayout = findViewById(R.id.leader_container)
+            val selectedLeaders = mutableListOf<String>()
+            for (i in 0 until leaderContainer.childCount) {
+                val checkBox = leaderContainer.getChildAt(i) as? CheckBox
+                if (checkBox?.isChecked == true) {
+                    selectedLeaders.add(checkBox.tag.toString())
+                }
+            }
+
+            val filteredDataByLeader = if (selectedLeaders.isNotEmpty()) {
+                filteredDataByDeadline.filter { item ->
+                    selectedLeaders.contains(item.assignedTo)
+                }.toCollection(ArrayList())
+            } else {
+                filteredDataByDeadline
+            }
+
+            // Filtra per priorità
+            val filteredDataByPriority = when {
+                !highPriorityCheckBox.isChecked &&
+                        !mediumPriorityCheckBox.isChecked &&
+                        !lowPriorityCheckBox.isChecked -> filteredDataByLeader
+                else -> {
+                    filteredDataByLeader.filter { item ->
+                        when {
+                            highPriorityCheckBox.isChecked && item.priority == "High" -> true
+                            mediumPriorityCheckBox.isChecked && item.priority == "Medium" -> true
+                            lowPriorityCheckBox.isChecked && item.priority == "Low" -> true
+                            else -> false
+                        }
+                    }.toCollection(ArrayList())
+                }
+            }
+
+            // Aggiorna la RecyclerView con i dati filtrati
+            updateUI(filteredDataByPriority)
+        }
+    }
+
+    private suspend fun filterDataByProgress(
+        role: Role,
+        data: ArrayList<ItemsViewModel>,
+        progressType: String
+    ): ArrayList<ItemsViewModel> {
+        return when (role) {
+            Role.Developer-> subtaskService.filterSubTasksByProgress(data, progressType)
+            Role.Leader -> taskService.filterTasksByProgress(data, progressType)
+            else -> data
+        }
+    }
+
+    private fun filterByDeadline(
+        items: ArrayList<ItemsViewModel>,
+        startDate: Long,
+        endDate: Long,
+        dateFormat: SimpleDateFormat
+    ): ArrayList<ItemsViewModel> {
+        return items.filter { item ->
+            val taskDate: Long = try {
+                val deadlineDate = dateFormat.parse(item.deadline)
+                deadlineDate?.time ?: -1L
+            } catch (e: Exception) {
+                -1L
+            }
+
+            if (taskDate == -1L) return@filter false
+
+            when {
+                startDate != -1L && endDate != -1L -> taskDate in startDate..endDate
+                startDate != -1L -> taskDate >= startDate
+                endDate != -1L -> taskDate <= endDate
+                else -> true
+            }
+        } as ArrayList<ItemsViewModel>
     }
 
     override fun onBackPressed() {

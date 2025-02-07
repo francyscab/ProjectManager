@@ -37,4 +37,6 @@
     <string name="nome">Nome</string>
     <string name="scrivi_un_messaggio">Scrivi un messaggio...</string>
     <string name="invia_messaggio">Invia messaggio</string>
+    <string name="developer">Developer</string>
+    <string name="stato">Stato</string>
 </resources>

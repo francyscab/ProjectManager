@@ -448,6 +448,7 @@
 
                 <!-- Titolo "Leader" -->
                 <TextView
+                    android:id="@+id/leader_filter_title"
                     android:text="@string/leader"
                     android:textSize="18sp"
                     android:textStyle="bold"

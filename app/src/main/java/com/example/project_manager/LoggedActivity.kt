@@ -85,6 +85,12 @@ class LoggedActivity : AppCompatActivity() {
             }
         }
 
+
+    }
+
+
+
+    private fun handleSeaarchBar(data: ArrayList<ItemsViewModel>){
         //barra di ricerca
         val searchView = findViewById<SearchView>(R.id.searchView)
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
@@ -99,9 +105,6 @@ class LoggedActivity : AppCompatActivity() {
             }
         })
     }
-
-
-
     //barra di ricerca
     private fun filterProjects(query: String?,data: ArrayList<ItemsViewModel>) {
         val filteredData= projectService.filterProjects(query,data)
@@ -120,7 +123,7 @@ class LoggedActivity : AppCompatActivity() {
         Log.d(TAG, "applyFilters started")
         // Filtraggio basato sullo stato (completati/incompleti)
         lifecycleScope.launch {
-            loadUsersFilter()
+
 
             filteredDataByStatus = data
 
@@ -140,7 +143,7 @@ class LoggedActivity : AppCompatActivity() {
                 filteredDataByDeadline = filterByDeadline(filteredDataByStatus, startDate, endDate, dateFormat)
             }
 
-            val leaderContainer = findViewById<LinearLayout>(R.id.leader_container)
+            val leaderContainer = findViewById<LinearLayout>(R.id.leader_container_logged)
             val selectedLeaders = mutableListOf<String>()
             for (i in 0 until leaderContainer.childCount) {
                 val checkBox = leaderContainer.getChildAt(i) as? CheckBox
@@ -262,30 +265,55 @@ class LoggedActivity : AppCompatActivity() {
     }
 
 
-    private suspend fun loadUsersFilter() {
-        val leaderContainer = findViewById<LinearLayout>(R.id.leader_container)
+    private suspend fun loadUsersFilter(role:Role) {
+        val leaderContainer: LinearLayout = findViewById(R.id.leader_container_logged)
+        val leaderFilterTitle: TextView = findViewById(R.id.leader_filter_title_logged) // Aggiungi questo ID nel layout XML
 
-        val leaderNames = loadFilterName(Role.Leader) // Ora è una chiamata diretta e sospesa
+        when (role) {
+            Role.Leader -> {
+                // Per il Leader, carica i Developer
+                val developerNames = userService.getUsersByRole(Role.Developer)
 
-        leaderContainer.removeAllViews() // Pulisce la lista prima di riempirla
+                leaderContainer.removeAllViews()
+                leaderFilterTitle.text = getString(R.string.developer) // Cambia il titolo
 
-        for (user in leaderNames) {
-            val checkBox = CheckBox(leaderContainer.context) // Usa il contesto del container
-            checkBox.text = user.name + "" + user.surname
-            checkBox.tag=user.uid
-            checkBox.layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-            leaderContainer.addView(checkBox) // Aggiunge il CheckBox alla sidebar
+                for (user in developerNames) {
+                    val checkBox = CheckBox(this)
+                    checkBox.text = "${user.name} ${user.surname}"
+                    checkBox.tag = user.uid
+                    checkBox.layoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    )
+                    leaderContainer.addView(checkBox)
+                }
+            }
+            Role.Developer -> {
+                // Per il Developer, nascondi l'intera sezione dei filtri per leader
+                val leaderFilterSection: LinearLayout = findViewById(R.id.leader_container_logged)
+                val leaderText: TextView = findViewById(R.id.leader_filter_title_logged)
+                leaderFilterSection.visibility = View.GONE
+                leaderText.visibility = View.GONE
+            }
+            else -> {
+                // Per altri ruoli (es. Manager), lascia invariato
+                val developerNames = userService.getUsersByRole(Role.Leader)
+
+                leaderContainer.removeAllViews()
+                leaderFilterTitle.text = getString(R.string.leader)
+
+                for (user in developerNames) {
+                    val checkBox = CheckBox(this)
+                    checkBox.text = "${user.name} ${user.surname}"
+                    checkBox.tag = user.uid
+                    checkBox.layoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    )
+                    leaderContainer.addView(checkBox)
+                }
+            }
         }
-    }
-
-
-    private suspend fun loadFilterName(itemRole: Role): ArrayList<User> {
-        var filteredNames = ArrayList<User>()
-        filteredNames = userService.getUsersByRole(itemRole)
-        return filteredNames
     }
 
     private fun loadData() {
@@ -296,6 +324,7 @@ class LoggedActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 role= userService.getCurrentUserRole()!!
+                loadUsersFilter(role)
                 val userId=userService.getCurrentUserId()
                 val chat=chatService.getCurrentUserChats()
 
@@ -313,7 +342,7 @@ class LoggedActivity : AppCompatActivity() {
                 Role.Leader -> {
                     data = projectService.loadProjectByLeader(userId.toString())
                     notificationHelper.handleNotification( role, userId!! ,"progresso")
-                    notificationHelper.handleNotification(role,userId!!, "chat", chat)
+                    notificationHelper.handleNotification(role,userId, "chat", chat)
                     leaderView()
                     visualizza(recyclerview, data)
                 }
@@ -321,7 +350,7 @@ class LoggedActivity : AppCompatActivity() {
                 Role.Developer -> {
                     data = taskService.filterTaskByDeveloper(userId.toString())
                     notificationHelper.handleNotification(role,userId!!, "chat", chat)
-                    notificationHelper.handleNotification( role, userId!! ,"progresso")
+                    notificationHelper.handleNotification( role, userId ,"progresso")
                     developerView()
                     visualizza(recyclerview, data)
                 }
@@ -335,6 +364,7 @@ class LoggedActivity : AppCompatActivity() {
                 applyFilters(role)
                 drawerLayout.closeDrawer(GravityCompat.END)
             }
+                handleSeaarchBar(data)
 
             }catch (e:Exception){
                 Log.e("Auth", "Errore nel recuperare il ruolo", e)
