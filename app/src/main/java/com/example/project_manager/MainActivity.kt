@@ -16,6 +16,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import com.google.android.gms.tasks.OnCompleteListener
+import com.google.android.material.button.MaterialButton
 import com.google.firebase.messaging.FirebaseMessaging
 
 
@@ -73,13 +74,13 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_start)
 
-        findViewById<Button>(R.id.button_login).setOnClickListener {
+        findViewById<MaterialButton>(R.id.button_login).setOnClickListener {
 
             val it = Intent(this, LoginActivity::class.java)
             startActivity(it)
         }
 
-        findViewById<Button>(R.id.button_signin).setOnClickListener {
+        findViewById<MaterialButton>(R.id.button_signin).setOnClickListener {
             val it = Intent(this, SignInActivity::class.java)
             startActivity(it)
         }

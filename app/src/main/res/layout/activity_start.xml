@@ -5,26 +5,43 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:background="@color/darkblue">
     <!-- Barra superiore con il nome dell'applicazione -->
 
-    <Button
+
+    <ImageView
+        android:id="@+id/logo"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        android:layout_marginLeft="55dp"
+        android:layout_marginTop="150dp"
+        android:src="@drawable/logo" />
+
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/button_login"
         android:layout_width="230dp"
         android:layout_height="60dp"
         android:layout_marginLeft="85dp"
-        android:layout_marginTop="500dp"
-        android:backgroundTint="@color/cadetblue"
+        android:layout_marginTop="80dp"
+        android:backgroundTint="@color/darkblue"
         android:text="@string/login"
-        android:textColor="@color/white" />
+        android:textColor="@color/white"
+        app:strokeColor="@color/white"
+        app:strokeWidth="2dp" />
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/button_signin"
-        android:layout_marginLeft="85dp"
         android:layout_width="230dp"
         android:layout_height="60dp"
-        android:backgroundTint="@color/cadetblue"
+        android:layout_marginLeft="85dp"
+        android:layout_marginTop="10dp"
+        android:backgroundTint="@color/darkblue"
+        android:text="@string/signin"
         android:textColor="@color/white"
-        android:text="@string/signin" />
+        app:strokeColor="@color/white"
+        app:strokeWidth="2dp" />
+
+
 
 </LinearLayout>
