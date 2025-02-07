@@ -3,6 +3,7 @@ package com.example.project_manager.repository
 import android.util.Log
 import com.example.project_manager.models.Chat
 import com.example.project_manager.models.Message
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.tasks.await
@@ -24,6 +25,7 @@ class ChatRepository {
                     lastMessage = doc.getString("lastMessage") ?: "",
                     timestamp = doc.getLong("timestamp") ?: 0L,
                     unreadCount = doc.getLong("unreadCount")?.toInt() ?: 0,
+                    senderId = doc.getString("senderId") ?: "",
                     user1 = doc.getString("user1") ?: "",
                     user2 = doc.getString("user2") ?: ""
                 )
@@ -54,6 +56,7 @@ class ChatRepository {
                     lastMessage = doc.getString("lastMessage") ?: "",
                     timestamp = doc.getLong("timestamp") ?: 0L,
                     unreadCount = doc.getLong("unreadCount")?.toInt() ?: 0,
+                    senderId = doc.getString("senderId") ?: "",
                     user1 = doc.getString("user1") ?: "",
                     user2 = doc.getString("user2") ?: ""
                 ).let { allChats.add(it) }
@@ -90,6 +93,18 @@ class ChatRepository {
 
     suspend fun sendMessage(chatId: String, message: Message): Boolean {
         return try {
+            // Get current chat data
+            val chatDoc = db.collection("chat")
+                .document(chatId)
+                .get()
+                .await()
+
+            val recipientId = if (chatDoc.getString("user1") == message.senderId) {
+                chatDoc.getString("user2")
+            } else {
+                chatDoc.getString("user1")
+            }
+
             // Add message to messages collection
             db.collection("chat")
                 .document(chatId)
@@ -97,14 +112,15 @@ class ChatRepository {
                 .add(message)
                 .await()
 
-            // Update chat's last message
+            // Update chat's last message and increment unread counter
             db.collection("chat")
                 .document(chatId)
                 .update(
                     mapOf(
                         "lastMessage" to message.text,
                         "timestamp" to message.timestamp,
-                        "senderId" to message.senderId
+                        "senderId" to message.senderId,
+                        "unreadCount" to FieldValue.increment(1)  // Increment unread counter
                     )
                 )
                 .await()
@@ -112,6 +128,19 @@ class ChatRepository {
             true
         } catch (e: Exception) {
             Log.w(TAG, "Error sending message", e)
+            false
+        }
+    }
+
+    suspend fun resetUnreadCounter(chatId: String): Boolean {
+        return try {
+            db.collection("chat")
+                .document(chatId)
+                .update("unreadCount", 0)
+                .await()
+            true
+        } catch (e: Exception) {
+            Log.w(TAG, "Error resetting unread counter", e)
             false
         }
     }

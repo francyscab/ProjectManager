@@ -1,5 +1,6 @@
 package com.example.project_manager.services
 
+import android.util.Log
 import com.example.project_manager.models.Chat
 import com.example.project_manager.models.Message
 import com.example.project_manager.repository.ChatRepository
@@ -31,6 +32,19 @@ class ChatService {
         return chatRepository.sendMessage(chatId, message)
     }
 
+    suspend fun resetUnreadCounter(chatId: String): Boolean {
+        return try {
+            val currentUserId = userService.getCurrentUserId() ?: return false
+            val chat = chatRepository.getChat(chatId) ?: return false
+            if (chat.senderId == currentUserId) {
+                return true
+            }
+            chatRepository.resetUnreadCounter(chatId)
+        } catch (e: Exception) {
+            Log.e("ChatService", "Error resetting unread counter", e)
+            false
+        }
+    }
 
     suspend fun startChatWithUser(otherUserId: String): String? {
         val currentUserId = userService.getCurrentUserId().toString()

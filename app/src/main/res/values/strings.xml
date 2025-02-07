@@ -35,4 +35,6 @@
     <string name="msg_token_fmt" >Token recuperato %s</string>
     <string name="cognome">Cognome</string>
     <string name="nome">Nome</string>
+    <string name="scrivi_un_messaggio">Scrivi un messaggio...</string>
+    <string name="invia_messaggio">Invia messaggio</string>
 </resources>

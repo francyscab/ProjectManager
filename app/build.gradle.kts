@@ -54,6 +54,7 @@ dependencies {
     implementation ("com.github.bumptech.glide:glide:4.12.0")
     implementation ("com.google.firebase:firebase-storage-ktx")
     implementation ("com.github.PhilJay:MPAndroidChart:v3.1.0")
+    implementation ("de.hdodenhof:circleimageview:3.1.0")
     testImplementation("junit:junit:4.13.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")

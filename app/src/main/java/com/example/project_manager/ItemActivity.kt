@@ -702,10 +702,27 @@ class ItemActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
-                val currentProgress =
-                    subtaskService.getSubTaskProgress(projectId, taskId, subtaskId)
+                val currentProgress = subtaskService.getSubTaskProgress(projectId, taskId, subtaskId)
                 seekBar.progress = currentProgress
                 progressLabel.text = "$currentProgress%"
+
+                // Add SeekBar change listener for real-time updates
+                seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                    override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                        // Update the progress label in real-time
+                        progressLabel.text = "$progress%"
+                        // Update also the progress info TextView
+                        findViewById<TextView>(R.id.progressiTextView).text = "$progress%"
+                    }
+
+                    override fun onStartTrackingTouch(seekBar: SeekBar?) {
+                        // Not needed, but required by interface
+                    }
+
+                    override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                        // Not needed, but required by interface
+                    }
+                })
 
                 val saveButton = findViewById<Button>(R.id.saveButton)
                 saveButton.setOnClickListener {
@@ -876,5 +893,72 @@ class ItemActivity : AppCompatActivity() {
         val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
         val originalFileName = fileUri.lastPathSegment ?: "file"
         return "${timeStamp}_${originalFileName}"
+    }
+
+    override fun onBackPressed() {
+        when {
+            // Case 1: Viewing a subtask - go back to task view
+            !subtaskId.isNullOrEmpty() -> {
+                Log.d(TAG, "Navigating back from subtask to task view")
+                navigateToItem(projectId, taskId, null)
+            }
+
+            // Case 2: Viewing a task
+            !taskId.isNullOrEmpty() -> {
+                when (role) {
+                    Role.Leader -> {
+                        // Leader viewing task - go back to project view
+                        Log.d(TAG, "Leader navigating back from task to project view")
+                        navigateToItem(projectId, null, null)
+                    }
+                    Role.Developer -> {
+                        // Developer viewing task - go back to task list
+                        Log.d(TAG, "Developer navigating back from task to task list")
+                        navigateToLoggedActivity()
+                    }
+                    else -> {
+                        Log.w(TAG, "Unexpected role $role for task view")
+                        super.onBackPressed()
+                    }
+                }
+            }
+
+            // Case 3: Viewing a project
+            !projectId.isNullOrEmpty() -> {
+                when (role) {
+                    Role.Manager, Role.Leader -> {
+                        // Go back to project list
+                        Log.d(TAG, "Navigating back to project list")
+                        navigateToLoggedActivity()
+                    }
+                    else -> {
+                        Log.w(TAG, "Unexpected role $role for project view")
+                        super.onBackPressed()
+                    }
+                }
+            }
+
+            // Default case
+            else -> {
+                Log.d(TAG, "No specific navigation path, using default back behavior")
+                super.onBackPressed()
+            }
+        }
+    }
+
+    private fun navigateToItem(projectId: String?, taskId: String?, subtaskId: String?) {
+        Intent(this, ItemActivity::class.java).apply {
+            projectId?.let { putExtra("projectId", it) }
+            taskId?.let { putExtra("taskId", it) }
+            subtaskId?.let { putExtra("subtaskId", it) }
+            putExtra("role", role.toString())
+            startActivity(this)
+        }
+        finish()
+    }
+
+    private fun navigateToLoggedActivity() {
+        startActivity(Intent(this, LoggedActivity::class.java))
+        finish()
     }
 }
