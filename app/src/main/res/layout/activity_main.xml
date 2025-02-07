@@ -11,7 +11,7 @@
         android:layout_width="230dp"
         android:layout_height="60dp"
         android:backgroundTint="@color/black"
-        android:text="Login"
+        android:text="@string/login"
         android:textColor="@color/white" />
 
     <Button
@@ -19,6 +19,6 @@
         android:layout_height="60dp"
         android:backgroundTint="@color/black"
         android:textColor="@color/white"
-        android:text="Sign in" />
+        android:text="@string/signin" />
 
 </LinearLayout>

@@ -8,7 +8,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Quanto sei soddisfatto?"
+        android:text="@string/quanto_sei_soddisfatto"
         android:textSize="18sp" />
 
     <HorizontalScrollView
@@ -39,7 +39,7 @@
         android:id="@+id/commentEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Inserisci un commento"
+        android:hint="@string/inserisci_un_commento"
         android:layout_marginTop="16dp" />
 
 </LinearLayout>

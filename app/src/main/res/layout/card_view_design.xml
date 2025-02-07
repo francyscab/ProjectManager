@@ -28,7 +28,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
             android:layout_marginLeft="15dp"
-            android:text="Titolo Progetto"
+            android:text="@string/project_name"
             android:layout_weight="10"
             android:textSize="17dp"
             android:textStyle="bold"

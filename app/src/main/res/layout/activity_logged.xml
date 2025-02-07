@@ -257,14 +257,14 @@
             android:id="@+id/button_clear_end_date"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Rimuovi data"
+            android:text="@string/rimuovi_data"
             android:layout_marginTop="5dp"/>
 
         <TextView
             android:id="@+id/text_end_date"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Nessuna data selezionata"
+            android:text="@string/nessuna_data_selezionata"
             android:textSize="14sp"
             android:layout_marginTop="5dp"
             android:gravity="center"/>

@@ -210,7 +210,7 @@
             android:layout_height="wrap_content"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:text="Priorità: Alta" />
+            android:text="@string/priorit_alta" />
 
     </LinearLayout>
 
@@ -235,7 +235,7 @@
             android:layout_width="100dp"
             android:layout_height="wrap_content"
             android:textColor="@color/black"
-            android:text=" Salva" />
+            android:text="@string/salva" />
     </LinearLayout>
 
 

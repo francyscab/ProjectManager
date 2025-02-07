@@ -14,7 +14,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Statistics"
+            android:text="@string/statistics"
             android:textSize="24sp"
             android:textStyle="bold"
             android:layout_marginBottom="24dp"/>
@@ -45,7 +45,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Completed"
+                        android:text="@string/completed"
                         android:textSize="14sp"/>
 
                     <TextView
@@ -79,7 +79,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Active"
+                        android:text="@string/active"
                         android:textSize="14sp"/>
 
                     <TextView
@@ -110,7 +110,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Not Started"
+                        android:text="@string/not_started"
                         android:textSize="14sp"/>
 
                     <TextView
@@ -141,7 +141,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Average Completion Time"
+                    android:text="@string/average_completion_time"
                     android:textSize="16sp"
                     android:textStyle="bold"/>
 
@@ -172,7 +172,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Project/Task Distribution"
+                    android:text="@string/project_task_distribution"
                     android:textSize="16sp"
                     android:textStyle="bold"
                     android:layout_marginBottom="16dp"/>

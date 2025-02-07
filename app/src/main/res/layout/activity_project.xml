@@ -31,7 +31,7 @@
             android:id="@+id/projectNameTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Project Name"
+            android:text="@string/project_name"
             android:textSize="24sp"
             android:layout_marginLeft="130dp"
 
@@ -44,7 +44,7 @@
             android:layout_height="30dp"
             android:layout_marginLeft="70dp"
             android:background="?android:attr/selectableItemBackground"
-            android:contentDescription="Menu"
+            android:contentDescription="@string/menu"
             android:src="@drawable/ic_menu" />
 
     </LinearLayout>
@@ -149,7 +149,7 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:layout_marginTop="16dp"
-                    android:text="CREARTO DA"
+                    android:text="@string/crearto_da"
                     android:textSize="20dp"
                     android:textStyle="bold" />
 
@@ -192,7 +192,7 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:layout_marginTop="16dp"
-                    android:text="ASSEGNATO A"
+                    android:text="@string/assegnato_a"
                     android:textSize="20dp"
                     android:textStyle="bold" />
 
@@ -252,7 +252,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:text="Nessun task da visualizzare"
+                android:text="@string/nessun_task_da_visualizzare"
                 android:visibility="gone" /> <!-- Inizialmente nascosto -->
 
             <ImageButton
@@ -262,7 +262,7 @@
                 android:layout_margin="8dp"
                 android:background="?attr/selectableItemBackground"
                 android:layout_gravity="right"
-                android:contentDescription="Filter tasks"
+                android:contentDescription="@string/filter_tasks"
                 android:src="@drawable/icona_filtro_ios" />
 
             <androidx.recyclerview.widget.RecyclerView
@@ -343,7 +343,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:text="Save Progress" />
+                android:text="@string/save_progress" />
         </LinearLayout>
 
     </LinearLayout>
@@ -358,7 +358,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:text="sollecita" />
+            android:text="@string/sollecita" />
     </LinearLayout>
 
     <LinearLayout
@@ -387,7 +387,7 @@
             android:id="@+id/feedbackScore"
             android:layout_width="60dp"
             android:layout_height="wrap_content"
-            android:hint="Voto"
+            android:hint="@string/voto"
             android:inputType="number"
             android:textSize="16sp"
             android:gravity="center"
@@ -399,7 +399,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:hint="Commento"
+            android:hint="@string/commento"
             android:inputType="textMultiLine"
             android:textSize="16sp"
             android:padding="8dp" />
@@ -428,7 +428,7 @@
                 android:layout_height="match_parent"
                 android:orientation="vertical">        <!-- Titolo "Stato" -->
                 <TextView
-                    android:text="Stato"
+                    android:text="@string/stato"
                     android:textSize="18sp"
                     android:textStyle="bold"
                     android:layout_marginBottom="10dp"
@@ -496,7 +496,7 @@
 
                 <!-- Titolo "Scadenza" -->
                 <TextView
-                    android:text="Scadenza oltre il"
+                    android:text="@string/scadenza_oltre_il"
                     android:textSize="18sp"
                     android:textStyle="bold"
                     android:layout_marginTop="20dp"
@@ -546,14 +546,14 @@
                     android:id="@+id/button_clear_end_date"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Rimuovi data"
+                    android:text="@string/rimuovi_data"
                     android:layout_marginTop="5dp"/>
 
                 <TextView
                     android:id="@+id/text_end_date"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Nessuna data selezionata"
+                    android:text="@string/nessuna_data_selezionata"
                     android:textSize="14sp"
                     android:layout_marginTop="5dp"
                     android:gravity="center"/>

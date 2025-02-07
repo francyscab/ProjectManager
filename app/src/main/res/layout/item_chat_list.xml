@@ -22,7 +22,7 @@
         android:layout_height="wrap_content"
         android:layout_toEndOf="@id/imageViewProfile"
         android:layout_alignParentTop="true"
-        android:text="nome"
+        android:text="@string/name"
         android:layout_marginEnd="80dp"
         android:textStyle="bold"
         android:textSize="16sp" />
@@ -34,7 +34,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/textViewChatName"
         android:layout_toEndOf="@id/imageViewProfile"
-        android:text="esempio messaggio"
+        android:text="@string/esempio_messaggio"
         android:textColor="#888888"
         android:textSize="14sp" />
 

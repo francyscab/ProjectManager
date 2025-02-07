@@ -39,7 +39,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="20dp"
-            android:text="Name: "
+            android:text="@string/name"
             android:textSize="20dp"
             android:textColor="@android:color/white" />
     </LinearLayout>
@@ -61,7 +61,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="20dp"
-            android:text="Name: "
+            android:text="@string/cognome"
             android:textSize="20dp"
             android:textColor="@android:color/white" />
     </LinearLayout>
@@ -83,7 +83,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="20dp"
-            android:text="Role: "
+            android:text="@string/role"
             android:textSize="20dp"
             android:textColor="@android:color/white" />
     </LinearLayout>
@@ -106,7 +106,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="20dp"
-            android:text="Email: "
+            android:text="@string/email"
             android:textSize="20dp"
             android:textColor="@android:color/white" />
     </LinearLayout>
@@ -115,7 +115,7 @@
         android:id="@+id/logout_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Logout"
+        android:text="@string/logout"
         android:layout_marginTop="20dp"
         android:layout_gravity="center"
         android:backgroundTint="@color/cadetblue"

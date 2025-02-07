@@ -23,7 +23,7 @@
             android:id="@+id/username_field"
             android:layout_width="200dp"
             android:layout_height="wrap_content"
-            android:hint="username"
+            android:hint="@string/username"
             android:inputType="textEmailAddress"
             android:textSize="30dp" />
 
@@ -47,7 +47,7 @@
             android:layout_height="wrap_content"
             android:inputType="textPassword"
             android:textSize="30dp"
-            android:hint="password"
+            android:hint="@string/password"
             />
     </LinearLayout>
 
@@ -66,7 +66,7 @@
         android:layout_marginLeft="85dp"
         android:layout_marginTop="30dp"
         android:backgroundTint="@color/cadetblue"
-        android:text="Sign in"
+        android:text="@string/signin"
         android:textColor="@color/white" />
 
 </LinearLayout>
