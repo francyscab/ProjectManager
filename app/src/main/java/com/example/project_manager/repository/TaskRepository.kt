@@ -242,6 +242,21 @@ class TaskRepository {
             null
         }
     }
+
+    suspend fun deleteTask(projectId: String, taskId: String): Boolean {
+        return try {
+            db.collection("progetti")
+                .document(projectId)
+                .collection("task")
+                .document(taskId)
+                .delete()
+                .await()
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Error deleting task", e)
+            false
+        }
+    }
 }
 
 

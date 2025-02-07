@@ -68,4 +68,30 @@ class SubTaskService {
         return subtaskRepository.loadAllSubtaskByTaskId(projectId, taskId)
     }
 
+    // SubTaskService
+    suspend fun deleteSubTask(projectId: String, taskId: String, subtaskId: String): Boolean {
+        return try {
+            // Delete subtask
+            val success = subtaskRepository.deleteSubTask(projectId, taskId, subtaskId)
+            if (success) {
+                // Update task progress after subtask deletion
+                taskService.updateTaskProgress(projectId, taskId)
+            }
+            success
+        } catch (e: Exception) {
+            Log.e(TAG, "Error in subtask deletion", e)
+            false
+        }
+    }
+
+    suspend fun updateSubTask(projectId: String, taskId: String, subtaskId: String,title: String, description: String, developer: String? = null) {
+        val updates = mutableMapOf<String, Any>(
+            "title" to title,
+            "description" to description
+        )
+        developer?.let { updates["developer"] = it }
+
+        subtaskRepository.updateSubTask(projectId, taskId,subtaskId, updates)
+    }
+
 }

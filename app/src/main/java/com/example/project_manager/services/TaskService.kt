@@ -183,5 +183,22 @@ class TaskService {
     suspend fun getFeedback(projectId: String, taskId: String): Triple<Int, String, Boolean>? {
         return taskRepository.getFeedback(projectId, taskId)
     }
+
+    suspend fun deleteTask(projectId: String, taskId: String): Boolean {
+        return try {
+            // Delete task
+            val success = taskRepository.deleteTask(projectId, taskId)
+            if (success) {
+                // Update project progress after task deletion
+                projectService.updateProjectProgress(projectId)
+            }
+            success
+        } catch (e: Exception) {
+            Log.e(TAG, "Error in task deletion", e)
+            false
+        }
+    }
+
+
 }
 

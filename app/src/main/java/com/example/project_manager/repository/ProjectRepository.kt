@@ -156,6 +156,20 @@ class ProjectRepository {
             Log.e(TAG, "Error getting project feedback", e)
             null
         }
+
+    }
+
+    suspend fun deleteProject(projectId: String): Boolean {
+        return try {
+            db.collection("progetti")
+                .document(projectId)
+                .delete()
+                .await()
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Error deleting project", e)
+            false
+        }
     }
 
 }

@@ -107,7 +107,7 @@ class ItemActivity : AppCompatActivity() {
         lifecycleScope.launch {
             role = userService.getCurrentUserRole()!!
             loadDetails(tipo, notificationHelper)
-            menu()
+            menu(tipo)
         }
     }
 
@@ -511,15 +511,15 @@ class ItemActivity : AppCompatActivity() {
 
 
 
-    private fun menu() {
+    private fun menu(tipo: String) {
         val menuButton: ImageButton = findViewById(R.id.menuButton)
         //il leader non può modificare un progetto
-        if (role == Role.Leader && tipo == "Progetto") {
+        if (role == Role.Leader && tipo == "progetto") {
             menuButton.visibility = View.GONE
             return
         }
         //il developer non puo modificare un task
-        else if (role == Role.Developer && tipo == "subtask") {
+        else if (role == Role.Developer && tipo == "task") {
             menuButton.visibility = View.GONE
             return
         } else {
@@ -537,15 +537,56 @@ class ItemActivity : AppCompatActivity() {
                     when (item.itemId) {
                         R.id.menu_edit -> {
                             updateProject()
-                            // Azione per modificare il task
                             true
                         }
 
                         R.id.menu_delete -> {
-                            //deleteItem()
-                            //torna alla chermata precedente e ricarica
-                            //val intent = Intent(this, LoggedActivity::class.java)
-                            startActivity(intent)
+                            // Mostra l'AlertDialog qui
+                            AlertDialog.Builder(this)
+                                .setTitle("Conferma eliminazione")
+                                .setMessage("Sei sicuro di voler eliminare questo $tipo?")
+                                .setPositiveButton("Elimina") { _, _ ->
+                                    lifecycleScope.launch {
+                                        try {
+                                            val success = when (tipo) {
+                                                "progetto" -> projectService.deleteProject(projectId)
+                                                "task" -> taskService.deleteTask(projectId, taskId)
+                                                "subtask" -> subtaskService.deleteSubTask(projectId, taskId, subtaskId)
+                                                else -> {
+                                                    Log.e(TAG, "Tipo non valido: $tipo")
+                                                    false
+                                                }
+                                            }
+
+                                            if (success) {
+                                                Toast.makeText(
+                                                    this@ItemActivity,
+                                                    "$tipo eliminato con successo",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+
+                                                // Usa navigateToLoggedActivity per gestire la navigazione
+                                                navigateToLoggedActivity()
+                                            } else {
+                                                Toast.makeText(
+                                                    this@ItemActivity,
+                                                    "Errore durante l'eliminazione del $tipo",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                        } catch (e: Exception) {
+                                            Log.e(TAG, "Error during deletion", e)
+                                            Toast.makeText(
+                                                this@ItemActivity,
+                                                "Errore durante l'eliminazione del $tipo: ${e.message}",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                    }
+                                }
+                                .setNegativeButton("Annulla", null)
+                                .show()
+
                             true
                         }
 
@@ -553,11 +594,9 @@ class ItemActivity : AppCompatActivity() {
                     }
                 }
 
-                // Mostra il menu
                 popupMenu.show()
             }
         }
-
     }
 
     fun updateProject() {
@@ -570,64 +609,52 @@ class ItemActivity : AppCompatActivity() {
         startActivity(intent)
     }
 
-    /*fun deleteItem() {
-        val db = FirebaseFirestore.getInstance()
+    private fun deleteItem(tipo:String) {
+        AlertDialog.Builder(this)
+            .setTitle("Conferma eliminazione")
+            .setMessage("Sei sicuro di voler eliminare questo $tipo?")
+            .setPositiveButton("Elimina") { _, _ ->
+                // Procedi con l'eliminazione
+                lifecycleScope.launch {
+                    try {
+                        val success = when (tipo) {
+                            "progetto" -> projectService.deleteProject(projectId)
+                            "task" -> taskService.deleteTask(projectId, taskId)
+                            "subtask" -> subtaskService.deleteSubTask(projectId, taskId, subtaskId)
+                            else -> {
+                                Log.e(TAG, "Tipo non valido: $tipo")
+                                false
+                            }
+                        }
 
-        // Se c'è solo projectId
-        if (!projectId.isNullOrEmpty() && taskId.isNullOrEmpty() && subtaskId.isNullOrEmpty()) {
-            // Elimina il progetto dalla raccolta di progetti
-            db.collection("progetti")
-                .document(projectId)
-                .delete()
-                .addOnSuccessListener {
-                    // Conferma eliminazione del progetto
-                    Toast.makeText(this, "Progetto eliminato con successo", Toast.LENGTH_SHORT).show()
+                        if (success) {
+                            Toast.makeText(
+                                this@ItemActivity,
+                                "$tipo eliminato con successo",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            finish()
+                        } else {
+                            Toast.makeText(
+                                this@ItemActivity,
+                                "Errore durante l'eliminazione del $tipo",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error during deletion", e)
+                        Toast.makeText(
+                            this@ItemActivity,
+                            "Errore durante l'eliminazione del $tipo: ${e.message}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 }
-                .addOnFailureListener { e ->
-                    // Gestisci eventuali errori
-                    Toast.makeText(this, "Errore durante l'eliminazione del progetto: ${e.message}", Toast.LENGTH_SHORT).show()
-                }
-        }
-
-        // Se c'è anche taskId
-        else if (!projectId.isNullOrEmpty() && !taskId.isNullOrEmpty() && subtaskId.isNullOrEmpty()) {
-            // Elimina il task nel progetto specificato
-            db.collection("progetti")
-                .document(projectId)
-                .collection("tasks")
-                .document(taskId)
-                .delete()
-                .addOnSuccessListener {
-                    // Conferma eliminazione del task
-                    Toast.makeText(this, "Task eliminato con successo", Toast.LENGTH_SHORT).show()
-                }
-                .addOnFailureListener { e ->
-                    // Gestisci eventuali errori
-                    Toast.makeText(this, "Errore durante l'eliminazione del task: ${e.message}", Toast.LENGTH_SHORT).show()
-                }
-        }
-
-        // Se c'è anche subTaskId
-        else if (!projectId.isNullOrEmpty() && !taskId.isNullOrEmpty() && !subtaskId.isNullOrEmpty()) {
-            // Elimina il sottotask nel task specificato del progetto
-            db.collection("progetti")
-                .document(projectId)
-                .collection("tasks")
-                .document(taskId)
-                .collection("subtasks")
-                .document(subtaskId)
-                .delete()
-                .addOnSuccessListener {
-                    // Conferma eliminazione del sottotask
-                    Toast.makeText(this, "Sottotask eliminato con successo", Toast.LENGTH_SHORT).show()
-                }
-                .addOnFailureListener { e ->
-                    // Gestisci eventuali errori
-                    Toast.makeText(this, "Errore durante l'eliminazione del sottotask: ${e.message}", Toast.LENGTH_SHORT).show()
-                }
-        }
+            }
+            .setNegativeButton("Annulla", null)
+            .show()
     }
-*/
+
 
     //funzione che carica i task o sottotask nella recycler view
     private fun loadTask() {

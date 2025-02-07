@@ -173,6 +173,40 @@ class SubTaskRepository {
             throw e
         }
     }
+
+    suspend fun deleteSubTask(projectId: String, taskId: String, subtaskId: String): Boolean {
+        return try {
+            db.collection("progetti")
+                .document(projectId)
+                .collection("task")
+                .document(taskId)
+                .collection("subtask")
+                .document(subtaskId)
+                .delete()
+                .await()
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Error deleting subtask", e)
+            false
+        }
+    }
+
+    suspend fun updateSubTask(projectId: String, taskId: String,subtaskId: String, updates: Map<String, Any>) {
+        try {
+            db.collection("progetti")
+                .document(projectId)
+                .collection("task")
+                .document(taskId)
+                .collection("subtask")
+                .document(subtaskId)
+                .update(updates)
+                .await()
+            Log.d(TAG, "subtask updated successfully")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error updating task", e)
+            throw e
+        }
+    }
 }
 
 

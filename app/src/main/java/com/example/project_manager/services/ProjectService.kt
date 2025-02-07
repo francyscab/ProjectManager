@@ -137,4 +137,15 @@ class ProjectService {
     suspend fun getFeedback(projectId: String): Triple<Int, String, Boolean>? {
         return projectRepository.getFeedback(projectId)
     }
+
+    suspend fun deleteProject(projectId: String): Boolean {
+        return try {
+            projectRepository.deleteProject(projectId)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error in project deletion", e)
+            false
+        }
+    }
+
+
 }

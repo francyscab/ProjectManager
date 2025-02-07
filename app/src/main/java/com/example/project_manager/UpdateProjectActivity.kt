@@ -200,7 +200,7 @@ class UpdateProjectActivity : AppCompatActivity() {
                     taskService.updateTask(projectId!!, taskId!!, title, description)
                 }
                 "subtask" -> {
-                    //subtaskService.updateSubTask(projectId!!, taskId!!, subtaskId!!, title,description)
+                    subtaskService.updateSubTask(projectId!!, taskId!!, subtaskId!!, title,description)
                 }
             }
             Toast.makeText(this, "Update successful", Toast.LENGTH_SHORT).show()
