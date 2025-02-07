@@ -206,13 +206,13 @@ class NotificationHelper(private val context: Context, private val db: FirebaseF
                             snapshots?.documentChanges?.forEach { change ->
                                 if (change.type == DocumentChange.Type.MODIFIED) {
                                     val progress = change.document.getLong("progress")
-                                    if (progress?.toInt() == 100 && !isNotificationShown("progresso_${change.document.id}")) {
+                                    if (progress?.toInt() == 100) {
                                         Log.d("ProgressNotifications", "Task ${change.document.id} completato al 100% nel progetto $projectId")
                                         coroutineScope.launch {
                                             sendNotification(
                                                 type = "progresso",
                                                 title = "Task completato",
-                                                text = "Il task ${document.get("titolo")} è stato completato.",
+                                                text = "Il task ${document.get("title")} è stato completato.",
                                                 role= role,
                                                 recipientId = userId,
                                                 projectId = projectId,

@@ -12,6 +12,7 @@ import com.example.project_manager.models.User
 import com.example.project_manager.services.UserService
 import com.example.project_manager.repository.FileRepository
 import com.google.firebase.auth.FirebaseAuth
+import de.hdodenhof.circleimageview.CircleImageView
 import kotlinx.coroutines.launch
 
 class UserProfileActivity : AppCompatActivity() {
@@ -42,7 +43,7 @@ class UserProfileActivity : AppCompatActivity() {
 
 
     private suspend fun setView(user: User){
-        val profileImageView = findViewById<ImageView>(R.id.profileImageView)
+        val profileImageView = findViewById<CircleImageView>(R.id.profileImageView)
         val nameTextView = findViewById<TextView>(R.id.nameTextView)
         val surnameTextView = findViewById<TextView>(R.id.surnameTextView)
         val roleTextView = findViewById<TextView>(R.id.roleTextView)

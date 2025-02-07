@@ -28,6 +28,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.project_manager.models.ItemsViewModel
 import com.example.project_manager.models.Role
+import com.example.project_manager.repository.FileRepository
 import com.example.project_manager.services.FileService
 import com.example.project_manager.services.ProjectService
 import com.example.project_manager.services.SubTaskService
@@ -35,6 +36,7 @@ import com.example.project_manager.services.TaskService
 import com.example.project_manager.services.UserService
 import com.example.project_manager.repository.NotificationHelper
 import com.google.firebase.firestore.FirebaseFirestore
+import de.hdodenhof.circleimageview.CircleImageView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -55,6 +57,7 @@ class ItemActivity : AppCompatActivity() {
     val userService = UserService()
     val taskService = TaskService()
     val subtaskService = SubTaskService()
+    val fileRepository= FileRepository()
     private val PICK_FILE_REQUEST_CODE = 2002
     private val fileService = FileService()
 
@@ -77,6 +80,8 @@ class ItemActivity : AppCompatActivity() {
     private lateinit var fileLayout: LinearLayout
     private lateinit var filesRecyclerView: RecyclerView
     private lateinit var drawerLayout: DrawerLayout
+    private lateinit var imageCreator: CircleImageView
+    private lateinit var imageAssignedTo: CircleImageView
 
     private var startDate: Long = -1L
     private var endDate: Long = -1L
@@ -141,6 +146,8 @@ class ItemActivity : AppCompatActivity() {
         buttonFile = findViewById(R.id.aggiungiFileButton)
         fileLayout= findViewById(R.id.file)
         filesRecyclerView = findViewById(R.id.filesRecyclerView)
+        imageCreator = findViewById(R.id.profileImageCreator)
+        imageAssignedTo= findViewById(R.id.profileImageAssignedTo)
     }
 
     private fun getItemType(subtaskId: String, taskId: String, projectId: String): String {
@@ -280,7 +287,8 @@ class ItemActivity : AppCompatActivity() {
         seekbarLayout.visibility = View.GONE
         progLeaderTask.visibility = View.GONE
         fileLayout.visibility= View.VISIBLE
-        setupFileUpload()
+        buttonFile.visibility= View.GONE
+        filesRecyclerView.visibility= View.VISIBLE
 
         val filesRecyclerView = findViewById<RecyclerView>(R.id.filesRecyclerView)
         filesRecyclerView.layoutManager = LinearLayoutManager(this)
@@ -340,8 +348,15 @@ class ItemActivity : AppCompatActivity() {
         setCreator(item)
         setAssignedTo(item)
         setProgressInfo(item)
+        setProfileImage(item)
     }
 
+    private suspend fun setProfileImage(item: ItemsViewModel) {
+        val creatorPathImage= userService.getUserById(item.creator)?.profile_image_url
+        val assignedToPathImage= userService.getUserById(item.assignedTo)?.profile_image_url
+        fileRepository.loadProfileImage(this, imageCreator, creatorPathImage!!)
+        fileRepository.loadProfileImage(this, imageAssignedTo, assignedToPathImage!!)
+    }
 
     private suspend fun setName(item: ItemsViewModel) {
         val projectNameTextView = findViewById<TextView>(R.id.projectNameTextView)

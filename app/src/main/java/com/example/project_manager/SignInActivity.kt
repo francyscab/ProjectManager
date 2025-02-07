@@ -17,6 +17,7 @@ import android.widget.TextView
 import android.widget.Toast
 import com.example.project_manager.models.Role
 import com.example.project_manager.services.UserService
+import de.hdodenhof.circleimageview.CircleImageView
 
 import java.io.File
 import java.io.FileInputStream
@@ -191,7 +192,7 @@ class SignInActivity : AppCompatActivity() {
                 // Salva l'URI selezionato per il caricamento
                 globalImageUri = selectedImageUri
 
-                val profileImageView = findViewById<ImageView>(R.id.profile_image)
+                val profileImageView = findViewById<CircleImageView>(R.id.profile_image)
 
                 // Sostituisci l'immagine nell'ImageView
                 profileImageView.setImageURI(selectedImageUri)
