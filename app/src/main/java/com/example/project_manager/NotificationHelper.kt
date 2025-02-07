@@ -1,4 +1,4 @@
-package com.example.project_manager // Cambia il package in base al tuo progetto
+/*package com.example.project_manager // Cambia il package in base al tuo progetto
 
 import android.app.*
 import android.content.Context
@@ -268,3 +268,4 @@ class NotificationHelper(private val context: Context, private val db: FirebaseF
         }
     }
 }
+*/

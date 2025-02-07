@@ -77,6 +77,21 @@ class TaskRepository {
         }
     }
 
+    suspend fun sollecita(projectId: String, taskId: String, valore: Boolean): Boolean {
+        return try {
+            db.collection("progetti")
+                .document(projectId)
+                .collection("task")
+                .document(taskId)
+                .update("sollecitato", valore)
+                .await()
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Error updating task progress", e)
+            false
+        }
+    }
+
     public suspend fun loadTaskById(taskId: String, projectId: String): ItemsViewModel {
         return try {
             val taskDoc = db.collection("progetti")

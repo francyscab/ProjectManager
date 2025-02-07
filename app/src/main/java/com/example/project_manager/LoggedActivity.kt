@@ -333,7 +333,7 @@ class LoggedActivity : AppCompatActivity() {
                     Log.d(TAG, "sono in manager")
                     data = projectService.loadProjectForUser(userId.toString())
                     Log.d(TAG, "Data: $data")
-                    notificationHelper.handleNotification(role,userId!!, "chat",chat)
+                    notificationHelper.handleNotification(role,userId!!, "chat",lifecycleScope,chat)
                     managerView()
                     newProjectButtonHandler()
                     visualizza(recyclerview, data)
@@ -341,16 +341,18 @@ class LoggedActivity : AppCompatActivity() {
 
                 Role.Leader -> {
                     data = projectService.loadProjectByLeader(userId.toString())
-                    notificationHelper.handleNotification( role, userId!! ,"progresso")
-                    notificationHelper.handleNotification(role,userId, "chat", chat)
+                    notificationHelper.handleNotification( role, userId!!,"progresso",lifecycleScope)
+                    notificationHelper.handleNotification(role,userId, "chat",lifecycleScope, chat)
+                    notificationHelper.handleNotification(role,userId, "sollecito",lifecycleScope)
                     leaderView()
                     visualizza(recyclerview, data)
                 }
 
                 Role.Developer -> {
                     data = taskService.filterTaskByDeveloper(userId.toString())
-                    notificationHelper.handleNotification(role,userId!!, "chat", chat)
-                    notificationHelper.handleNotification( role, userId ,"progresso")
+                    notificationHelper.handleNotification(role,userId!!, "chat", lifecycleScope,chat)
+                    notificationHelper.handleNotification( role, userId ,"progresso",lifecycleScope)
+                    notificationHelper.handleNotification(role,userId, "sollecito",lifecycleScope)
                     developerView()
                     visualizza(recyclerview, data)
                 }

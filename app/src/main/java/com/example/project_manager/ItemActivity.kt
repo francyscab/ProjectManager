@@ -240,18 +240,19 @@ class ItemActivity : AppCompatActivity() {
     private suspend fun setupManagerView(notificationHelper: NotificationHelper) {
         setData(tipo, taskId, projectId, subtaskId)
 
+        sollecitaButton.setOnClickListener {
+            lifecycleScope.launch {
+                projectService.sollecita(projectId)
+            }
+        }
+
+
         sollecitaCont.visibility = View.VISIBLE
         progLeaderTask.visibility = View.GONE
         seekbarLayout.visibility = View.GONE
         fileLayout.visibility= View.GONE
 
-        sollecitaButton.setOnClickListener {
-            lifecycleScope.launch {
-                val item = projectService.getProjectById(projectId)!!
-                val assignedTo = item.assignedTo
-                notificationHelper.handleNotification(Role.Developer, assignedTo, "sollecito")
-            }
-        }
+
 
     }
 
@@ -267,10 +268,14 @@ class ItemActivity : AppCompatActivity() {
     }
 
     private suspend fun setupLeaderTaskView(notificationHelper: NotificationHelper) {
+
         setData(tipo, taskId, projectId, subtaskId)
         sollecitaCont.visibility = View.VISIBLE
         sollecitaButton.setOnClickListener {
-            //notificationHelper.handleNotification(role, name, "sollecito")
+            lifecycleScope.launch {
+                taskService.sollecita(projectId,taskId)
+
+            }
         }
         seekbarLayout.visibility = View.GONE
         progLeaderTask.visibility = View.GONE

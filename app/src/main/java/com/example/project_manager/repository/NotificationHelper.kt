@@ -12,10 +12,19 @@ import com.example.project_manager.ItemActivity
 import com.example.project_manager.R
 import com.example.project_manager.models.Chat
 import com.example.project_manager.models.Role
+import com.example.project_manager.services.ProjectService
+import com.example.project_manager.services.TaskService
+import com.example.project_manager.services.UserService
 import com.google.firebase.firestore.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
-class NotificationHelper(private val context: Context, private val db: FirebaseFirestore) {
+class NotificationHelper(private val context: Context, private val db: FirebaseFirestore,
+    ) {
 
+    private val projectService = ProjectService()
+    private val taskService= TaskService()
+    private val userService= UserService()
     private val sharedPreferences = context.getSharedPreferences("NotificationPrefs", Context.MODE_PRIVATE)
     private val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -27,26 +36,88 @@ class NotificationHelper(private val context: Context, private val db: FirebaseF
         }
     }
 
-    fun handleNotification(role: Role, userUid: String, type: String, data: List<Chat>? = null) {
+    suspend fun handleNotification(role: Role, userUid: String, type: String, coroutineScope: CoroutineScope, data: List<Chat>? = null) {
         when (type) {
-            "sollecito" -> handleSollecitoNotification(userUid)
-            "chat" -> data?.let { handleChatNotifications(role, userUid, it) }
-            "progresso" -> handleProgressNotifications(role, userUid)
+            "sollecito" -> when (role) {
+                Role.Leader -> setupLeaderSollecitoListeners(userUid,coroutineScope)
+                Role.Developer -> setupDeveloperSollecitoListeners(userUid,coroutineScope)
+                else -> {} // Manager doesn't need sollecito notifications
+            }
+            "chat" -> data?.let { handleChatNotifications(role, userUid,coroutineScope, it) }
+            "progresso" -> handleProgressNotifications(role, userUid,coroutineScope)
         }
     }
 
-    private fun handleSollecitoNotification(recipientId: String) {
-        sendNotification(
-            type = "sollecito",
-            title = "Sollecito",
-            text = "Ricordati di procedere con i compiti da svolgere.",
-            recipientId = recipientId,
-            projectId = null,
-            taskId = null
-        )
+    private suspend fun setupLeaderSollecitoListeners(leaderId: String,coroutineScope: CoroutineScope) {
+        val projects = projectService.loadProjectByLeader(leaderId)
+
+        projects.forEach { project ->
+            db.collection("progetti")
+                .document(project.projectId)
+                .addSnapshotListener { snapshot, e ->
+                    if (e != null) {
+                        Log.e("SollecitoListener", "Error listening to project ${project.projectId}", e)
+                        return@addSnapshotListener
+                    }
+
+                    if (snapshot != null && snapshot.exists()) {
+                        val sollecitato = snapshot.getBoolean("sollecitato") ?: false
+                        if (sollecitato) {
+                            coroutineScope.launch {
+                                sendNotification(
+                                    type = "sollecito",
+                                    title = "Sollecito Progetto",
+                                    text = "Il manager ${snapshot.getString("creator")
+                                        ?.let { userService.getUserById(it)?.name }} richiede aggiornamenti sul progetto ${snapshot.getString("title")}",
+                                    role = Role.Manager,
+                                    recipientId = leaderId,
+                                    projectId = project.projectId,
+                                    taskId = null
+                                )
+                            }
+
+                        }
+                    }
+                }
+        }
     }
 
-    private fun handleChatNotifications(role: Role, userId: String, chatIds: List<Chat>) {
+    private suspend fun setupDeveloperSollecitoListeners(developerId: String,coroutineScope: CoroutineScope) {
+        val tasks=taskService.filterTaskByDeveloper(developerId)
+        tasks.forEach { task ->
+            db.collection("progetti")
+                .document(task.projectId)
+                .collection("task")
+                .document(task.taskId!!)
+                .addSnapshotListener { snapshot, e ->
+                        if (e != null) {
+                            Log.e("SollecitoListener", "Error listening to developer tasks", e)
+                            return@addSnapshotListener
+                        }
+
+                    if (snapshot != null && snapshot.exists()) {
+                        val sollecitato = snapshot.getBoolean("sollecitato") ?: false
+                        if (sollecitato) {
+                            coroutineScope.launch {
+                                sendNotification(
+                                    type = "sollecito",
+                                    title = "Sollecito Progetto",
+                                    text = "Il leader ${snapshot.getString("creator")
+                                        ?.let { userService.getUserById(it)?.name }} richiede aggiornamenti sul progetto ${snapshot.getString("title")}",
+                                    role = Role.Developer,
+                                    recipientId = developerId,
+                                    projectId = task.projectId,
+                                    taskId = task.taskId
+                                )
+                            }
+
+                        }
+                    }
+            }
+        }
+    }
+
+    private fun handleChatNotifications(role: Role, userId: String,coroutineScope: CoroutineScope, chatIds: List<Chat>) {
         chatIds.forEach { chatId ->
             db.collection("chat").document(chatId.chatId).addSnapshotListener { snapshot, e ->
                 if (e != null) {
@@ -57,21 +128,27 @@ class NotificationHelper(private val context: Context, private val db: FirebaseF
                 snapshot?.get("lastMessage")?.let { message ->
                     val timestamp = snapshot.get("timestamp").toString()
                     if(snapshot.get("senderId").toString() !== userId.toString()) {
-                        sendNotification(
-                            type = "chat",
-                            title = "Nuovo messaggio",
-                            text = "Hai ricevuto un nuovo messaggio: $message",
-                            recipientId = userId,
-                            projectId = chatId.chatId,
-                            taskId = timestamp
-                        )
+                        coroutineScope.launch {
+                            sendNotification(
+                                type = "chat",
+                                title = "Nuovo messaggio",
+                                text = "Hai ricevuto un nuovo messaggio: $message da ${
+                                    userService.getUserById(
+                                        snapshot.get("senderId").toString())?.name
+                                }",
+                                role = role,
+                                recipientId = userId,
+                                projectId = chatId.chatId,
+                                taskId = timestamp
+                            )
+                        }
                     }
                 }
             }
         }
     }
 
-    private fun handleProgressNotifications(role: Role, userId: String) {
+    private fun handleProgressNotifications(role: Role, userId: String,coroutineScope: CoroutineScope) {
         Log.d("ProgressNotifications", "Entrato nella funzione handleProgressNotifications con ruolo: $role, nome: $userId")
 
         if (role == Role.Manager) {
@@ -89,15 +166,18 @@ class NotificationHelper(private val context: Context, private val db: FirebaseF
                     Log.d("ProgressNotifications", "Progresso del progetto $projectId: $progress")
                     if (progress?.toInt() == 100 && !isNotificationShown("progresso_$projectId")) {
                         Log.d("ProgressNotifications", "Progetto $projectId completato al 100%")
-                        sendNotification(
-                            type = "progresso",
-                            title = "Progetto completato",
-                            text = "Il progetto ${document.get("titolo")} è stato completato.",
-                            recipientId = userId,
-                            projectId = projectId,
-                            taskId = null
-                        )
-                        setNotificationShown("progresso_$projectId")
+                        coroutineScope.launch {
+                            sendNotification(
+                                type = "progresso",
+                                title = "Progetto completato",
+                                text = "Il progetto ${document.get("title")} è stato completato.",
+                                role = role,
+                                recipientId = userId,
+                                projectId = projectId,
+                                taskId = null
+                            )
+                        }
+                        //setNotificationShown("progresso_$projectId")
                     }
                 }
             }.addOnFailureListener { exception ->
@@ -128,15 +208,19 @@ class NotificationHelper(private val context: Context, private val db: FirebaseF
                                     val progress = change.document.getLong("progress")
                                     if (progress?.toInt() == 100 && !isNotificationShown("progresso_${change.document.id}")) {
                                         Log.d("ProgressNotifications", "Task ${change.document.id} completato al 100% nel progetto $projectId")
-                                        sendNotification(
-                                            type = "progresso",
-                                            title = "Task completato",
-                                            text = "Il task ${document.get("titolo")} è stato completato.",
-                                            recipientId = userId,
-                                            projectId = projectId,
-                                            taskId = change.document.id
-                                        )
-                                        setNotificationShown("progresso_${change.document.id}")
+                                        coroutineScope.launch {
+                                            sendNotification(
+                                                type = "progresso",
+                                                title = "Task completato",
+                                                text = "Il task ${document.get("titolo")} è stato completato.",
+                                                role= role,
+                                                recipientId = userId,
+                                                projectId = projectId,
+                                                taskId = change.document.id
+                                            )
+                                        }
+
+                                        //setNotificationShown("progresso_${change.document.id}")
                                     }
                                 }
                             }
@@ -148,10 +232,11 @@ class NotificationHelper(private val context: Context, private val db: FirebaseF
         }
     }
 
-    private fun sendNotification(
+    private suspend fun sendNotification(
         type: String,
         title: String,
         text: String,
+        role: Role,
         recipientId: String,
         projectId: String?,
         taskId: String?
@@ -161,6 +246,11 @@ class NotificationHelper(private val context: Context, private val db: FirebaseF
 
         if (type == "sollecito" || type == "progresso") {
             canale = if (type == "sollecito") "it.sollecito" else "it.newprogress"
+            if (type == "sollecito" && role == Role.Developer){
+                taskService.elimina_sollecita(projectId!!,taskId!!)
+            }else if (type == "progresso" && role == Role.Leader){
+                projectService.elimina_sollecita(projectId!!)
+            }
             intent = Intent(context, ItemActivity::class.java).apply {
                 putExtra("projectId", projectId)
                 putExtra("taskId", taskId)
@@ -168,7 +258,7 @@ class NotificationHelper(private val context: Context, private val db: FirebaseF
         } else if (type == "chat") {
             canale = "it.newmessage"
             intent = Intent(context, ChatActivity::class.java).apply {
-                putExtra("chatID", projectId)
+                putExtra("chatId", projectId)
                 putExtra("timestamp", taskId)
             }
         }

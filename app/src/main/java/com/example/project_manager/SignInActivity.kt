@@ -88,7 +88,7 @@ class SignInActivity : AppCompatActivity() {
                     "MANAGER" -> Role.Manager
                     else -> throw IllegalArgumentException("Ruolo non valido selezionato")
                 }
-                userService.signInProcedure(email, pw1, name, surname, role, globalImageUri!!,
+                userService.signInProcedure(email, pw1, name.capitalizeFirstLetter(), surname.capitalizeFirstLetter(), role, globalImageUri!!,
                     onSuccess = {
                         Log.d(
                             "SignInProcedure",
@@ -108,130 +108,6 @@ class SignInActivity : AppCompatActivity() {
         }
 
 
-            /*var check_campi=true;
-            if(name==""){
-                err_name.setText("missing name")
-                check_campi=false;
-            }
-            if(roleSelected.selectedItemPosition== AdapterView.INVALID_POSITION){
-                err_role.setText("select your business role")
-                check_campi=false;
-            }
-            if(!email.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\$".toRegex())){
-                err_email.setText("missing email")
-                check_campi=false
-            }
-            if(pw1==""){
-                err_pw1.setText("missing password")
-                check_campi=false
-            }
-            if(pw1.length<=6){
-                err_pw1.setText("password too short")
-                check_campi=false
-            }
-            if(pw2==""){
-                err_pw2.setText("missing password")
-                check_campi=false
-            }
-            if(pw1!=pw2){
-                check_campi=false
-                err_pw2.setText("not matching")
-            }
-
-            if(check_campi) {
-                err_name.setText("")
-                err_role.setText("")
-                err_email.setText("")
-                err_pw1.setText("")
-                err_pw2.setText("")
-
-                auth.createUserWithEmailAndPassword(email, pw1)
-                    .addOnCompleteListener(this) { task ->
-                        if (task.isSuccessful) {
-                            Log.d(TAG, "User created successfully with email: $email")
-                            Toast.makeText(
-                                baseContext,
-                                "User created. Log in to enter the restricted area.",
-                                Toast.LENGTH_SHORT
-                            ).show()
-
-                            val currentUser = auth.currentUser
-                            if (currentUser != null) {
-                                Log.d(TAG, "currentUser UID: ${currentUser.uid}")
-                                val user = HashMap<String, Any>()
-                                user["name"] = name
-                                user["role"] = roleSelected.selectedItem.toString()
-                                user["email"] = email
-                                user["uid"] = currentUser.uid
-
-
-                                // Aggiungi il campo per l'immagine del profilo
-
-                                Log.d(TAG, "Image URI: $globalImageUri")
-                                val fileUri = globalImageUri?.let { it1 -> getFileUriFromContentUri(it1) }
-                                Log.d(TAG, "Image URI to upload: $fileUri")
-                                val file = File(fileUri?.path ?: "")
-                                if (file.exists()) {
-                                    Log.d(TAG, "File exists: ${file.absolutePath}")
-                                } else {
-                                    Log.e(TAG, "File does not exist at path: ${file.absolutePath}")
-                                }
-                                if (fileUri !== null && globalImageUri !== null) {
-                                    val storage = FirebaseStorage.getInstance()
-                                    val storageReference = storage.reference
-
-                                    val formatter = SimpleDateFormat("yyyy_MM_dd_HH_mm_ss", Locale.getDefault())
-                                    val now = Date()
-                                    val fileName = formatter.format(now)
-
-                                    val profileImagesRef = storageReference.child("profile_images/${fileName}")
-
-                                    profileImagesRef.putFile(globalImageUri!!)
-                                        .addOnSuccessListener { taskSnapshot ->
-                                            Log.d(TAG, "Image uploaded successfully")
-
-                                            user["profile_image_url"] = globalImageUri.toString()
-
-                                            // Salva i dati dell'utente su Firestore
-                                            db.collection("utenti")
-                                                .add(user)
-                                                .addOnSuccessListener { documentReference ->
-                                                    Log.d(TAG, "User data added to Firestore with ID: ${documentReference.id}")
-                                                    auth.signInWithEmailAndPassword(email, pw1)
-                                                    startActivity(Intent(this, LoginActivity::class.java))
-                                                }.addOnFailureListener { e ->
-                                                    Log.w(TAG, "Error adding user data to Firestore", e)
-                                                }
-                                        }.addOnFailureListener { e ->
-                                            Log.e(TAG, "Error uploading image to Firebase Storage", e)
-                                        }
-                                } else {
-                                Log.e(TAG, "Failed to resolve file URI from content URI: $globalImageUri")
-                                Toast.makeText(this, "Failed to upload image", Toast.LENGTH_SHORT)
-                                    .show()
-                                }
-                            } else {
-                                Log.e(TAG, "Current user is null after creation")
-                            }
-                        } else {
-                            Log.e(TAG, "User creation failed: ${task.exception}")
-                            Toast.makeText(
-                                baseContext,
-                                "Sign Up failed. Try again later.",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    }
-                    .addOnFailureListener(this) { e ->
-                        Log.e(TAG, "Error creating user in Firebase Auth", e)
-                    }
-            }
-            else{
-                check_campi=true;
-                return@setOnClickListener
-            }
-
-        }*/
     }
 
     private fun check_all_data(name: String, surname:String, role: Spinner, email:String, pw1:String, pw2:String, err_profile_image:TextView, err_name:TextView, err_surname:TextView, err_role:TextView, err_email: TextView, err_pw1: TextView, err_pw2: TextView): Boolean{
@@ -346,4 +222,7 @@ class SignInActivity : AppCompatActivity() {
         }
     }
 
+    fun String.capitalizeFirstLetter(): String {
+        return this.firstOrNull()?.uppercase()?.plus(this.substring(1)) ?: ""
+    }
 }

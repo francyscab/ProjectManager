@@ -26,7 +26,7 @@ class ProjectService {
         assignedTo: String
     ): String {
         val projectData = mapOf(
-            "title" to title,
+            "title" to title.capitalizeFirstLetter(),
             "description" to description,
             "deadline" to deadline,
             "priority" to priority,
@@ -48,7 +48,7 @@ class ProjectService {
 
     suspend fun updateProject(projectId: String, title: String, description: String, assignedTo: String) {
         val updates = mutableMapOf<String, Any>(
-            "title" to title,
+            "title" to title.capitalizeFirstLetter(),
             "description" to description,
             "assignedTo" to assignedTo
         )
@@ -147,5 +147,16 @@ class ProjectService {
         }
     }
 
+    public suspend fun sollecita(projectId: String): Boolean {
+        return projectRepository.sollecita(projectId,true)
+    }
+
+    public suspend fun elimina_sollecita(projectId: String): Boolean {
+        return projectRepository.sollecita(projectId,false)
+    }
+
+    fun String.capitalizeFirstLetter(): String {
+        return this.firstOrNull()?.uppercase()?.plus(this.substring(1)) ?: ""
+    }
 
 }

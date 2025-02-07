@@ -172,4 +172,17 @@ class ProjectRepository {
         }
     }
 
+    suspend fun sollecita(projectId: String,valore :Boolean): Boolean {
+        return try {
+            db.collection("progetti")
+                .document(projectId)
+                .update("sollecitato", valore)
+                .await()
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Error updating project progress", e)
+            false
+        }
+    }
+
 }

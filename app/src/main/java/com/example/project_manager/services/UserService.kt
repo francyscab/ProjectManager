@@ -233,4 +233,8 @@ class UserService {
 
         return developerUsers
     }
+
+    fun String.capitalizeFirstLetter(): String {
+        return this.firstOrNull()?.uppercase()?.plus(this.substring(1)) ?: ""
+    }
 }

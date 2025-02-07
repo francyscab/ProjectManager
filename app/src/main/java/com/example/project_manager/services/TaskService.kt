@@ -105,7 +105,7 @@ class TaskService {
 
     suspend fun updateTask(projectId: String, taskId: String, title: String, description: String, developer: String? = null) {
         val updates = mutableMapOf<String, Any>(
-            "title" to title,
+            "title" to title.capitalizeFirstLetter(),
             "description" to description
         )
         developer?.let { updates["developer"] = it }
@@ -123,7 +123,7 @@ class TaskService {
         assignedTo: String
     ): String {
         val subtaskData = mapOf(
-            "title" to title,
+            "title" to title.capitalizeFirstLetter(),
             "description" to description,
             "deadline" to deadline,
             "priority" to priority,
@@ -199,6 +199,17 @@ class TaskService {
         }
     }
 
+    public suspend fun sollecita(projectId: String,taskId: String): Boolean {
+        return taskRepository.sollecita(projectId,taskId,true)
+    }
+
+    public suspend fun elimina_sollecita(projectId: String,taskId: String): Boolean {
+        return taskRepository.sollecita(projectId,taskId,false)
+    }
+
+    fun String.capitalizeFirstLetter(): String {
+        return this.firstOrNull()?.uppercase()?.plus(this.substring(1)) ?: ""
+    }
 
 }
 

@@ -44,7 +44,7 @@ class SubTaskService {
         assignedTo: String
     ): String {
         val subtaskData = mapOf(
-            "title" to title,
+            "title" to title.capitalizeFirstLetter(),
             "description" to description,
             "deadline" to deadline,
             "priority" to priority,
@@ -86,7 +86,7 @@ class SubTaskService {
 
     suspend fun updateSubTask(projectId: String, taskId: String, subtaskId: String,title: String, description: String, developer: String? = null) {
         val updates = mutableMapOf<String, Any>(
-            "title" to title,
+            "title" to title.capitalizeFirstLetter(),
             "description" to description
         )
         developer?.let { updates["developer"] = it }
@@ -121,4 +121,7 @@ class SubTaskService {
         return filteredSubTasks
     }
 
+    fun String.capitalizeFirstLetter(): String {
+        return this.firstOrNull()?.uppercase()?.plus(this.substring(1)) ?: ""
+    }
 }
