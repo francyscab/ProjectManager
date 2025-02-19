@@ -70,8 +70,8 @@ class TaskService {
 
         for (project in projectData) {
             val tasks = taskRepository.loadAllTaskByProjectId(project.projectId)
-            tasks.filter { task -> task.assignedTo == developerId }
-            taskData.addAll(tasks)
+            val filteredTasks = tasks.filter { task -> task.assignedTo == developerId }
+            taskData.addAll(filteredTasks)
         }
         return taskData
     }

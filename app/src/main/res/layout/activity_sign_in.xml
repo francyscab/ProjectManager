@@ -1,244 +1,297 @@
 <?xml version="1.0" encoding="utf-8"?>
-
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    tools:context=".SignInActivity">
-
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/darkblue"
+    android:fillViewport="true">
 
-    tools:context=".SignInActivity"
-    android:orientation="vertical">
-
-    <!-- Sezione per l'immagine del profilo -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:layout_marginTop="50dp"
+        android:padding="24dp"
         android:gravity="center">
 
-        <de.hdodenhof.circleimageview.CircleImageView
-            android:id="@+id/profile_image"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:src="@drawable/username"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"/>
-
-        <Button
-            android:id="@+id/button_select_profile_image"
-            android:layout_width="wrap_content"
+        <!-- Form Container -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/select_profile_image"
-            android:layout_marginTop="10dp"
-            android:backgroundTint="@color/cadetblue"
-            android:textColor="@android:color/white" />
+            app:cardCornerRadius="20dp"
+            app:cardBackgroundColor="@color/progress_background"
+            app:cardElevation="0dp"
+            app:strokeWidth="0dp">
+
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="24dp">
+
+                <!-- Title - spostato qui dentro -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/registrazione"
+                    android:textColor="@color/white"
+                    android:textSize="32sp"
+                    android:textStyle="bold"
+                    android:layout_gravity="center"
+                    android:layout_marginBottom="32dp"/>
+
+                <!-- Profile Image Section -->
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:id="@+id/profile_image"
+                    android:layout_width="100dp"
+                    android:layout_height="100dp"
+                    android:src="@drawable/username"
+                    android:layout_gravity="center"
+                    android:layout_marginBottom="16dp"/>
+                <TextView
+                    android:id="@+id/errore_profile_image"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/inserire_immagine_profilo"
+                    android:textColor="@color/red"
+                    android:textSize="12sp"
+                    android:layout_marginBottom="16dp"
+                    android:layout_marginStart="4dp"
+                    android:visibility="gone"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/button_select_profile_image"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/select_profile_image"
+                    android:layout_gravity="center"
+                    android:layout_marginBottom="20dp"
+                    app:cornerRadius="25dp"
+                    android:backgroundTint="@color/progress_foreground"/>
+
+                <!-- Name Input -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/nome"
+                    android:textColorHint="@color/white"
+                    app:boxBackgroundColor="@color/darkblue"
+                    app:boxStrokeColor="@color/progress_foreground"
+                    app:startIconTint="@color/white"
+                    app:boxCornerRadiusBottomEnd="15dp"
+                    app:boxCornerRadiusTopEnd="15dp"
+                    app:boxCornerRadiusBottomStart="15dp"
+                    app:boxCornerRadiusTopStart="15dp"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/name_signin_field"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="text"
+                        android:textColor="@color/white"/>
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <TextView
+                    android:id="@+id/errore_nome"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/inserisci_un_nome"
+                    android:textColor="@color/red"
+                    android:textSize="12sp"
+                    android:layout_marginStart="4dp"
+                    android:visibility="invisible"/>
+
+                <!-- Surname Input -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/cognome"
+                    android:textColorHint="@color/white"
+                    app:boxBackgroundColor="@color/darkblue"
+                    app:boxStrokeColor="@color/progress_foreground"
+                    app:startIconTint="@color/white"
+                    app:boxCornerRadiusBottomEnd="15dp"
+                    app:boxCornerRadiusTopEnd="15dp"
+                    app:boxCornerRadiusBottomStart="15dp"
+                    app:boxCornerRadiusTopStart="15dp"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/surname_signin_field"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="text"
+                        android:textColor="@color/white"/>
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <TextView
+                    android:id="@+id/errore_surname"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/inserisci_un_cognome"
+                    android:textColor="@color/red"
+                    android:textSize="12sp"
+                    android:layout_marginStart="4dp"
+                    android:visibility="invisible"/>
+
+                <!-- Role Spinner -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/ruolo"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                    app:boxBackgroundColor="@color/darkblue"
+                    app:boxStrokeColor="@color/progress_foreground"
+                    app:boxStrokeWidth="2dp"
+
+                    android:textColorHint="@color/white"
+                    app:startIconTint="@color/white"
+                    app:boxCornerRadiusBottomEnd="15dp"
+                    app:boxCornerRadiusTopEnd="15dp"
+                    app:boxCornerRadiusBottomStart="15dp"
+                    app:boxCornerRadiusTopStart="15dp">
+
+                    <AutoCompleteTextView
+                        android:id="@+id/role_signin_field"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="none"
+                        android:textColor="@color/white"
+                        android:popupBackground="@color/darkblue"
+                        android:dropDownSelector="@color/white"
+                        android:dropDownVerticalOffset="4dp"/>
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <TextView
+                    android:id="@+id/errore_role"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/inserire_il_ruolo"
+                    android:textColor="@color/red"
+                    android:textSize="12sp"
+                    android:layout_marginStart="4dp"
+                    android:visibility="invisible"/>
+
+                <!-- Email Input -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/email"
+                    android:textColorHint="@color/white"
+                    app:boxBackgroundColor="@color/darkblue"
+                    app:boxStrokeColor="@color/progress_foreground"
+                    app:startIconTint="@color/white"
+                    app:boxCornerRadiusBottomEnd="15dp"
+                    app:boxCornerRadiusTopEnd="15dp"
+                    app:boxCornerRadiusBottomStart="15dp"
+                    app:boxCornerRadiusTopStart="15dp"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/email_signin_field"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textEmailAddress"
+                        android:textColor="@color/white"/>
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <TextView
+                    android:id="@+id/errore_email"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/inserire_una_email"
+                    android:textColor="@color/red"
+                    android:textSize="12sp"
+                    android:layout_marginStart="4dp"
+                    android:visibility="invisible"/>
+
+                <!-- Password Input -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/password"
+                    android:textColorHint="@color/white"
+                    app:boxBackgroundColor="@color/darkblue"
+                    app:boxStrokeColor="@color/progress_foreground"
+
+                    app:startIconTint="@color/white"
+                    app:passwordToggleEnabled="true"
+                    app:passwordToggleTint="@color/white"
+                    app:boxCornerRadiusBottomEnd="15dp"
+                    app:boxCornerRadiusTopEnd="15dp"
+                    app:boxCornerRadiusBottomStart="15dp"
+                    app:boxCornerRadiusTopStart="15dp"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/password_signin_field"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textPassword"
+                        android:textColor="@color/white"/>
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <TextView
+                    android:id="@+id/errore_pw1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/inserire_una_password"
+                    android:textColor="@color/red"
+                    android:textSize="12sp"
+                    android:layout_marginStart="4dp"
+                    android:visibility="invisible"/>
+
+                <!-- Confirm Password Input -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/confirm_password"
+                    android:textColorHint="@color/white"
+                    app:boxBackgroundColor="@color/darkblue"
+                    app:boxStrokeColor="@color/progress_foreground"
+                    app:startIconTint="@color/white"
+                    app:passwordToggleEnabled="true"
+                    app:passwordToggleTint="@color/white"
+                    app:boxCornerRadiusBottomEnd="15dp"
+                    app:boxCornerRadiusTopEnd="15dp"
+                    app:boxCornerRadiusBottomStart="15dp"
+                    app:boxCornerRadiusTopStart="15dp"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/password_conf_signin_field"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textPassword"
+                        android:textColor="@color/white"/>
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <TextView
+                    android:id="@+id/errore_pw2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/inserire_nuovamente_la_password"
+                    android:textColor="@color/red"
+                    android:textSize="12sp"
+                    android:layout_marginStart="4dp"
+                    android:visibility="invisible"/>
+
+                <!-- Sign Up Button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/button_signin_signup"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="REGISTRATI"
+                    android:textSize="16sp"
+                    android:layout_marginTop="10dp"
+                    android:padding="12dp"
+                    app:cornerRadius="25dp"
+                    android:backgroundTint="@color/progress_foreground"/>
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
-
-    <TextView
-        android:id="@+id/errore_profile_immage"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text=""
-        android:textColor="@color/red"
-        android:layout_marginLeft="120dp"
-        android:textSize="10dp"/>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:orientation="horizontal">
-
-        <ImageView
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginLeft="50dp"
-            android:src="@drawable/nome" />
-
-        <EditText
-            android:id="@+id/name_signin_field"
-            android:layout_width="236dp"
-            android:layout_height="wrap_content"
-            android:hint="@string/nome"
-            android:inputType="text"
-            android:textSize="20dp" />
-
-    </LinearLayout>
-    <TextView
-        android:id="@+id/errore_surname"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text=""
-        android:textColor="@color/red"
-        android:layout_marginLeft="120dp"
-        android:textSize="10dp"/>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:orientation="horizontal">
-
-        <ImageView
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginLeft="50dp"
-            android:src="@drawable/nome" />
-
-        <EditText
-            android:id="@+id/surname_signin_field"
-            android:layout_width="236dp"
-            android:layout_height="wrap_content"
-            android:hint="@string/cognome"
-            android:inputType="text"
-            android:textSize="20dp" />
-
-    </LinearLayout>
-
-    <TextView
-        android:id="@+id/errore_nome"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text=""
-        android:textColor="@color/red"
-        android:layout_marginLeft="120dp"
-        android:textSize="10dp"/>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
-        android:orientation="horizontal">
-
-        <ImageView
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginLeft="50dp"
-            android:src="@drawable/valigia" />
-
-        <Spinner
-            android:id="@+id/role_signin_field"
-            android:layout_width="240dp"
-            android:layout_height="match_parent"
-            android:entries="@array/role"
-            android:spinnerMode="dropdown"
-            android:textSize="20dp" />
-
-    </LinearLayout>
-
-    <TextView
-        android:id="@+id/errore_role"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text=""
-        android:textColor="@color/red"
-        android:layout_marginLeft="120dp"
-        android:textSize="10dp"/>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
-        android:orientation="horizontal">
-
-        <ImageView
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginLeft="50dp"
-            android:src="@drawable/mail" />
-
-        <EditText
-            android:id="@+id/email_signin_field"
-            android:layout_width="240dp"
-            android:layout_height="wrap_content"
-            android:hint="@string/email"
-            android:inputType="textEmailAddress"
-            android:textSize="20dp" />
-
-    </LinearLayout>
-    <TextView
-        android:id="@+id/errore_email"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text=""
-        android:textColor="@color/red"
-        android:textSize="10dp"
-        android:layout_marginLeft="120dp"/>
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="5dp">
-
-        <ImageView
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:src="@drawable/password"
-            android:layout_marginLeft="50dp"/>
-
-        <EditText
-            android:id="@+id/password_signin_field"
-            android:layout_width="246dp"
-            android:layout_height="wrap_content"
-            android:hint="@string/password"
-            android:inputType="textPassword"
-            android:textSize="20dp" />
-
-    </LinearLayout>
-    <TextView
-        android:id="@+id/errore_pw1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text=""
-        android:textColor="@color/red"
-        android:textSize="10dp"
-        android:layout_marginLeft="120dp"/>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="5dp">
-
-        <ImageView
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:src="@drawable/password"
-            android:layout_marginLeft="50dp"/>
-
-        <EditText
-            android:id="@+id/password_conf_signin_field"
-            android:layout_width="246dp"
-            android:layout_height="wrap_content"
-            android:hint="@string/confirm_password"
-            android:inputType="textPassword"
-            android:textSize="20dp" />
-    </LinearLayout>
-    <TextView
-        android:id="@+id/errore_pw2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text=""
-        android:textColor="@color/red"
-        android:textSize="10dp"
-        android:layout_marginLeft="120dp"/>
-    <Button
-        android:id="@+id/button_signin_signup"
-        android:layout_width="230dp"
-        android:layout_height="60dp"
-        android:layout_marginLeft="85dp"
-        android:layout_marginTop="15dp"
-        android:backgroundTint="@color/cadetblue"
-        android:textColor="@color/white"
-        android:text="Sign up" />
-
-</LinearLayout>
 </ScrollView>

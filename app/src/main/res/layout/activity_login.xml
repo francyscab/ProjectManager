@@ -1,72 +1,152 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white"
-    tools:context=".MainActivity"
-    android:orientation="vertical">
+    android:background="@color/darkblue"
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="250dp">
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:gravity="center_horizontal">
 
-        <ImageView
-            android:layout_marginLeft="75dp"
-            android:layout_width="50dp"
-            android:layout_height="53dp"
-            android:src="@drawable/nome" />
-
-        <EditText
-            android:id="@+id/username_field"
-            android:layout_width="200dp"
+        <!-- Logo Section -->
+        <LinearLayout
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:hint="@string/username"
-            android:inputType="textEmailAddress"
-            android:textSize="30dp" />
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_marginBottom="35dp">
+
+            <ImageView
+                android:layout_width="200dp"
+                android:layout_height="200dp"
+                android:src="@drawable/logo"
+                android:padding="20dp"/>
+
+        </LinearLayout>
+
+        <!-- Login Form -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="20dp"
+            app:cardBackgroundColor="@color/progress_background"
+            android:layout_marginTop="10dp"
+            app:strokeWidth="0dp">
+
+            <LinearLayout
+                android:layout_width="368dp"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:padding="24dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginBottom="24dp"
+                    android:text="@string/login"
+                    android:textColor="@color/white"
+                    android:textSize="24sp" />
+
+                <!-- Email Input -->
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:hint="@string/email"
+                    android:textColorHint="@color/white"
+                    app:boxBackgroundColor="@color/darkblue"
+                    app:boxStrokeColor="@color/progress_foreground">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/emailInput"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textEmailAddress"
+                        android:textColor="@color/white" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Password Input -->
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="24dp"
+                    android:hint="@string/password"
+                    android:textColorHint="@color/white"
+                    app:boxBackgroundColor="@color/darkblue"
+                    app:boxStrokeColor="@color/progress_foreground"
+                    app:passwordToggleEnabled="true"
+                    app:passwordToggleTint="@color/white">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/passwordInput"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textPassword"
+                        android:textColor="@color/white" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <TextView
+                    android:id="@+id/error"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginBottom="16dp"
+                    android:text=""
+                    android:textColor="@color/red"
+                    android:textSize="12sp"
+                    android:visibility="invisible" />
+
+                <!-- Login Button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/loginButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:backgroundTint="@color/progress_foreground"
+                    android:padding="12dp"
+                    android:text="@string/login"
+                    android:textSize="16sp"
+                    app:cornerRadius="25dp" />
+
+                <!-- Bottom Links -->
+                <TextView
+                    android:id="@+id/forgotPasswordLink"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:alpha="0.8"
+                    android:padding="10dp"
+                    android:text="@string/password_dimenticata"
+                    android:textAlignment="center"
+                    android:textColor="@color/white" />
+
+
+                <TextView
+                    android:id="@+id/registerLink"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:padding="10dp"
+                    android:text="@string/non_hai_un_account_registrati"
+                    android:textAlignment="center"
+                    android:textColor="@color/white" />
+
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+
 
     </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="20dp">
-
-        <ImageView
-            android:layout_width="50dp"
-            android:layout_height="53dp"
-            android:src="@drawable/icona_pw_ios"
-            android:layout_marginLeft="75dp"/>
-
-        <EditText
-            android:id="@+id/password_field"
-            android:layout_width="200dp"
-            android:layout_height="wrap_content"
-            android:inputType="textPassword"
-            android:textSize="30dp"
-            android:hint="@string/password"
-            />
-    </LinearLayout>
-
-    <TextView
-        android:id="@+id/errore_credenziali_login"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text=""
-        android:textColor="@color/red"
-        android:layout_marginLeft="120dp"/>
-
-    <Button
-        android:id="@+id/button_login"
-        android:layout_width="230dp"
-        android:layout_height="60dp"
-        android:layout_marginLeft="85dp"
-        android:layout_marginTop="30dp"
-        android:backgroundTint="@color/cadetblue"
-        android:text="@string/signin"
-        android:textColor="@color/white" />
-
-</LinearLayout>
+</ScrollView>

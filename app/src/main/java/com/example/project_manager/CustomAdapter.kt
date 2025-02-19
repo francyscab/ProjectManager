@@ -1,14 +1,13 @@
 package com.example.project_manager
 
-import android.content.ContentValues
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.example.project_manager.models.ItemsViewModel
+import com.google.android.material.chip.Chip
+import com.google.android.material.progressindicator.CircularProgressIndicator
 
 
 class CustomAdapter(private val mList: ArrayList<ItemsViewModel>) : RecyclerView.Adapter<CustomAdapter.ViewHolder>() {
@@ -28,51 +27,66 @@ class CustomAdapter(private val mList: ArrayList<ItemsViewModel>) : RecyclerView
         // inflates the card_view_design view
         // that is used to hold list item
         val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.card_view_design, parent, false)
+            .inflate(R.layout.item_card_activity, parent, false)
 
         return ViewHolder(view,mListener)
     }
 
     // binds the list items to a view
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        val item = mList[position]
 
-        val ItemsViewModel = mList[position]
+        // Set project title
+        holder.titleView.text = item.title
 
-        Log.d(ContentValues.TAG,"ITEMVIEWMODEL: $ItemsViewModel")
+        // Set progress
+        holder.progressIndicator.progress = item.progress
+        holder.progressText.text = "${item.progress}%"
 
-        // sets the text to the textview from our itemHolder class
-        holder.textView.text = ItemsViewModel.title
-        val labelNew: TextView=holder.itemView.findViewById(R.id.new_label)
-
-        holder.projectId=ItemsViewModel.projectId.toString()
-        holder.taskId=ItemsViewModel.taskId.toString()
-        holder.subtaskId=ItemsViewModel.subtaskId.toString()
-
-        val priorityIndicator: View = holder.itemView.findViewById(R.id.priorityIndicator)
-
-        val color = when (ItemsViewModel.priority) {
-            "High" -> ContextCompat.getColor(holder.itemView.context, R.color.red)
-            "Medium" -> ContextCompat.getColor(holder.itemView.context, R.color.yellow)
-            "Low" -> ContextCompat.getColor(holder.itemView.context, R.color.green)
-            else -> ContextCompat.getColor(holder.itemView.context, R.color.gray) // Default
+        // Set priority chip
+        val (chipColor, chipText) = when (item.priority) {
+            "High" -> Pair(R.color.red, "Alta")
+            "Medium" -> Pair(R.color.yellow, "Media")
+            "Low" -> Pair(R.color.green, "Bassa")
+            else -> Pair(R.color.gray, "---")
+        }
+        holder.priorityChip.apply {
+            setChipBackgroundColorResource(chipColor)
+            text = chipText
         }
 
-        priorityIndicator.setBackgroundColor(color)
+        // Set deadline
+        if (item.deadline.isNotEmpty()) {
+            holder.deadlineText.text = item.deadline
+            holder.deadlineText.visibility = View.VISIBLE
+        } else {
+            holder.deadlineText.visibility = View.GONE
+        }
 
-
-
+        // Store IDs
+        holder.projectId = item.projectId
+        holder.taskId = item.taskId ?: ""
+        holder.subtaskId = item.subtaskId ?: ""
     }
-    // return the number of the items in the list
+
     override fun getItemCount(): Int {
         return mList.size
     }
 
     // Holds the views for adding it to text
-    class ViewHolder(ItemView: View, listener: onItemClickListener) : RecyclerView.ViewHolder(ItemView) {
-        val textView: TextView = itemView.findViewById(R.id.titolo)
-        var projectId: String = "" // Changed to String
-        var taskId: String = "" // Changed to String
-        var subtaskId: String = "" // Changed to String
+    class ViewHolder(itemView: View, listener: onItemClickListener) :
+        RecyclerView.ViewHolder(itemView) {
+
+        val titleView: TextView = itemView.findViewById(R.id.titolo)
+        val progressIndicator: CircularProgressIndicator =
+            itemView.findViewById(R.id.progressCircle)
+        val progressText: TextView = itemView.findViewById(R.id.progressText)
+        val priorityChip: Chip = itemView.findViewById(R.id.priorityChip)
+        val deadlineText: TextView = itemView.findViewById(R.id.deadlineText)
+
+        var projectId: String = ""
+        var taskId: String = ""
+        var subtaskId: String = ""
 
         init {
             itemView.setOnClickListener {
@@ -81,5 +95,3 @@ class CustomAdapter(private val mList: ArrayList<ItemsViewModel>) : RecyclerView
         }
     }
 }
-
-

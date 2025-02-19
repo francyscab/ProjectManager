@@ -7,35 +7,31 @@
     android:layout_height="wrap_content"
     android:padding="8dp">
 
-    <!-- Contenitore del messaggio -->
     <LinearLayout
         android:id="@+id/messageContainer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="8dp"
-        android:elevation="2dp"
+        android:padding="12dp"
+        android:background="@drawable/message_bubble"
         android:layout_margin="4dp"
+        android:maxWidth="280dp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent">
+        app:layout_constraintTop_toTopOf="parent">
 
-        <!-- Testo del messaggio -->
         <TextView
             android:id="@+id/textViewMessage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#FFFFFF"
-            android:textSize="16sp" />
+            android:textColor="@color/white"
+            android:textSize="16sp"/>
 
-        <!-- Timestamp -->
         <TextView
             android:id="@+id/textViewTimestamp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:textSize="12sp"
-            android:textColor="#AFAFAF" />
+            android:textColor="#B3FFFFFF"/>
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

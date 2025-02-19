@@ -1,65 +1,63 @@
-/*package com.example.project_manager
+package com.example.project_manager
 
-import android.annotation.SuppressLint
 import android.app.DatePickerDialog
 import android.content.ContentValues.TAG
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.CheckBox
-import android.widget.ImageButton
-import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.SearchView
 import android.widget.TextView
-import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
+import android.widget.Toast
+import androidx.appcompat.widget.SearchView
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.project_manager.models.ItemsViewModel
 import com.example.project_manager.models.Role
-import com.example.project_manager.models.User
 import com.example.project_manager.services.ChatService
+import com.example.project_manager.services.FileService
 import com.example.project_manager.services.ProjectService
+import com.example.project_manager.services.SubTaskService
 import com.example.project_manager.services.TaskService
 import com.example.project_manager.services.UserService
-import com.example.project_manager.repository.NotificationHelper
-import com.example.project_manager.services.SubTaskService
-import com.google.firebase.firestore.FirebaseFirestore
+import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
+class ItemListFragment : Fragment() {
 
-class LoggedActivity : AppCompatActivity() {
-
-    val projectService= ProjectService()
-    val userService= UserService()
-    val taskService= TaskService()
-    val subtaskService= SubTaskService()
-    val chatService= ChatService()
+    private val projectService = ProjectService()
+    private val userService = UserService()
+    private val taskService = TaskService()
+    private val subtaskService = SubTaskService()
+    private val chatService = ChatService()
+    private val fileService = FileService()
 
     private lateinit var data: ArrayList<ItemsViewModel>
     private lateinit var role: Role
     private lateinit var filteredDataByStatus: ArrayList<ItemsViewModel>
     private lateinit var buttonApplyFilters: Button
-    private lateinit var projectId: String
-    private lateinit var taskId: String
-
-
+    private var projectId: String = ""
+    private var taskId: String = ""
 
     private lateinit var drawerLayout: DrawerLayout
     private var startDate: Long = -1L
     private var endDate: Long = -1L
+    private val PICK_FILE_REQUEST_CODE = 2002
 
-    private lateinit var newProject: ImageButton
 
+
+    private lateinit var newProject: MaterialCardView
 
     private lateinit var startDateText: TextView
     private lateinit var endDateText: TextView
@@ -67,29 +65,31 @@ class LoggedActivity : AppCompatActivity() {
 
     val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_logged)
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+        return inflater.inflate(R.layout.itemlist_fragment, container, false)
+    }
 
-        projectId = intent.getStringExtra("projectId") ?: ""
-        taskId = intent.getStringExtra("taskId") ?: ""
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
-        if (projectId.isNotEmpty() || taskId.isNotEmpty()) {
+        getArgumentsData()
+
+        if(projectId.isNotEmpty() || taskId.isNotEmpty()) {
             loadSpecificData()
         } else {
-
-            loadData()
+            lifecycleScope.launch {
+                loadData()
+                deadlineFilterHandler()
+            }
         }
-        deadlineFilterHandler()
-
-        chatButtonHandler()
-        profileButtonHandler()
-        statistticButtonHandler()
 
         //barra laterale per filtri
-        drawerLayout = findViewById<DrawerLayout>(R.id.drawer_layout_logged)
-        val iconButton = findViewById<ImageView>(R.id.icon_logged)
+        drawerLayout = view.findViewById(R.id.drawer_layout_logged)
 
+        // Find the filter icon
+        val iconButton = view.findViewById<MaterialCardView>(R.id.icon_logged)
+
+        // Set click listener to toggle drawer
         iconButton.setOnClickListener {
             if (drawerLayout.isDrawerOpen(GravityCompat.END)) {
                 drawerLayout.closeDrawer(GravityCompat.END)
@@ -101,11 +101,62 @@ class LoggedActivity : AppCompatActivity() {
 
     }
 
-    private fun loadSpecificData() {
-        val recyclerview = findViewById<RecyclerView>(R.id.recyclerview)
-        recyclerview.layoutManager = LinearLayoutManager(this)
+    //per quando visualizzo i dati
+    private fun setupFileView() {
+        // Nascondi elementi non necessari per la modalità file
+        requireView().findViewById<MaterialCardView>(R.id.icon_logged).visibility = View.GONE
+        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
 
-        lifecycleScope.launch {
+        // Modifica il comportamento del pulsante +
+        newProject.visibility = View.VISIBLE
+        requireView().findViewById<MaterialCardView>(R.id.newProjectButton).setOnClickListener {
+            setupFileUpload()
+        }
+
+        // Carica i file
+        loadFiles()
+    }
+
+    private fun setupFileUpload() {
+        requireView().findViewById<MaterialCardView>(R.id.newProjectButton).setOnClickListener {
+            val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+                type = "*/*"
+                addCategory(Intent.CATEGORY_OPENABLE)
+            }
+            startActivityForResult(intent, PICK_FILE_REQUEST_CODE)
+        }
+    }
+
+    private fun loadFiles() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val files = fileService.getTaskFiles(projectId, taskId)
+                val recyclerview = requireView().findViewById<RecyclerView>(R.id.recyclerview)
+                recyclerview.layoutManager = LinearLayoutManager(requireContext())
+                recyclerview.adapter = FilesAdapter(files)
+            } catch (e: Exception) {
+                Log.e(TAG, "Error loading files", e)
+                Toast.makeText(requireContext(), "Error loading files", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun getArgumentsData() {
+        arguments?.let { args ->
+            projectId = args.getString("projectId", "")
+            taskId = args.getString("taskId", "")
+        }
+        Log.d(TAG, "itemlist ha ricevuto: - projectId: $projectId, taskId: $taskId")
+    }
+
+
+
+
+    private fun loadSpecificData() {
+        val recyclerview = requireView().findViewById<RecyclerView>(R.id.recyclerview)
+        recyclerview.layoutManager = LinearLayoutManager(requireContext())
+
+        viewLifecycleOwner.lifecycleScope.launch {
             try {
                 role = userService.getCurrentUserRole()!!
                 data = when {
@@ -121,12 +172,12 @@ class LoggedActivity : AppCompatActivity() {
                 }
 
                 // Aggiorna la UI
-                    recyclerview.visibility = View.VISIBLE
-                    visualizza(recyclerview, data)
+                recyclerview.visibility = View.VISIBLE
+                visualizza(recyclerview, data)
 
                 handleSeaarchBar(data)
 
-                buttonApplyFilters = findViewById(R.id.apply_filters)
+                buttonApplyFilters = requireView().findViewById(R.id.apply_filters)
                 buttonApplyFilters.setOnClickListener {
                     applyFilters(role)
                     drawerLayout.closeDrawer(GravityCompat.END)
@@ -141,7 +192,7 @@ class LoggedActivity : AppCompatActivity() {
 
     private fun handleSeaarchBar(data: ArrayList<ItemsViewModel>){
         //barra di ricerca
-        val searchView = findViewById<SearchView>(R.id.searchView)
+        val searchView = requireView().findViewById<SearchView>(R.id.searchView)
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 //cosa fare quando l'utente preme invio.
@@ -157,17 +208,17 @@ class LoggedActivity : AppCompatActivity() {
     //barra di ricerca
     private fun filterProjects(query: String?,data: ArrayList<ItemsViewModel>) {
         val filteredData= projectService.filterProjects(query,data)
-        visualizza(findViewById(R.id.recyclerview), filteredData)
+        visualizza(requireView().findViewById(R.id.recyclerview), filteredData)
     }
 
 
 
     private fun applyFilters(role:Role) {
-        val completedCheckBox = findViewById<CheckBox>(R.id.filter_completati)
-        val inProgressCheckBox = findViewById<CheckBox>(R.id.filter_in_corso)
-        val highPriorityCheckBox = findViewById<CheckBox>(R.id.filter_alta)
-        val mediumPriorityCheckBox = findViewById<CheckBox>(R.id.filter_media)
-        val lowPriorityCheckBox = findViewById<CheckBox>(R.id.filter_bassa)
+        val completedCheckBox = requireView().findViewById<CheckBox>(R.id.filter_completati)
+        val inProgressCheckBox = requireView().findViewById<CheckBox>(R.id.filter_in_corso)
+        val highPriorityCheckBox = requireView().findViewById<CheckBox>(R.id.filter_alta)
+        val mediumPriorityCheckBox = requireView().findViewById<CheckBox>(R.id.filter_media)
+        val lowPriorityCheckBox = requireView().findViewById<CheckBox>(R.id.filter_bassa)
 
         Log.d(TAG, "applyFilters started")
         // Filtraggio basato sullo stato (completati/incompleti)
@@ -192,7 +243,7 @@ class LoggedActivity : AppCompatActivity() {
                 filteredDataByDeadline = filterByDeadline(filteredDataByStatus, startDate, endDate, dateFormat)
             }
 
-            val leaderContainer = findViewById<LinearLayout>(R.id.leader_container_logged)
+            val leaderContainer = requireView().findViewById<LinearLayout>(R.id.leader_container_logged)
             val selectedLeaders = mutableListOf<String>()
             for (i in 0 until leaderContainer.childCount) {
                 val checkBox = leaderContainer.getChildAt(i) as? CheckBox
@@ -231,7 +282,7 @@ class LoggedActivity : AppCompatActivity() {
             Log.d(TAG, "filteredDataByPriority: $filteredDataByPriority")
 
             Log.d(TAG, "sto chiamado visualizza con data= $filteredDataByPriority")
-            visualizza(findViewById(R.id.recyclerview), filteredDataByPriority)
+            visualizza(requireView().findViewById(R.id.recyclerview), filteredDataByPriority)
         }
     }
 
@@ -270,12 +321,12 @@ class LoggedActivity : AppCompatActivity() {
     }
 
     private fun deadlineFilterHandler(){
-        startDateText = findViewById(R.id.text_start_date)
-        endDateText = findViewById(R.id.text_end_date)
-        val buttonSelectStartDate = findViewById<Button>(R.id.button_select_start_date)
-        val buttonSelectEndDate = findViewById<Button>(R.id.button_select_end_date)
-        val buttonClearStartDate = findViewById<Button>(R.id.button_clear_start_date)
-        val buttonClearEndDate = findViewById<Button>(R.id.button_clear_end_date)
+        startDateText = requireView().findViewById(R.id.text_start_date)
+        endDateText = requireView().findViewById(R.id.text_end_date)
+        val buttonSelectStartDate = requireView().findViewById<Button>(R.id.button_select_start_date)
+        val buttonSelectEndDate = requireView().findViewById<Button>(R.id.button_select_end_date)
+        val buttonClearStartDate = requireView().findViewById<Button>(R.id.button_clear_start_date)
+        val buttonClearEndDate = requireView().findViewById<Button>(R.id.button_clear_end_date)
 
         buttonClearStartDate.setOnClickListener {
             startDateText.text = "Nessuna data selezionata"
@@ -292,7 +343,7 @@ class LoggedActivity : AppCompatActivity() {
 
     private fun showDatePickerDialog(isStartDate: Boolean) {
         val datePicker = DatePickerDialog(
-            this,
+            requireActivity(),
             { _, year, month, dayOfMonth ->
                 val selectedDate = Calendar.getInstance()
                 selectedDate.set(year, month, dayOfMonth)
@@ -315,8 +366,8 @@ class LoggedActivity : AppCompatActivity() {
 
 
     private suspend fun loadUsersFilter(role:Role) {
-        val leaderContainer: LinearLayout = findViewById(R.id.leader_container_logged)
-        val leaderFilterTitle: TextView = findViewById(R.id.leader_filter_title_logged) // Aggiungi questo ID nel layout XML
+        val leaderContainer: LinearLayout = requireView().findViewById(R.id.leader_container_logged)
+        val leaderFilterTitle: TextView = requireView().findViewById(R.id.leader_filter_title_logged) // Aggiungi questo ID nel layout XML
 
         when (role) {
             Role.Leader -> {
@@ -327,7 +378,7 @@ class LoggedActivity : AppCompatActivity() {
                 leaderFilterTitle.text = getString(R.string.developer) // Cambia il titolo
 
                 for (user in developerNames) {
-                    val checkBox = CheckBox(this)
+                    val checkBox = CheckBox(requireActivity())
                     checkBox.text = "${user.name} ${user.surname}"
                     checkBox.tag = user.uid
                     checkBox.layoutParams = LinearLayout.LayoutParams(
@@ -339,8 +390,8 @@ class LoggedActivity : AppCompatActivity() {
             }
             Role.Developer -> {
                 // Per il Developer, nascondi l'intera sezione dei filtri per leader
-                val leaderFilterSection: LinearLayout = findViewById(R.id.leader_container_logged)
-                val leaderText: TextView = findViewById(R.id.leader_filter_title_logged)
+                val leaderFilterSection: LinearLayout = requireView().findViewById(R.id.leader_container_logged)
+                val leaderText: TextView = requireView().findViewById(R.id.leader_filter_title_logged)
                 leaderFilterSection.visibility = View.GONE
                 leaderText.visibility = View.GONE
             }
@@ -352,7 +403,7 @@ class LoggedActivity : AppCompatActivity() {
                 leaderFilterTitle.text = getString(R.string.leader)
 
                 for (user in developerNames) {
-                    val checkBox = CheckBox(this)
+                    val checkBox = CheckBox(requireActivity())
                     checkBox.text = "${user.name} ${user.surname}"
                     checkBox.tag = user.uid
                     checkBox.layoutParams = LinearLayout.LayoutParams(
@@ -365,59 +416,58 @@ class LoggedActivity : AppCompatActivity() {
         }
     }
 
-    private fun loadData() {
-        val recyclerview = findViewById<RecyclerView>(R.id.recyclerview)
-        recyclerview.layoutManager = LinearLayoutManager(this)
-        newProject = findViewById(R.id.newProject)
-        val notificationHelper = NotificationHelper(this, FirebaseFirestore.getInstance())
+    private suspend fun loadData() {
+        val view = view ?: return
+        role = userService.getCurrentUserRole()!!
+
+        val recyclerview: RecyclerView = view.findViewById(R.id.recyclerview) ?: return
+        recyclerview.layoutManager = LinearLayoutManager(requireActivity())
+
+        newProject = view.findViewById(R.id.newProjectButton) ?: return
+
         lifecycleScope.launch {
             try {
-                role= userService.getCurrentUserRole()!!
+                role = userService.getCurrentUserRole() ?: return@launch
                 loadUsersFilter(role)
-                val userId=userService.getCurrentUserId()
-                val chat=chatService.getCurrentUserChats()
 
-            when (role) {
-                Role.Manager -> {
-                    Log.d(TAG, "sono in manager")
-                    data = projectService.loadProjectForUser(userId.toString())
-                    Log.d(TAG, "Data: $data")
-                    notificationHelper.handleNotification(role,userId!!, "chat",lifecycleScope,chat)
-                    managerView()
-                    newProjectButtonHandler()
-                    visualizza(recyclerview, data)
+                val userId = userService.getCurrentUserId() ?: return@launch
+                val chat = chatService.getCurrentUserChats()
+
+                when (role) {
+                    Role.Manager -> {
+                        Log.d(TAG, "sono in manager")
+                        data = projectService.loadProjectForUser(userId.toString())
+                        Log.d(TAG, "Data: $data")
+                        managerView()
+                        newProjectButtonHandler()
+                        visualizza(recyclerview, data)
+                    }
+
+                    Role.Leader -> {
+                        data = projectService.loadProjectByLeader(userId.toString())
+
+                        leaderView()
+                        visualizza(recyclerview, data)
+                    }
+
+                    Role.Developer -> {
+                        data = taskService.filterTaskByDeveloper(userId.toString())
+
+                        developerView()
+                        visualizza(recyclerview, data)
+                    }
+
+                    else -> throw Exception("Role or user not found")
                 }
 
-                Role.Leader -> {
-                    data = projectService.loadProjectByLeader(userId.toString())
-                    notificationHelper.handleNotification( role, userId!!,"progresso",lifecycleScope)
-                    notificationHelper.handleNotification(role,userId, "chat",lifecycleScope, chat)
-                    notificationHelper.handleNotification(role,userId, "sollecito",lifecycleScope)
-                    leaderView()
-                    visualizza(recyclerview, data)
+                val applyFiltersButton: Button = view.findViewById(R.id.apply_filters) ?: return@launch
+                applyFiltersButton.setOnClickListener {
+                    applyFilters(role)
+                    drawerLayout.closeDrawer(GravityCompat.END)
                 }
-
-                Role.Developer -> {
-                    data = taskService.filterTaskByDeveloper(userId.toString())
-                    notificationHelper.handleNotification(role,userId!!, "chat", lifecycleScope,chat)
-                    notificationHelper.handleNotification( role, userId ,"progresso",lifecycleScope)
-                    notificationHelper.handleNotification(role,userId, "sollecito",lifecycleScope)
-                    developerView()
-                    visualizza(recyclerview, data)
-                }
-
-                else -> throw Exception("Role or user not found")
-            }
-
-
-            buttonApplyFilters = findViewById(R.id.apply_filters)
-            buttonApplyFilters.setOnClickListener {
-                applyFilters(role)
-                drawerLayout.closeDrawer(GravityCompat.END)
-            }
                 handleSeaarchBar(data)
 
-            }catch (e:Exception){
+            } catch (e: Exception) {
                 Log.e("Auth", "Errore nel recuperare il ruolo", e)
                 return@launch
             }
@@ -440,7 +490,7 @@ class LoggedActivity : AppCompatActivity() {
                 Log.d(TAG, "hai cliccato su $clickedItem")
                 Log.d(TAG,"projectid=${clickedItem.projectId} taskid=${clickedItem.taskId} subtaskid=${clickedItem.subtaskId}")
 
-                val intent = Intent(this@LoggedActivity, ItemActivity::class.java)
+                val intent = Intent(requireActivity(), HomeItemActivity::class.java)
                 intent.putExtra("projectId", clickedItem.projectId)
                 intent.putExtra("taskId", clickedItem.taskId)
                 intent.putExtra("subtaskId", clickedItem.subtaskId)
@@ -450,30 +500,9 @@ class LoggedActivity : AppCompatActivity() {
     }
 
     private fun newProjectButtonHandler(){
-        findViewById<ImageButton>(R.id.newProject).setOnClickListener {
-            val intent = Intent(this@LoggedActivity, NewItemActivity::class.java)
+        requireView().findViewById<MaterialCardView>(R.id.newProjectButton).setOnClickListener {
+            val intent = Intent(requireActivity(), NewItemActivity::class.java)
             intent.putExtra("tipoForm", "progetto")
-            startActivity(intent)
-        }
-    }
-
-    private fun chatButtonHandler(){
-        findViewById<ImageButton>(R.id.button_chat).setOnClickListener {
-            val intent = Intent(this, ChatListActivity::class.java)
-            startActivity(intent)
-        }
-    }
-
-    private fun profileButtonHandler(){
-        findViewById<ImageButton>(R.id.button_person).setOnClickListener {
-            val intent = Intent(this, UserProfileActivity::class.java)
-            startActivity(intent)
-        }
-    }
-
-    private fun statistticButtonHandler(){
-        findViewById<ImageButton>(R.id.button_statistiche).setOnClickListener {
-            val intent = Intent(this, StatisticheActivity::class.java)
             startActivity(intent)
         }
     }
@@ -489,26 +518,4 @@ class LoggedActivity : AppCompatActivity() {
     private fun developerView(){
         newProject.visibility = View.INVISIBLE
     }
-
-    @SuppressLint("MissingSuperCall")
-    override fun onBackPressed() {
-        AlertDialog.Builder(this)
-            .setTitle("Confirm Exit")
-            .setMessage("Are you sure you want to exit the application?")
-            .setPositiveButton("Yes") { _, _ ->
-                // User confirmed, move the app to the background
-                moveTaskToBack(true) // Mette l'app in background senza chiuderla
-            }
-            .setNegativeButton("No") { dialog, _ ->
-                // User canceled, dismiss the dialog
-                dialog.dismiss()
-            }
-            .show()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        lifecycleScope.launch {
-        }
-    }
-}*/
+}

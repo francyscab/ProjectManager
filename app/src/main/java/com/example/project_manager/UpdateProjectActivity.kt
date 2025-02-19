@@ -15,13 +15,15 @@ import com.example.project_manager.services.ProjectService
 import com.example.project_manager.services.SubTaskService
 import com.example.project_manager.services.TaskService
 import com.example.project_manager.services.UserService
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.launch
 
 class UpdateProjectActivity : AppCompatActivity() {
-    private lateinit var titleNewProject: EditText
-    private lateinit var descrizioneNewProject: EditText
-    private lateinit var pickDate: Button
-    private lateinit var projectElementSpinner: Spinner
+    private lateinit var titleNewProject: TextInputEditText
+    private lateinit var descrizioneNewProject: TextInputEditText
+    private lateinit var pickDate: MaterialButton
+    private lateinit var projectElementSpinner: AutoCompleteTextView
     private lateinit var buttonSave: Button
     private lateinit var erroreDescrizione: TextView
     private lateinit var erroreTitolo: TextView
@@ -59,7 +61,7 @@ class UpdateProjectActivity : AppCompatActivity() {
         titleNewProject = findViewById(R.id.titleNewProject)
         descrizioneNewProject = findViewById(R.id.descrizioneNewProject)
         pickDate = findViewById(R.id.pickDate)
-        projectElementSpinner = findViewById(R.id.projectElementSpinner)
+        projectElementSpinner = findViewById(R.id.assignedTo_field)
         buttonSave = findViewById(R.id.buttonSave)
         erroreDescrizione = findViewById(R.id.errore_descrizione)
         erroreTitolo = findViewById(R.id.errore_titolo)
@@ -107,13 +109,11 @@ class UpdateProjectActivity : AppCompatActivity() {
         pickDate.isEnabled = false
 
         // Trova il layout contenente i RadioButton e nascondilo
-        val priorityLayout: LinearLayout = findViewById(R.id.priorityLayout)
+        val priorityLayout: LinearLayout = findViewById(R.id.radioGroupPriority)
+        val priorityTitle: TextView = findViewById(R.id.radioGroupTitle)
         priorityLayout.visibility = View.GONE
+        priorityTitle.visibility = View.GONE
 
-        // Aggiungi un TextView per mostrare la priorità
-        val priorityTextView: TextView = findViewById(R.id.priorityTextView)
-        priorityTextView.visibility = View.VISIBLE
-        priorityTextView.text = "Priorità: ${item.priority}"
 
         titleNewProject.setText(item.title)
         descrizioneNewProject.setText(item.description)
@@ -130,35 +130,46 @@ class UpdateProjectActivity : AppCompatActivity() {
                 showDataInSpinner(projectElementSpinner, users, item.assignedTo, role)
             }
             Role.Developer -> {
-                findViewById<LinearLayout>(R.id.spinnerLinearLayout).visibility = View.GONE
+                findViewById<LinearLayout>(R.id.assignedTo_field).visibility = View.GONE
             }
         }
     }
 
-    private fun showDataInSpinner(spinner: Spinner, users: ArrayList<User>, selectedValue: String?, role: Role) {
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item,
-            users.map { "${it.name} ${it.surname}" })
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinner.adapter = adapter
+    private fun showDataInSpinner(
+        autoComplete: AutoCompleteTextView,
+        users: ArrayList<User>,
+        selectedValue: String?,
+        role: Role
+    ) {
+        val userMap = mutableMapOf<String, String>()
+        val displayNames = users.map { user ->
+            val displayName = "${user.name} ${user.surname}"
+            userMap[displayName] = user.uid
+            displayName
+        }.toTypedArray()
 
-        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                selectedUserId = users[position].uid
-            }
-            override fun onNothingSelected(parent: AdapterView<*>?) {
-                selectedUserId = null
-            }
+        val adapter = ArrayAdapter(
+            this,
+            R.layout.custom_dropdown_item,
+            displayNames
+        )
+        autoComplete.setAdapter(adapter)
+
+        autoComplete.setOnItemClickListener { parent, _, position, _ ->
+            val selectedName = parent.getItemAtPosition(position).toString()
+            selectedUserId = userMap[selectedName]
         }
 
         selectedValue?.let { value ->
-            val position = users.indexOfFirst { it.uid == value }
-            if (position >= 0) {
-                spinner.setSelection(position)
-                selectedUserId = users[position].uid
+            val selectedUser = users.find { it.uid == value }
+            selectedUser?.let {
+                val displayName = "${it.name} ${it.surname}"
+                autoComplete.setText(displayName, false)
+                selectedUserId = it.uid
             }
         }
 
-        spinner.isEnabled = role == Role.Manager
+        autoComplete.isEnabled = role == Role.Manager
     }
 
     private suspend fun loadSpinnerData(role: Role): ArrayList<User> {
@@ -178,7 +189,7 @@ class UpdateProjectActivity : AppCompatActivity() {
             if (validateInputs(title, description)) {
                 lifecycleScope.launch {
                     updateItem(title, description,tipo)
-                    navigateBack()
+                    //navigateBack()
                 }
             }
         }
@@ -188,17 +199,17 @@ class UpdateProjectActivity : AppCompatActivity() {
         var isValid = true
 
         if (title.isBlank()) {
-            erroreTitolo.text = "Title cannot be empty"
+            erroreTitolo.visibility= View.VISIBLE
             isValid = false
         } else {
-            erroreTitolo.text = ""
+            erroreTitolo.visibility= View.INVISIBLE
         }
 
         if (description.isBlank()) {
-            erroreDescrizione.text = "Description cannot be empty"
+            erroreDescrizione.visibility= View.VISIBLE
             isValid = false
         } else {
-            erroreDescrizione.text = ""
+            erroreDescrizione.visibility= View.INVISIBLE
         }
 
         return isValid
@@ -223,7 +234,7 @@ class UpdateProjectActivity : AppCompatActivity() {
         }
     }
 
-    private fun navigateBack() {
+    /*private fun navigateBack() {
         val intent = Intent(this, ItemActivity::class.java).apply {
             putExtra("projectId", projectId)
             putExtra("taskId", taskId)
@@ -231,5 +242,5 @@ class UpdateProjectActivity : AppCompatActivity() {
         }
         startActivity(intent)
         finish()
-    }
+    }*/
 }

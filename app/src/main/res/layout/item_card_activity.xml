@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="100dp"
+    android:layout_margin="10dp"
+    app:cardElevation="4dp"
+    app:cardCornerRadius="10dp"
+    app:cardBackgroundColor="@color/dark_background">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="8dp">
+
+        <com.google.android.material.progressindicator.CircularProgressIndicator
+            android:id="@+id/progressCircle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            app:indicatorSize="70dp"
+            app:trackThickness="8dp"
+            app:trackColor="@color/progress_background"
+            app:indicatorColor="@color/progress_foreground"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+        <TextView
+            android:id="@+id/progressText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="17sp"
+            android:textColor="@color/white"
+            app:layout_constraintStart_toStartOf="@id/progressCircle"
+            app:layout_constraintEnd_toEndOf="@id/progressCircle"
+            app:layout_constraintTop_toTopOf="@id/progressCircle"
+            app:layout_constraintBottom_toBottomOf="@id/progressCircle"/>
+
+        <TextView
+            android:id="@+id/titolo"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/white"
+            app:layout_constraintStart_toEndOf="@id/progressCircle"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:layout_marginTop="5dp"/>
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/priorityChip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:textSize="12sp"
+            app:chipCornerRadius="16dp"
+            app:layout_constraintStart_toEndOf="@id/progressCircle"
+            app:layout_constraintTop_toBottomOf="@id/titolo" />
+
+        <TextView
+            android:id="@+id/deadlineText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:textSize="12sp"
+            android:textColor="@color/white"
+            android:alpha="0.8"
+            app:layout_constraintStart_toEndOf="@id/priorityChip"
+            app:layout_constraintTop_toTopOf="@id/priorityChip"
+            app:layout_constraintBottom_toBottomOf="@id/priorityChip"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.cardview.widget.CardView>

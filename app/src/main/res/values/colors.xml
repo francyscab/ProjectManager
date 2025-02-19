@@ -8,5 +8,11 @@
     <color name="yellow">#FFD700</color>
     <color name="green">#008000</color>
     <color name="gray">#B0B0B0</color>
-    <color name="darkblue">#18212f</color>
+    <color name="darkblue">#1a1a2e</color>
+
+    <color name="dark_background">#2a2a40</color>
+    <color name="progress_background">#3a3a50</color>
+    <color name="progress_foreground">#5d4e8c</color>
+    <color name="progress_foreground_darker">#483c6d</color>
+    <color name="progress_foreground_darkest">#332a4e</color>
 </resources>

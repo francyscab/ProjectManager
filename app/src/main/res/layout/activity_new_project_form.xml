@@ -1,245 +1,269 @@
 <?xml version="1.0" encoding="utf-8"?>
-
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white"
-    tools:context=".SignInActivity">
-
-
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".SignInActivity"
-    android:orientation="vertical">
-
-    <TextView
-        android:id="@+id/typeNew"
-        android:layout_marginTop="40dp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Add new project"
-        android:textSize="50dp"
-        android:layout_marginLeft="20dp"/>
+    android:background="@color/darkblue"
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="40dp"
-        android:orientation="horizontal">
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:gravity="center">
 
-        <ImageView
-            android:layout_width="50dp"
-            android:layout_height="53dp"
-            android:layout_marginLeft="50dp"
-            android:src="@drawable/icona_progetto_ios" />
-
-        <EditText
-            android:id="@+id/titleNewProject"
-            android:layout_width="236dp"
+        <!-- Form Container -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Title"
-            android:inputType="text"
-            android:textSize="25dp" />
+            app:cardCornerRadius="20dp"
+            app:cardBackgroundColor="@color/progress_background"
+            app:cardElevation="0dp"
+            app:strokeWidth="0dp">
 
-    </LinearLayout>
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:orientation="horizontal">
-
-        <ImageView
-            android:layout_width="50dp"
-            android:layout_height="53dp"
-            android:layout_marginLeft="50dp"
-            android:src="@drawable/icona_descrizione_ios" />
-
-        <EditText
-            android:id="@+id/descrizioneNewProject"
-            android:layout_width="236dp"
-            android:layout_height="wrap_content"
-            android:hint="Descrizione"
-            android:inputType="textMultiLine"
-            android:gravity="top"
-            android:lines="5"
-            android:scrollbars="vertical"
-            android:textSize="25dp" />
-
-    </LinearLayout>
-    <TextView
-        android:id="@+id/errore_descrizione"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text=""
-        android:textColor="@color/red"
-        android:layout_marginLeft="120dp"
-        android:textSize="15dp"/>
-    <TextView
-        android:id="@+id/errore_titolo"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text=""
-        android:textColor="@color/red"
-        android:layout_marginLeft="120dp"
-        android:textSize="15dp"/>
-
-    <LinearLayout
-        android:id="@+id/spinnerLinearLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
-        android:orientation="horizontal">
-
-        <ImageView
-            android:layout_width="50dp"
-            android:layout_height="53dp"
-            android:layout_marginLeft="50dp"
-            android:src="@drawable/icona_user_ios" />
-
-        <Spinner
-            android:id="@+id/projectElementSpinner"
-            android:layout_width="240dp"
-            android:layout_height="match_parent"
-            android:spinnerMode="dropdown"
-            android:entries="@array/role"
-            android:textSize="30dp" />
-
-    </LinearLayout>
-
-    <TextView
-        android:id="@+id/errore_spinner"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text=""
-        android:textColor="@color/red"
-        android:layout_marginLeft="120dp"
-        android:textSize="15dp"/>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
-        android:orientation="horizontal">
-
-        <ImageView
-            android:layout_width="50dp"
-            android:layout_height="53dp"
-            android:layout_marginLeft="50dp"
-            android:src="@drawable/scadenza" />
-
-        <Button
-            android:id="@+id/pickDate"
-            android:layout_width="240dp"
-            android:layout_height="wrap_content"
-            android:text=""
-            android:gravity="start"
-            android:background="?android:attr/selectableItemBackground"
-            android:textColor="@color/black"
-            />
-
-    </LinearLayout>
-
-    <TextView
-        android:id="@+id/errore_date"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text=""
-        android:textColor="@color/red"
-        android:layout_marginLeft="120dp"/>
-
-    <LinearLayout
-        android:id="@+id/priorityLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical">
-
-        <ImageView
-            android:layout_width="50dp"
-            android:layout_height="53dp"
-            android:layout_marginLeft="50dp"
-            android:src="@drawable/priority" />
-
-        <RadioGroup
-            android:id="@+id/radioGroupPriority"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <RadioButton
-                android:id="@+id/radioHigh"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Alta" />
+                android:orientation="vertical"
+                android:padding="24dp">
 
-            <RadioButton
-                android:id="@+id/radioMedium"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Media" />
+                <!-- Title -->
+                <TextView
+                    android:id="@+id/typeNew"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/nuovo_progetto"
+                    android:textColor="@color/white"
+                    android:textSize="32sp"
+                    android:textStyle="bold"
+                    android:layout_gravity="center"
+                    android:layout_marginBottom="25dp"/>
 
-            <RadioButton
-                android:id="@+id/radioLow"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Bassa" />
+                <!-- Title Input -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Titolo"
+                    android:textColorHint="@color/white"
+                    app:boxBackgroundColor="@color/darkblue"
+                    app:boxStrokeColor="@color/progress_foreground"
+                    app:startIconTint="@color/white"
+                    app:boxCornerRadiusBottomEnd="15dp"
+                    app:boxCornerRadiusTopEnd="15dp"
+                    app:boxCornerRadiusBottomStart="15dp"
+                    app:boxCornerRadiusTopStart="15dp"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
-        </RadioGroup>
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/titleNewProject"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="text"
+                        android:textColor="@color/white"/>
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Title Error -->
+                <TextView
+                    android:id="@+id/errore_titolo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/inserire_un_titolo"
+                    android:textColor="@color/red"
+                    android:textSize="12sp"
+                    android:layout_marginStart="4dp"
+                    android:visibility="invisible" />
+
+                <!-- Description Input -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Descrizione"
+                    android:textColorHint="@color/white"
+                    app:boxBackgroundColor="@color/darkblue"
+                    app:boxStrokeColor="@color/progress_foreground"
+                    app:startIconTint="@color/white"
+                    app:boxCornerRadiusBottomEnd="15dp"
+                    app:boxCornerRadiusTopEnd="15dp"
+                    app:boxCornerRadiusBottomStart="15dp"
+                    app:boxCornerRadiusTopStart="15dp"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/descrizioneNewProject"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textMultiLine"
+                        android:gravity="top"
+                        android:minLines="10"
+                        android:textColor="@color/white"/>
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <TextView
+                    android:id="@+id/errore_descrizione"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/inserire_una_descrizione"
+                    android:textColor="@color/red"
+                    android:textSize="12sp"
+                    android:layout_marginStart="4dp"
+                    android:visibility="invisible" />
+
+
+
+                <!-- Assignee Dropdown -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/assignedToLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/ruolo"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                    app:boxBackgroundColor="@color/darkblue"
+                    app:boxStrokeColor="@color/progress_foreground"
+                    app:boxStrokeWidth="2dp"
+
+                    android:textColorHint="@color/white"
+                    app:startIconTint="@color/white"
+                    app:boxCornerRadiusBottomEnd="15dp"
+                    app:boxCornerRadiusTopEnd="15dp"
+                    app:boxCornerRadiusBottomStart="15dp"
+                    app:boxCornerRadiusTopStart="15dp">
+
+                    <AutoCompleteTextView
+                        android:id="@+id/assignedTo_field"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="none"
+                        android:textColor="@color/white"
+                        android:popupBackground="@color/darkblue"
+                        android:dropDownSelector="@color/white"
+                        android:dropDownVerticalOffset="4dp"/>
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Assignee Error -->
+                <TextView
+                    android:id="@+id/errore_spinner"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/selezionare_il_ruolo"
+                    android:textColor="@color/red"
+                    android:textSize="12sp"
+                    android:layout_marginStart="4dp"
+                    android:visibility="invisible" />
+
+
+
+                <!-- Deadline Section -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:cardBackgroundColor="@color/darkblue"
+                    app:cardCornerRadius="15dp"
+                    app:cardElevation="0dp"
+                    app:strokeColor="@color/progress_foreground"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/pickDate"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/seleziona_data"
+                            android:textColor="@color/white"
+                            android:textAlignment="textStart"
+                            android:padding="16dp"
+                            android:textAllCaps="false"
+                            style="@style/Widget.MaterialComponents.Button.TextButton"
+                            android:backgroundTint="@android:color/transparent"/>
+
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Date Error -->
+                <TextView
+                    android:id="@+id/errore_date"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/selezionare_la_data"
+                    android:textColor="@color/red"
+                    android:textSize="12sp"
+                    android:layout_marginStart="4dp"
+                    android:visibility="invisible" />
+
+                <!-- Priority Section -->
+                <TextView
+                    android:id="@+id/radioGroupTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/priorit"
+                    android:textColor="@color/white"
+                    android:textSize="16sp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="8dp"/>
+
+                <RadioGroup
+                    android:id="@+id/radioGroupPriority"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    >
+
+                    <com.google.android.material.radiobutton.MaterialRadioButton
+                        android:id="@+id/radioHigh"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/alta"
+                        android:textColor="@color/white"/>
+
+                    <com.google.android.material.radiobutton.MaterialRadioButton
+                        android:id="@+id/radioMedium"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/media"
+                        android:textColor="@color/white"/>
+
+                    <com.google.android.material.radiobutton.MaterialRadioButton
+                        android:id="@+id/radioLow"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/bassa"
+                        android:textColor="@color/white"/>
+                </RadioGroup>
+
+                <!-- Priority Error -->
+                <TextView
+                    android:id="@+id/errore_priorita"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/selezionare_la_priorit"
+                    android:textColor="@color/red"
+                    android:textSize="12sp"
+                    android:layout_marginStart="4dp"
+                    android:visibility="invisible" />
+
+
+
+                <!-- Save Button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/buttonSave"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/salva_up"
+                    android:textSize="16sp"
+                    android:padding="12dp"
+                    app:cornerRadius="25dp"
+                    android:backgroundTint="@color/progress_foreground"/>
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
-    <LinearLayout
-        android:id="@+id/priorityTextLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical">
-
-        <ImageView
-            android:layout_width="50dp"
-            android:layout_height="53dp"
-            android:layout_marginLeft="50dp"
-            android:src="@drawable/priority" />
-
-        <TextView
-            android:id="@+id/priorityTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:text="@string/priorit_alta" />
-
-    </LinearLayout>
-
-    <TextView
-        android:id="@+id/errore_priorita"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text=""
-        android:textColor="@color/red"
-        android:layout_marginLeft="120dp"/>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="10dp"
-        android:gravity="center_horizontal">
-
-        <Button
-            android:id="@+id/buttonSave"
-            android:backgroundTint="@color/cadetblue"
-            android:layout_width="100dp"
-            android:layout_height="wrap_content"
-            android:textColor="@color/black"
-            android:text="@string/salva" />
-    </LinearLayout>
-
-
-
-</LinearLayout>
-
 </ScrollView>

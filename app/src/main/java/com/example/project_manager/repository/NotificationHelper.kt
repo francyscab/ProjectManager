@@ -7,7 +7,7 @@ import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.project_manager.ChatActivity
-import com.example.project_manager.ItemActivity
+import com.example.project_manager.HomeActivity
 //ProjectActivity
 import com.example.project_manager.R
 import com.example.project_manager.models.Chat
@@ -241,41 +241,45 @@ class NotificationHelper(private val context: Context, private val db: FirebaseF
         projectId: String?,
         taskId: String?
     ) {
-        var intent: Intent? = null
-        var canale: String? = null
+        // Create a default intent that points to HomeActivity
+        val intent = Intent(context, HomeActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
 
-        if (type == "sollecito" || type == "progresso") {
-            canale = if (type == "sollecito") "it.sollecito" else "it.newprogress"
-            if (type == "sollecito" && role == Role.Developer){
-                taskService.elimina_sollecita(projectId!!,taskId!!)
-            }else if (type == "progresso" && role == Role.Leader){
-                projectService.elimina_sollecita(projectId!!)
+        var channelId = when (type) {
+            "sollecito" -> {
+                if (type == "sollecito" && role == Role.Developer) {
+                    taskService.elimina_sollecita(projectId!!, taskId!!)
+                } else if (type == "progresso" && role == Role.Leader) {
+                    projectService.elimina_sollecita(projectId!!)
+                }
+                "it.sollecito"
             }
-            intent = Intent(context, ItemActivity::class.java).apply {
-                putExtra("projectId", projectId)
-                putExtra("taskId", taskId)
+            "progresso" -> "it.newprogress"
+            "chat" -> {
+                // Override default intent for chat notifications
+                intent.setClass(context, ChatActivity::class.java)
+                intent.putExtra("chatId", projectId)
+                intent.putExtra("timestamp", taskId)
+                "it.newmessage"
             }
-        } else if (type == "chat") {
-            canale = "it.newmessage"
-            intent = Intent(context, ChatActivity::class.java).apply {
-                putExtra("chatId", projectId)
-                putExtra("timestamp", taskId)
-            }
+            else -> "it.default"
         }
 
         val pendingIntent = PendingIntent.getActivity(
-            context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            context,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val notification = canale?.let {
-            NotificationCompat.Builder(context, it)
-                .setSmallIcon(R.drawable.username)
-                .setContentTitle(title)
-                .setContentText(text)
-                .setContentIntent(pendingIntent)
-                .setAutoCancel(true)
-                .build()
-        }
+        val notification = NotificationCompat.Builder(context, channelId)
+            .setSmallIcon(R.drawable.username)
+            .setContentTitle(title)
+            .setContentText(text)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+            .build()
 
         notificationManager.notify("${type}_${recipientId}".hashCode(), notification)
     }

@@ -10,10 +10,18 @@ class ProjectService {
     val taskService = TaskService()
 
     public suspend fun getProjectById(projectId: String): ItemsViewModel? {
+        Log.d(TAG, "ProjectService: Getting project with ID: $projectId")
         return try {
-            projectRepository.getProjectById(projectId)
+            val project = projectRepository.getProjectById(projectId)
+            if (project == null) {
+                Log.w(TAG, "ProjectService: No project found with ID: $projectId")
+            } else {
+                Log.d(TAG, "ProjectService: Successfully retrieved project: ${project.title}")
+            }
+            project
         } catch (exception: Exception) {
-            throw exception
+            Log.e(TAG, "ProjectService: Error getting project", exception)
+            null
         }
     }
 

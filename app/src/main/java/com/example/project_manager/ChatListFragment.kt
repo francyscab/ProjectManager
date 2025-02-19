@@ -1,12 +1,15 @@
-/*package com.example.project_manager
+package com.example.project_manager
 
-import android.content.ContentValues.TAG
+
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -18,28 +21,33 @@ import com.example.project_manager.services.UserService
 import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.launch
 
-class ChatListActivity : AppCompatActivity() {
+class ChatListFragment : Fragment() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var chatListAdapter: ChatListAdapter
 
-    val chatService = ChatService()
-    val userService = UserService()
+    private val chatService = ChatService()
+    private val userService = UserService()
 
     private val chats = mutableListOf<Chat>()
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.chat_list_activity)
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        return inflater.inflate(R.layout.chat_list_fragment, container, false)
+    }
 
-        setupViews()
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        setupViews(view)
         loadChats()
     }
 
-    private fun setupViews() {
-        recyclerView = findViewById(R.id.recyclerViewChatList)
+    private fun setupViews(view: View) {
+        recyclerView = view.findViewById(R.id.recyclerViewChatList)
 
-        // Cambiato da Button a MaterialButton
-        val startChatButton: MaterialButton = findViewById(R.id.buttonStartNewChat)
+        val startChatButton: MaterialButton = view.findViewById(R.id.buttonStartNewChat)
         startChatButton.setOnClickListener {
             showSelectUserDialog()
         }
@@ -54,7 +62,7 @@ class ChatListActivity : AppCompatActivity() {
 
         recyclerView.apply {
             adapter = chatListAdapter
-            layoutManager = LinearLayoutManager(this@ChatListActivity)
+            layoutManager = LinearLayoutManager(requireContext())
         }
     }
 
@@ -66,7 +74,7 @@ class ChatListActivity : AppCompatActivity() {
                 chats.addAll(userChats)
                 chatListAdapter.notifyDataSetChanged()
             } catch (e: Exception) {
-                Log.e("ChatListActivity", "Error loading chats", e)
+                Log.e("ChatListFragment", "Error loading chats", e)
             }
         }
     }
@@ -74,23 +82,23 @@ class ChatListActivity : AppCompatActivity() {
     private fun showSelectUserDialog() {
         lifecycleScope.launch {
             try {
-                val role=userService.getCurrentUserRole()
-                val userId=userService.getCurrentUserId()!!
+                val role = userService.getCurrentUserRole()
+                val userId = userService.getCurrentUserId()!!
                 val users = when (role) {
                     Role.Developer -> getDeveloperUsers(userId)
-                    Role.Leader-> getUsersForLeader()
+                    Role.Leader -> getUsersForLeader()
                     Role.Manager -> getUsersForManager()
                     else -> emptyList()
                 }
                 showUserSelectionDialog(users)
             } catch (e: Exception) {
-                Log.e("ChatListActivity", "Error loading users", e)
+                Log.e("ChatListFragment", "Error loading users", e)
             }
         }
     }
 
     private suspend fun getDeveloperUsers(userId: String): List<User> {
-        try {
+        return try {
             val uniqueUsers = mutableMapOf<String, User>()
 
             val developers = userService.getMyDeveloperCollegue(userId)
@@ -104,17 +112,15 @@ class ChatListActivity : AppCompatActivity() {
             }
 
             Log.d(TAG, "Found ${uniqueUsers.size} unique users (developers and leaders)")
-
-            return uniqueUsers.values.toList()
-
+            uniqueUsers.values.toList()
         } catch (e: Exception) {
             Log.e(TAG, "Error in getDeveloperUsers", e)
-            return emptyList()
+            emptyList()
         }
     }
 
     private suspend fun getUsersForLeader(): List<User> {
-        try {
+        return try {
             val currentUser = userService.getCurrentUser() ?: return emptyList()
             val uniqueUsers = mutableMapOf<String, User>()
 
@@ -129,24 +135,23 @@ class ChatListActivity : AppCompatActivity() {
             }
 
             uniqueUsers.remove(currentUser.uid)
-
-            return uniqueUsers.values.toList()
-
+            uniqueUsers.values.toList()
         } catch (e: Exception) {
             Log.e(TAG, "Error in getUsersForLeader", e)
-            return emptyList()
+            emptyList()
         }
     }
 
     private suspend fun getUsersForManager(): List<User> {
         val currentUser = userService.getCurrentUser() ?: return emptyList()
-        val leaders=userService.getLeaderOfManager(currentUser.uid)
-        return leaders
+        return userService.getLeaderOfManager(currentUser.uid)
     }
 
     private fun showUserSelectionDialog(users: List<User>) {
+        if (!isAdded) return  // Check if fragment is attached to activity
+
         if (users.isEmpty()) {
-            AlertDialog.Builder(this)
+            AlertDialog.Builder(requireContext())
                 .setTitle("No Users Available")
                 .setMessage("No users found to start a chat with.")
                 .setPositiveButton("OK", null)
@@ -154,21 +159,18 @@ class ChatListActivity : AppCompatActivity() {
             return
         }
 
-        // Create array of TextViews with tags
         val items = users.map { user ->
-            TextView(this).apply {
+            TextView(requireContext()).apply {
                 text = "${user.name} ${user.surname}"
-                tag = user.uid  // Store the user ID as a tag
-                setPadding(50, 30, 50, 30) // Add some padding for better appearance
+                tag = user.uid
+                setPadding(50, 30, 50, 30)
             }
         }.toTypedArray()
 
-        AlertDialog.Builder(this)
+        AlertDialog.Builder(requireContext())
             .setTitle("Select User")
             .setItems(items.map { it.text.toString() }.toTypedArray()) { _, which ->
-                // Retrieve the ID from the tag
                 val selectedUserId = items[which].tag as String
-                // Find the full user object using the ID
                 val selectedUser = users.find { it.uid == selectedUserId }
                 selectedUser?.let { startChatWithUser(it) }
             }
@@ -183,12 +185,14 @@ class ChatListActivity : AppCompatActivity() {
                     openChat(chatId)
                 }
             } catch (e: Exception) {
-                Log.e("ChatListActivity", "Error starting chat", e)
-                AlertDialog.Builder(this@ChatListActivity)
-                    .setTitle("Error")
-                    .setMessage("Failed to start chat. Please try again.")
-                    .setPositiveButton("OK", null)
-                    .show()
+                Log.e("ChatListFragment", "Error starting chat", e)
+                if (isAdded) {  // Check if fragment is attached
+                    AlertDialog.Builder(requireContext())
+                        .setTitle("Error")
+                        .setMessage("Failed to start chat. Please try again.")
+                        .setPositiveButton("OK", null)
+                        .show()
+                }
             }
         }
     }
@@ -198,18 +202,12 @@ class ChatListActivity : AppCompatActivity() {
     }
 
     private fun openChat(chatId: String) {
-        val intent = Intent(this, ChatActivity::class.java)
+        val intent = Intent(requireContext(), ChatActivity::class.java)
         intent.putExtra("chatId", chatId)
         startActivity(intent)
     }
 
-    override fun onBackPressed() {
-        super.onBackPressed()
-        val intent = Intent(this, LoggedActivity::class.java)
-        startActivity(intent)
-        finish()
+    companion object {
+        private const val TAG = "ChatListFragment"
     }
-
-
 }
-*/

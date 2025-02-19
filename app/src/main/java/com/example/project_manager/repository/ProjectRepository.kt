@@ -66,8 +66,21 @@ class ProjectRepository {
     }
 
     public suspend fun getProjectById(projectId: String): ItemsViewModel? {
+        Log.d(TAG, "Attempting to fetch project with ID: $projectId")
+
         return try {
-            val document = db.collection("progetti").document(projectId).get().await()
+            // Verifica che l'ID non sia vuoto
+            if (projectId.isBlank()) {
+                Log.e(TAG, "Project ID is blank or empty")
+                return null
+            }
+
+            // Aggiungi log per debuggare
+            val documentRef = db.collection("progetti").document(projectId)
+            Log.d(TAG, "Document reference created for path: ${documentRef.path}")
+
+            val document = documentRef.get().await()
+            Log.d(TAG, "Document exists: ${document.exists()}")
 
             if (document.exists()) {
                 val creator = document.getString("creator") ?: ""
@@ -75,24 +88,50 @@ class ProjectRepository {
                 val assignedTo = document.getString("assignedTo") ?: ""
                 val deadline = document.getString("deadline") ?: ""
                 val priority = document.getString("priority") ?: ""
-                val  description = document.getString("description") ?: ""
+                val description = document.getString("description") ?: ""
                 val progress = document.getLong("progress")?.toInt() ?: 0
                 val comment = document.getString("comment") ?: ""
                 val rating = document.getLong("rating")?.toInt() ?: 0
                 val valutato = document.getBoolean("valutato") ?: false
-                val createdAt = document.getLong("createdAt")?:0
-                val completedAt = document.getLong("completedAt")?:-1
+                val createdAt = document.getLong("createdAt") ?: 0
+                val completedAt = document.getLong("completedAt") ?: -1
                 val sollecitato = document.getBoolean("sollecitato") ?: false
 
-                ItemsViewModel(title, assignedTo, creator, deadline, priority, description,progress,comment, rating,valutato,createdAt,completedAt,sollecitato,document.id)
+                // Log dei dati recuperati
+                Log.d(TAG, """
+                Project data retrieved:
+                - Title: $title
+                - Creator: $creator
+                - AssignedTo: $assignedTo 
+                - Progress: $progress
+            """.trimIndent())
+
+                ItemsViewModel(
+                    title = title,
+                    assignedTo = assignedTo,
+                    creator = creator,
+                    deadline = deadline,
+                    priority = priority,
+                    description = description,
+                    progress = progress,
+                    comment = comment,
+                    rating = rating,
+                    valutato = valutato,
+                    createdAt = createdAt,
+                    completedAt = completedAt,
+                    sollecitato = sollecitato,
+                    projectId = document.id
+                )
             } else {
-                throw NoSuchElementException("Project non trovato con ID: $projectId")
+                Log.w(TAG, "No document found with ID: $projectId")
+                null
             }
-        } catch (exception: Exception) {
-            Log.w(TAG, "Error getting project.", exception)
-          throw NoSuchElementException("errore nel caricare il progetto")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting project with ID: $projectId", e)
+            null
         }
     }
+
 
     suspend fun updateProjectProgress(projectId: String, progress: Int): Boolean {
         return try {

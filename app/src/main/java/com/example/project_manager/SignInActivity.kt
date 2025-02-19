@@ -8,7 +8,10 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
+import android.view.View
 import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
@@ -35,13 +38,29 @@ class SignInActivity : AppCompatActivity() {
         setContentView(R.layout.activity_sign_in)
         var userService= UserService()
 
-        val err_profile_image=findViewById<TextView>(R.id.errore_profile_immage)
+        val err_profile_image=findViewById<TextView>(R.id.errore_profile_image)
         val err_name=findViewById<TextView>(R.id.errore_nome)
         val err_surname=findViewById<TextView>(R.id.errore_surname)
         val err_role=findViewById<TextView>(R.id.errore_role)
         val err_email=findViewById<TextView>(R.id.errore_email)
         val err_pw1=findViewById<TextView>(R.id.errore_pw1)
         val err_pw2=findViewById<TextView>(R.id.errore_pw2)
+
+        val nameField = findViewById<EditText>(R.id.name_signin_field)
+        val surnameField = findViewById<EditText>(R.id.surname_signin_field)
+        val roleSelected = findViewById<AutoCompleteTextView>(R.id.role_signin_field)
+        val emailField = findViewById<EditText>(R.id.email_signin_field)
+        val pw1Field = findViewById<EditText>(R.id.password_signin_field)
+        val pw2Field = findViewById<EditText>(R.id.password_conf_signin_field)
+
+
+
+        val adapter = ArrayAdapter.createFromResource(
+            this,
+            R.array.role,
+            R.layout.custom_dropdown_item
+        )
+        roleSelected.setAdapter(adapter)
 
         //gestione selezione immagine profilo
         findViewById<Button>(R.id.button_select_profile_image).setOnClickListener {
@@ -54,18 +73,19 @@ class SignInActivity : AppCompatActivity() {
 
         button_signup.setOnClickListener {
 
-            err_name.setText("")
-            err_role.setText("")
-            err_email.setText("")
-            err_pw1.setText("")
-            err_pw2.setText("")
+            val name = nameField.text.toString()
+            val surname = surnameField.text.toString()
+            val email = emailField.text.toString()
+            val pw1 = pw1Field.text.toString()
+            val pw2 = pw2Field.text.toString()
 
-            val name = findViewById<EditText>(R.id.name_signin_field).text.toString()
-            val surname = findViewById<EditText>(R.id.surname_signin_field).text.toString()
-            val roleSelected = findViewById<Spinner>(R.id.role_signin_field)
-            val email = findViewById<EditText>(R.id.email_signin_field).text.toString()
-            val pw1 = findViewById<EditText>(R.id.password_signin_field).text.toString()
-            val pw2 = findViewById<EditText>(R.id.password_conf_signin_field).text.toString()
+            err_name.visibility=View.INVISIBLE
+            err_role.visibility=View.INVISIBLE
+            err_email.visibility=View.INVISIBLE
+            err_pw1.visibility=View.INVISIBLE
+            err_pw2.visibility=View.INVISIBLE
+
+
 
             if (check_all_data(
                     name,
@@ -83,7 +103,7 @@ class SignInActivity : AppCompatActivity() {
                     err_pw2
                 )
             ) {
-                val role: Role = when (roleSelected.selectedItem.toString().uppercase()) {
+                val role: Role = when (roleSelected.text.toString().uppercase()) {
                     "LEADER" -> Role.Leader
                     "DEVELOPER" -> Role.Developer
                     "MANAGER" -> Role.Manager
@@ -111,60 +131,77 @@ class SignInActivity : AppCompatActivity() {
 
     }
 
-    private fun check_all_data(name: String, surname:String, role: Spinner, email:String, pw1:String, pw2:String, err_profile_image:TextView, err_name:TextView, err_surname:TextView, err_role:TextView, err_email: TextView, err_pw1: TextView, err_pw2: TextView): Boolean{
-        var check_campi=true;
-        if(globalImageUri==null){
-            err_profile_image.setText("missing profile image")
-            check_campi=false
+    private fun check_all_data(
+        name: String,
+        surname: String,
+        role: AutoCompleteTextView,
+        email: String,
+        pw1: String,
+        pw2: String,
+        err_profile_image: TextView,
+        err_name: TextView,
+        err_surname: TextView,
+        err_role: TextView,
+        err_email: TextView,
+        err_pw1: TextView,
+        err_pw2: TextView
+    ): Boolean {
+        var check_campi = true
+
+        // Resetta tutti gli errori all'inizio
+        err_name.visibility = View.INVISIBLE
+        err_surname.visibility = View.INVISIBLE
+        err_role.visibility = View.INVISIBLE
+        err_email.visibility = View.INVISIBLE
+        err_pw1.visibility = View.INVISIBLE
+        err_pw2.visibility = View.INVISIBLE
+
+        if (globalImageUri == null) {
+            err_profile_image.visibility = View.VISIBLE
+            check_campi = false
         }
 
-        if(name==""){
-            err_name.setText("missing name")
-            check_campi=false;
-        }
-        if(surname==""){
-            err_name.setText("missing name")
-            check_campi=false;
-        }
-        if(surname==""){
-            err_name.setText("missing surname")
-            check_campi=false;
-        }
-        if(role.selectedItemPosition== AdapterView.INVALID_POSITION){
-            err_role.setText("select your business role")
-            check_campi=false;
-        }
-        if(!email.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\$".toRegex())){
-            err_email.setText("missing email")
-            check_campi=false
-        }
-        if(pw1==""){
-            err_pw1.setText("missing password")
-            check_campi=false
-        }
-        if(pw1.length<=6){
-            err_pw1.setText("password too short")
-            check_campi=false
-        }
-        if(pw2==""){
-            err_pw2.setText("missing password")
-            check_campi=false
-        }
-        if(pw1!=pw2){
-            check_campi=false
-            err_pw2.setText("not matching")
+        if (name.isEmpty()) {
+            err_name.visibility = View.VISIBLE
+            check_campi = false
         }
 
-        if(check_campi) {
-            err_name.setText("")
-            err_surname.setText("")
-            err_role.setText("")
-            err_email.setText("")
-            err_pw1.setText("")
-            err_pw2.setText("")
-            return true
+        if (surname.isEmpty()) {
+            err_surname.visibility = View.VISIBLE
+            check_campi = false
         }
-        return false
+
+        if (role.text.toString().isEmpty()) {
+            err_role.visibility = View.VISIBLE
+            check_campi = false
+        }
+
+        if (!email.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\$".toRegex())) {
+            err_email.visibility = View.VISIBLE
+            check_campi = false
+        }
+
+        if (pw1.isEmpty()) {
+            err_pw1.visibility = View.VISIBLE
+            check_campi = false
+        }
+
+        if (pw1.length <= 6) {
+            err_pw1.visibility = View.VISIBLE
+            check_campi = false
+        }
+
+        if (pw2.isEmpty()) {
+            err_pw2.visibility = View.VISIBLE
+            check_campi = false
+        }
+
+        if (pw1 != pw2) {
+            check_campi = false
+            err_pw2.visibility = View.VISIBLE
+        }
+
+        return check_campi
     }
 
     private fun checkAndRequestPermissions() {

@@ -1,24 +1,27 @@
-package com.example.project_manager
+/*package com.example.project_manager
 
 import android.app.DatePickerDialog
 import android.app.ProgressDialog
 import android.content.Intent
+import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
+import android.text.SpannableString
+import android.text.style.ForegroundColorSpan
 import android.util.Log
+import android.view.ContextThemeWrapper
 import android.view.View
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.ImageButton
-import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.RadioButton
 import android.widget.RadioGroup
-import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
+import android.widget.Toolbar
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
@@ -35,6 +38,10 @@ import com.example.project_manager.services.SubTaskService
 import com.example.project_manager.services.TaskService
 import com.example.project_manager.services.UserService
 import com.example.project_manager.repository.NotificationHelper
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.card.MaterialCardView
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.slider.Slider
 import com.google.firebase.firestore.FirebaseFirestore
 import de.hdodenhof.circleimageview.CircleImageView
 import kotlinx.coroutines.CoroutineScope
@@ -61,24 +68,24 @@ class ItemActivity : AppCompatActivity() {
     private val PICK_FILE_REQUEST_CODE = 2002
     private val fileService = FileService()
 
-    private lateinit var progressSeekBar: SeekBar
-    private lateinit var progLeaderTask: LinearLayout
+    private lateinit var progressSeekBar: Slider
+    private lateinit var buttonTask: MaterialButton
     private lateinit var tipoElenco: TextView
-    private lateinit var seekbarLayout: LinearLayout
-    private lateinit var seekbutton: Button
+    private lateinit var seekbarLayout: MaterialCardView
+    //private lateinit var seekbutton: Button
     private lateinit var progressLabel: TextView
-    private lateinit var sollecitaCont: LinearLayout
+    //private lateinit var sollecitaCont: LinearLayout
     private lateinit var sollecitaButton: Button
-    private lateinit var feedbackLayout: LinearLayout
+    private lateinit var feedbackLayout: MaterialCardView
     private lateinit var feedback: LinearLayout
-    private lateinit var valuta: Button
+    private lateinit var valuta: MaterialButton
     private lateinit var feedbackScore: TextView
     private lateinit var feedbackComment: TextView
-    private lateinit var assignedCont: LinearLayout
+    private lateinit var assignedCont: MaterialCardView
     private lateinit var tipo: String
-    private lateinit var buttonFile: ImageButton
-    private lateinit var fileLayout: LinearLayout
-    private lateinit var filesRecyclerView: RecyclerView
+    //private lateinit var buttonFile: MaterialButton
+    private lateinit var fileButton: MaterialButton
+    //private lateinit var filesRecyclerView: RecyclerView
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var imageCreator: CircleImageView
     private lateinit var imageAssignedTo: CircleImageView
@@ -93,7 +100,7 @@ class ItemActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_project)
+        setContentView(R.layout.activity_item)
 
         val notificationHelper = NotificationHelper(this, FirebaseFirestore.getInstance())
         inizialiseView()
@@ -101,25 +108,24 @@ class ItemActivity : AppCompatActivity() {
 
         tipo = getItemType(subtaskId, taskId, projectId)
 
-        drawerLayout = findViewById<DrawerLayout>(R.id.drawer_layout_item)
-        val iconButton = findViewById<ImageView>(R.id.filterButton)
+        /*drawerLayout = findViewById<DrawerLayout>(R.id.drawer_layout_item)*/
+        //val iconButton = findViewById<ImageView>(R.id.filterButton)
 
-        iconButton.setOnClickListener {
+        /*iconButton.setOnClickListener {
             if (drawerLayout.isDrawerOpen(GravityCompat.END)) {
                 drawerLayout.closeDrawer(GravityCompat.END)
             } else {
                 drawerLayout.openDrawer(GravityCompat.END)
             }
-        }
+        }*/
 
         lifecycleScope.launch {
             role = userService.getCurrentUserRole()!!
-            loadUsersFilter(role)
+            //loadUsersFilter(role)
             loadDetails(tipo, notificationHelper)
             menu(tipo)
         }
     }
-
 
 
     private fun getIntentData() {
@@ -129,25 +135,25 @@ class ItemActivity : AppCompatActivity() {
     }
 
     private fun inizialiseView() {
-        assignedCont = findViewById(R.id.assignedCont)
-        sollecitaCont = findViewById(R.id.sollecitaCont)
-        sollecitaButton = findViewById(R.id.sollecitaButton)
-        feedbackLayout = findViewById(R.id.feedbackLayout)
-        feedback = findViewById(R.id.feedback)//layout del bottone feedback
-        valuta = findViewById(R.id.feedbackButton)
-        feedbackScore = findViewById(R.id.feedbackScore)
-        feedbackComment = findViewById(R.id.feedbackComment)
-        progLeaderTask = findViewById<LinearLayout>(R.id.progLeaderTask)
-        tipoElenco = findViewById(R.id.typeElenco)
-        seekbarLayout = findViewById(R.id.seekbarLayout)
-        progressSeekBar = findViewById(R.id.seekBar)
-        seekbutton = findViewById(R.id.saveButton)
-        progressLabel = findViewById(R.id.progressLabel)
-        buttonFile = findViewById(R.id.aggiungiFileButton)
-        fileLayout= findViewById(R.id.file)
-        filesRecyclerView = findViewById(R.id.filesRecyclerView)
-        imageCreator = findViewById(R.id.profileImageCreator)
-        imageAssignedTo= findViewById(R.id.profileImageAssignedTo)
+        assignedCont = findViewById(R.id.assignedToCard)
+        //sollecitaCont = findViewById(R.id.sollecitaCont)
+        sollecitaButton = findViewById(R.id.buttonSollecita)
+        feedbackLayout = findViewById(R.id.feedbackCard)
+        //feedback = findViewById(R.id.feedback)//layout del bottone feedback
+        valuta = findViewById(R.id.buttonVota)
+        feedbackScore = findViewById(R.id.ratingNumber)
+        feedbackComment = findViewById(R.id.ratingComment)
+        buttonTask = findViewById(R.id.viewTasksButton)
+        //tipoElenco = findViewById(R.id.typeElenco)
+        seekbarLayout = findViewById(R.id.progressCard)
+        progressSeekBar = findViewById(R.id.progressSlider)
+        //seekbutton = findViewById(R.id.saveButton)
+        progressLabel = findViewById(R.id.progressPercentage)
+        //buttonFile = findViewById(R.id.viewDocButton)
+        fileButton= findViewById(R.id.viewDocButton)
+        //filesRecyclerView = findViewById(R.id.filesRecyclerView)
+        imageCreator = findViewById(R.id.creatorImage)
+        imageAssignedTo= findViewById(R.id.assigneeImage)
     }
 
     private fun getItemType(subtaskId: String, taskId: String, projectId: String): String {
@@ -226,7 +232,7 @@ class ItemActivity : AppCompatActivity() {
 
     private suspend fun setupLeaderView(notificationHelper: NotificationHelper) {
         setData(tipo, taskId, projectId, subtaskId)
-        findViewById<ImageButton>(R.id.aggiungiTaskButton).setOnClickListener {
+        /*findViewById<ImageButton>(R.id.aggiungiTaskButton).setOnClickListener {
             val intent = Intent(this, NewItemActivity::class.java).apply {
                 putExtra("tipoForm", "task")
                 putExtra("projectId", projectId)
@@ -234,14 +240,13 @@ class ItemActivity : AppCompatActivity() {
             }
             startActivity(intent)
             //loadTask()
-        }
-        progLeaderTask.visibility = View.VISIBLE
+        }*/
+        buttonTask.visibility = View.VISIBLE
         seekbarLayout.visibility = View.GONE
-        sollecitaCont.visibility = View.GONE
-        fileLayout.visibility= View.GONE
-
-
-        loadTask()
+        sollecitaButton.visibility= View.GONE
+        //sollecitaCont.visibility = View.GONE
+        fileButton.visibility= View.GONE
+        //loadSubItem()
     }
 
     private suspend fun setupManagerView(notificationHelper: NotificationHelper) {
@@ -254,21 +259,23 @@ class ItemActivity : AppCompatActivity() {
         }
 
 
-        sollecitaCont.visibility = View.VISIBLE
-        progLeaderTask.visibility = View.GONE
+        sollecitaButton.visibility=View.VISIBLE
+        //sollecitaCont.visibility = View.VISIBLE
+        buttonTask.visibility = View.GONE
         seekbarLayout.visibility = View.GONE
-        fileLayout.visibility= View.GONE
+        fileButton.visibility= View.GONE
 
 
 
     }
 
     private suspend fun setupDeveloperSubTaskView() {
-        sollecitaCont.visibility = View.GONE
-        progLeaderTask.visibility = View.GONE
+        sollecitaButton.visibility=View.GONE
+        //sollecitaCont.visibility = View.GONE
+        buttonTask.visibility = View.GONE
         seekbarLayout.visibility = View.VISIBLE
         assignedCont.visibility = View.GONE
-        fileLayout.visibility= View.GONE
+        fileButton.visibility= View.GONE
 
         setData(tipo, taskId, projectId, subtaskId)
 
@@ -277,7 +284,8 @@ class ItemActivity : AppCompatActivity() {
     private suspend fun setupLeaderTaskView(notificationHelper: NotificationHelper) {
 
         setData(tipo, taskId, projectId, subtaskId)
-        sollecitaCont.visibility = View.VISIBLE
+        sollecitaButton.visibility=View.VISIBLE
+        //sollecitaCont.visibility = View.VISIBLE
         sollecitaButton.setOnClickListener {
             lifecycleScope.launch {
                 taskService.sollecita(projectId,taskId)
@@ -285,32 +293,34 @@ class ItemActivity : AppCompatActivity() {
             }
         }
         seekbarLayout.visibility = View.GONE
-        progLeaderTask.visibility = View.GONE
-        fileLayout.visibility= View.VISIBLE
-        buttonFile.visibility= View.GONE
-        filesRecyclerView.visibility= View.VISIBLE
+        buttonTask.visibility = View.GONE
+        fileButton.visibility= View.VISIBLE
+        ///buttonFile.visibility= View.GONE
+        //filesRecyclerView.visibility= View.VISIBLE
 
-        val filesRecyclerView = findViewById<RecyclerView>(R.id.filesRecyclerView)
+        /*val filesRecyclerView = findViewById<RecyclerView>(R.id.filesRecyclerView)
         filesRecyclerView.layoutManager = LinearLayoutManager(this)
-        loadFiles() // Load existing files
+        loadFiles() // Load existing files*/
 
     }
 
     private suspend fun setupDeveloperTaskView() {
         setData(tipo, taskId, projectId, subtaskId)
-        sollecitaCont.visibility = View.GONE
-        progLeaderTask.visibility = View.VISIBLE
+        sollecitaButton.visibility=View.GONE
+        //sollecitaCont.visibility = View.GONE
+        buttonTask.visibility = View.VISIBLE
         seekbarLayout.visibility = View.GONE
-        fileLayout.visibility= View.VISIBLE
+        fileButton.visibility= View.VISIBLE
 
-        setupFileUpload()
-        val filesRecyclerView = findViewById<RecyclerView>(R.id.filesRecyclerView)
+        //setupFileUpload()
+        /*val filesRecyclerView = findViewById<RecyclerView>(R.id.filesRecyclerView)
         filesRecyclerView.layoutManager = LinearLayoutManager(this)
-        loadFiles()
+        loadFiles()*/
 
-        tipoElenco.text = "Sottotask"
+        buttonTask.text="Visualizza Sottotask"
+        //tipoElenco.text = "Sottotask"
 
-        findViewById<ImageButton>(R.id.aggiungiTaskButton).setOnClickListener {
+        /*findViewById<ImageButton>(R.id.aggiungiTaskButton).setOnClickListener {
             val intent = Intent(this, NewItemActivity::class.java).apply {
                 putExtra("tipoForm", "subtask")
                 putExtra("projectId", projectId)
@@ -320,7 +330,7 @@ class ItemActivity : AppCompatActivity() {
             startActivity(intent)
             //loadTask()
         }
-        loadTask()
+        loadSubItem()*/
     }
 
     private suspend fun setData(
@@ -359,36 +369,38 @@ class ItemActivity : AppCompatActivity() {
     }
 
     private suspend fun setName(item: ItemsViewModel) {
-        val projectNameTextView = findViewById<TextView>(R.id.projectNameTextView)
-        projectNameTextView.text = item.title.uppercase()
+        val projectNameTextView = findViewById<androidx.appcompat.widget.Toolbar>(R.id.toolbar)
+        projectNameTextView.title = item.title.uppercase()
     }
 
     private suspend fun setDescription(item: ItemsViewModel) {
-        val projectDescriptionTextView = findViewById<TextView>(R.id.descrizioneProgetto)
+        val projectDescriptionTextView = findViewById<TextView>(R.id.projectDescription)
         projectDescriptionTextView.text = item.description
     }
 
     private fun setDeadline(item: ItemsViewModel) {
-        val projectDeadlineTextView = findViewById<TextView>(R.id.projectDeadlineTextView)
+        val projectDeadlineTextView = findViewById<TextView>(R.id.deadlineDate)
         projectDeadlineTextView.text = item.deadline
     }
 
     private suspend fun setAssignedTo(item: ItemsViewModel) {
-        val projectAssignedTextView = findViewById<TextView>(R.id.projectAssignedTextView)
+        val projectAssignedTextView = findViewById<TextView>(R.id.assigneeName)
         val name = userService.getUserNameById(item.assignedTo)
         projectAssignedTextView.text = name
     }
 
     private suspend fun setCreator(item: ItemsViewModel) {
-        val projectCreatorTextView = findViewById<TextView>(R.id.projectCreatorTextView)
+        val projectCreatorTextView = findViewById<TextView>(R.id.creatorName)
         val name = userService.getUserNameById(item.creator)
         projectCreatorTextView.text = name
 
     }
 
     private fun setProgressInfo(item: ItemsViewModel) {
-        val progressInfo = findViewById<TextView>(R.id.progressiTextView)
+        val progressInfo = findViewById<TextView>(R.id.progressText)
         progressInfo.text = "${item.progress}%"
+        val progressIndicator = findViewById<com.google.android.material.progressindicator.CircularProgressIndicator>(R.id.progressIndicator)
+        progressIndicator.progress = item.progress
     }
 
 
@@ -403,7 +415,7 @@ class ItemActivity : AppCompatActivity() {
         when {
             // Project opened by leader
             tipo == "progetto" && role == Role.Leader -> {
-                feedback.visibility = View.GONE
+                valuta.visibility = View.GONE
                 feedbackLayout.visibility = View.GONE
             }
 
@@ -413,19 +425,19 @@ class ItemActivity : AppCompatActivity() {
                     when {
                         item.progress == 100 && !item.valutato -> {
                             // Progetto completato ma non ancora valutato
-                            feedback.visibility = View.VISIBLE
+                            valuta.visibility = View.VISIBLE
                             feedbackLayout.visibility = View.GONE
                             setupFeedbackForm("progetto")
                         }
                         item.valutato -> {
                             // Progetto già valutato, mostra il feedback esistente
-                            feedback.visibility = View.GONE
+                            valuta.visibility = View.GONE
                             feedbackLayout.visibility = View.VISIBLE
                             displayFeedback(item.rating, item.comment)
                         }
                         else -> {
                             // Progetto non completato
-                            feedback.visibility = View.GONE
+                            valuta.visibility = View.GONE
                             feedbackLayout.visibility = View.GONE
                         }
                     }
@@ -438,19 +450,19 @@ class ItemActivity : AppCompatActivity() {
                     when {
                         item.progress == 100 && !item.valutato -> {
                             // Task completato ma non ancora valutato
-                            feedback.visibility = View.VISIBLE
+                            valuta.visibility = View.VISIBLE
                             feedbackLayout.visibility = View.GONE
                             setupFeedbackForm("task")
                         }
                         item.valutato -> {
                             // Task già valutato, mostra il feedback esistente
-                            feedback.visibility = View.GONE
+                            valuta.visibility = View.GONE
                             feedbackLayout.visibility = View.VISIBLE
                             displayFeedback(item.rating, item.comment)
                         }
                         else -> {
                             // Task non completato
-                            feedback.visibility = View.GONE
+                            valuta.visibility = View.GONE
                             feedbackLayout.visibility = View.GONE
                         }
                     }
@@ -461,11 +473,11 @@ class ItemActivity : AppCompatActivity() {
             else -> {
                 currentItem?.let { item ->
                     if (item.valutato) {
-                        feedback.visibility = View.GONE
+                        valuta.visibility = View.GONE
                         feedbackLayout.visibility = View.VISIBLE
                         displayFeedback(item.rating, item.comment)
                     } else {
-                        feedback.visibility = View.GONE
+                        valuta.visibility = View.GONE
                         feedbackLayout.visibility = View.GONE
                     }
                 }
@@ -541,12 +553,27 @@ class ItemActivity : AppCompatActivity() {
         } else {
             menuButton.visibility = View.VISIBLE
             menuButton.setOnClickListener { view ->
-                // Crea il PopupMenu
-                val popupMenu = PopupMenu(this, view)
+                // Crea il PopupMenu con il tema personalizzato
+                val wrapper = ContextThemeWrapper(this, R.style.CustomPopupMenuStyle)
+                val popupMenu = PopupMenu(wrapper, view)
 
                 // Inflating the menu
                 val inflater = popupMenu.menuInflater
                 inflater.inflate(R.menu.menu_task_option, popupMenu.menu)
+
+                // Applica il colore bianco a tutte le voci del menu
+                for (i in 0 until popupMenu.menu.size()) {
+                    val item = popupMenu.menu.getItem(i)
+                    val spanString = SpannableString(item.title)
+                    spanString.setSpan(ForegroundColorSpan(Color.WHITE), 0, spanString.length, 0)
+                    item.title = spanString
+                }
+
+                // Imposta il colore rosso per l'opzione elimina
+                val deleteItem = popupMenu.menu.findItem(R.id.menu_delete)
+                val deleteText = SpannableString(deleteItem.title)
+                deleteText.setSpan(ForegroundColorSpan(Color.RED), 0, deleteText.length, 0)
+                deleteItem.title = deleteText
 
                 // Imposta listener per gli item del menu
                 popupMenu.setOnMenuItemClickListener { item ->
@@ -557,8 +584,8 @@ class ItemActivity : AppCompatActivity() {
                         }
 
                         R.id.menu_delete -> {
-                            // Mostra l'AlertDialog qui
-                            AlertDialog.Builder(this)
+                            // Crea l'AlertDialog con tema personalizzato
+                            MaterialAlertDialogBuilder(this, R.style.CustomAlertDialogStyle)
                                 .setTitle("Conferma eliminazione")
                                 .setMessage("Sei sicuro di voler eliminare questo $tipo?")
                                 .setPositiveButton("Elimina") { _, _ ->
@@ -581,7 +608,6 @@ class ItemActivity : AppCompatActivity() {
                                                     Toast.LENGTH_SHORT
                                                 ).show()
 
-                                                // Usa navigateToLoggedActivity per gestire la navigazione
                                                 navigateToLoggedActivity()
                                             } else {
                                                 Toast.makeText(
@@ -664,102 +690,56 @@ class ItemActivity : AppCompatActivity() {
     }
 
 
+    /*
     //funzione che carica i task o sottotask nella recycler view
-    private fun loadTask() {
-        var data = ArrayList<ItemsViewModel>()
-
-        // Avvia una Coroutine nel contesto del Main Thread
-        CoroutineScope(Dispatchers.Main).launch {
-            try {
-                if (role == Role.Leader) {
-                    data = taskService.getAllTaskByProjectId(projectId)
-                } else if (role == Role.Developer) {
-                    data = subtaskService.getAllSubTaskByTaskId(projectId, taskId)
-                }
-                updateUI(data)
-            } catch (e: Exception) {
-                Log.e(TAG, "Error loading tasks: ", e)
-                updateUI(data) // Anche in caso di errore, aggiorna la UI
-            }
-            setupFilterHandlers(data)
-        }
-
-    }
-
-    private fun updateUI(
-        data: ArrayList<ItemsViewModel>,
-    ) {
-        val recyclerviewTask = findViewById<RecyclerView>(R.id.recyclerviewTask)
-        val noTasksTextView = findViewById<TextView>(R.id.noTasksTextView)
-
-        val hasData = data.isNotEmpty()
-        recyclerviewTask.visibility = if (hasData) View.VISIBLE else View.GONE
-        noTasksTextView.visibility = if (hasData) View.GONE else View.VISIBLE
-
-        if (hasData) {
-            // Configure RecyclerView
-            recyclerviewTask.apply {
-                layoutManager = LinearLayoutManager(context)
-                adapter = CustomAdapter(data).apply {
-                    setOnItemClickListener(object : CustomAdapter.onItemClickListener {
-                        override fun onItemClick(position: Int) {
-                            navigateToSelectedItem(data[position])
-                        }
-                    })
-                }
-            }
-        }
-    }
-
-    private fun navigateToSelectedItem(selectedItem: ItemsViewModel) {
-        Log.d(TAG, "Selected item: $selectedItem")
-
-        Intent(this@ItemActivity, ItemActivity::class.java).apply {
-            putExtra("projectId", selectedItem.projectId)
-            putExtra("taskId", selectedItem.taskId)
-            putExtra("subtaskId", selectedItem.subtaskId)
-            putExtra("role", role.toString())
+    private fun loadSubItem() {
+        Intent(this@ItemActivity, LoggedActivity::class.java).apply {
+            putExtra("projectId",projectId)
+            putExtra("taskId", taskId)
             startActivity(this)
         }
-    }
+    }*/
 
     private fun setupProgressManagement(
         projectId: String,
         taskId: String,
         subtaskId: String,
-        seekBar: SeekBar,
+        slider: Slider,
         progressLabel: TextView
     ) {
         if (role != Role.Developer) return
 
         lifecycleScope.launch {
             try {
-                val currentProgress = subtaskService.getSubTaskProgress(projectId, taskId, subtaskId)
-                seekBar.progress = currentProgress
+                var currentProgress = subtaskService.getSubTaskProgress(projectId, taskId, subtaskId)
+                slider.value= currentProgress.toFloat()
                 progressLabel.text = "$currentProgress%"
 
+                slider.addOnSliderTouchListener(object : Slider.OnSliderTouchListener {
+                    override fun onStartTrackingTouch(slider: Slider) {
+                        currentProgress= slider.value.toInt()
+                        progressLabel.text="$currentProgress%"
+                    }
+
+                    override fun onStopTrackingTouch(slider: Slider) {
+                        saveProgress(projectId, taskId, subtaskId, slider, progressLabel)
+                    }
+                })
+
+
                 // Add SeekBar change listener for real-time updates
-                seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                /*slider.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                     override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                         // Update the progress label in real-time
                         progressLabel.text = "$progress%"
                         // Update also the progress info TextView
                         findViewById<TextView>(R.id.progressiTextView).text = "$progress%"
-                    }
+                    }*/
 
-                    override fun onStartTrackingTouch(seekBar: SeekBar?) {
-                        // Not needed, but required by interface
-                    }
-
-                    override fun onStopTrackingTouch(seekBar: SeekBar?) {
-                        // Not needed, but required by interface
-                    }
-                })
-
-                val saveButton = findViewById<Button>(R.id.saveButton)
+                /*val saveButton = findViewById<Button>(R.id.saveButton)
                 saveButton.setOnClickListener {
-                    saveProgress(projectId, taskId, subtaskId, seekBar, progressLabel)
-                }
+                    saveProgress(projectId, taskId, subtaskId, slider, progressLabel)
+                }*/
             } catch (e: Exception) {
                 Log.e(TAG, "Error setting up progress management", e)
                 Toast.makeText(this@ItemActivity, "Error loading progress", Toast.LENGTH_SHORT)
@@ -772,10 +752,10 @@ class ItemActivity : AppCompatActivity() {
         projectId: String,
         taskId: String,
         subtaskId: String,
-        seekBar: SeekBar,
+        seekBar: Slider,
         progressLabel: TextView
     ) {
-        val currentProgress = seekBar.progress
+        val currentProgress = seekBar.value.toInt()
 
         lifecycleScope.launch {
             try {
@@ -789,7 +769,7 @@ class ItemActivity : AppCompatActivity() {
                 if (success) {
                     progressLabel.text = "$currentProgress%"
 
-                    val progressInfo = findViewById<TextView>(R.id.progressiTextView)
+                    val progressInfo = findViewById<TextView>(R.id.progressText)
                     progressInfo.text = "${currentProgress}%"
 
                     Toast.makeText(
@@ -812,20 +792,20 @@ class ItemActivity : AppCompatActivity() {
     }
 
     companion object {
-        private const val TAG = "ProjectDetailsActivity"
+        const val TAG = "ProjectDetailsActivity"
     }
 
 
 
-    private fun setupFileUpload() {
+   private fun setupFileUpload() {
         buttonFile.setOnClickListener {
             val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
-                type = "*/*"  // Allow all file types
-                addCategory(Intent.CATEGORY_OPENABLE)
+
+               addCategory(Intent.CATEGORY_OPENABLE)
             }
             startActivityForResult(intent, PICK_FILE_REQUEST_CODE)
         }
-    }
+    }/*
 
     private fun loadFiles() {
         lifecycleScope.launch {
@@ -840,7 +820,7 @@ class ItemActivity : AppCompatActivity() {
         }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+    /*override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
         if (requestCode == PICK_FILE_REQUEST_CODE && resultCode == RESULT_OK && data != null) {
@@ -851,10 +831,10 @@ class ItemActivity : AppCompatActivity() {
                 Toast.makeText(this, "Error selecting file", Toast.LENGTH_SHORT).show()
             }
         }
-    }
+    }*/
 
     // Add this method to handle file upload
-    private fun uploadFile(fileUri: Uri) {
+    /*private fun uploadFile(fileUri: Uri) {
         val progressDialog = ProgressDialog(this).apply {
             setTitle("Uploading File")
             setMessage("Please wait...")
@@ -889,9 +869,9 @@ class ItemActivity : AppCompatActivity() {
         val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
         val originalFileName = fileUri.lastPathSegment ?: "file"
         return "${timeStamp}_${originalFileName}"
-    }
+    }*/
 
-    private fun setupFilterHandlers(data: ArrayList<ItemsViewModel>) {
+    /*private fun setupFilterHandlers(data: ArrayList<ItemsViewModel>) {
 
         val buttonApplyFilters = findViewById<Button>(R.id.apply_filters)
         buttonApplyFilters.setOnClickListener {
@@ -900,9 +880,9 @@ class ItemActivity : AppCompatActivity() {
         }
 
         deadlineFilterHandler()
-    }
+    }*/
 
-    private fun deadlineFilterHandler() {
+   /* private fun deadlineFilterHandler() {
         val startDateText: TextView = findViewById(R.id.text_start_date)
         val endDateText: TextView = findViewById(R.id.text_end_date)
         val buttonSelectStartDate: Button = findViewById(R.id.button_select_start_date)
@@ -1094,9 +1074,9 @@ class ItemActivity : AppCompatActivity() {
                 else -> true
             }
         } as ArrayList<ItemsViewModel>
-    }
+    }*/
 
-    override fun onBackPressed() {
+  /*  override fun onBackPressed() {
         when {
             // Case 1: Viewing a subtask - go back to task view
             !subtaskId.isNullOrEmpty() -> {
@@ -1159,7 +1139,8 @@ class ItemActivity : AppCompatActivity() {
     }
 
     private fun navigateToLoggedActivity() {
-        startActivity(Intent(this, LoggedActivity::class.java))
+        startActivity(Intent(this, HomeActivity::class.java))
         finish()
     }
 }
+*/

@@ -1,10 +1,14 @@
-/*package com.example.project_manager
+package com.example.project_manager
 
 import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.example.project_manager.models.ItemsViewModel
 import com.example.project_manager.models.Role
@@ -19,7 +23,7 @@ import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
-class StatisticheActivity : AppCompatActivity() {
+class StatisticheFragment : Fragment() {
     private val projectService = ProjectService()
     private val taskService = TaskService()
     private val userService = UserService()
@@ -30,25 +34,32 @@ class StatisticheActivity : AppCompatActivity() {
     private lateinit var avgCompletionTimeText: TextView
     private lateinit var barChart: BarChart
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_statistiche)
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        // Inflate the layout for this fragment
+        return inflater.inflate(R.layout.statistic_fragment, container, false)
+    }
 
-        initializeViews()
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        initializeViews(view)
         loadStatistics()
     }
 
-    private fun initializeViews() {
-        completedCountText = findViewById(R.id.completedCountText)
-        activeCountText = findViewById(R.id.activeCountText)
-        notStartedCountText = findViewById(R.id.notStartedCountText)
-        avgCompletionTimeText = findViewById(R.id.avgCompletionTimeText)
-        barChart = findViewById(R.id.barChart)
+
+    private fun initializeViews(view: View) {
+        completedCountText = view.findViewById(R.id.completedCountText)
+        activeCountText = view.findViewById(R.id.activeCountText)
+        notStartedCountText = view.findViewById(R.id.notStartedCountText)
+        avgCompletionTimeText = view.findViewById(R.id.avgCompletionTimeText)
+        barChart = view.findViewById(R.id.barChart)
         setupBarChart()
     }
 
     private fun loadStatistics() {
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             try {
                 val role = userService.getCurrentUserRole()
                 val userId = userService.getCurrentUserId()
@@ -147,7 +158,6 @@ class StatisticheActivity : AppCompatActivity() {
         }
     }
 
-
     private fun updateBarChartData(completed: Int, active: Int, notStarted: Int) {
         val entries = listOf(
             BarEntry(0f, completed.toFloat()),
@@ -157,9 +167,9 @@ class StatisticheActivity : AppCompatActivity() {
 
         val dataSet = BarDataSet(entries, "Projects/Tasks").apply {
             colors = listOf(
-                resources.getColor(R.color.progress_foreground, theme),
-                resources.getColor(R.color.progress_foreground_darker, theme),
-                resources.getColor(R.color.progress_foreground_darkest, theme)
+                ContextCompat.getColor(requireContext(), R.color.progress_foreground),
+                ContextCompat.getColor(requireContext(), R.color.progress_foreground_darker),
+                ContextCompat.getColor(requireContext(), R.color.progress_foreground_darkest)
             )
         }
 
@@ -167,7 +177,6 @@ class StatisticheActivity : AppCompatActivity() {
             setValueTextColor(Color.WHITE)
             setValueTextSize(12f)
         }
-
 
         val labels = listOf("Completed", "Active", "Not Started")
         barChart.xAxis.valueFormatter = IndexAxisValueFormatter(labels)
@@ -179,4 +188,4 @@ class StatisticheActivity : AppCompatActivity() {
         barChart.data = barData
         barChart.invalidate()
     }
-}*/
+}

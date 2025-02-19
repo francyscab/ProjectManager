@@ -1,16 +1,88 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Base.Theme.Project_manager" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
-    </style>
-
-    <style name="SearchViewStyle" parent="ThemeOverlay.AppCompat.Light">
-        <item name="android:textColorHint">#808080</item>
-        <item name="android:queryBackground">@android:color/transparent</item>
-        <item name="android:background">@android:color/transparent</item>
-        <item name="android:focusable">false</item>
     </style>
 
     <style name="Theme.Project_manager" parent="Base.Theme.Project_manager" />
+
+    <style name="SearchViewStyle" parent="Widget.AppCompat.SearchView">
+        <item name="android:textColorPrimary">@android:color/white</item>
+        <item name="android:textColorHint">@android:color/white</item>
+    </style>
+
+    <style name="CustomPopupMenu" parent="Widget.MaterialComponents.PopupMenu">
+        <item name="android:popupBackground">@color/dark_background</item>
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+    <style name="CustomPopupMenuStyle" parent="Theme.MaterialComponents">
+        <item name="popupMenuStyle">@style/CustomPopupMenu</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:itemBackground">@color/dark_background</item>
+        <item name="android:divider">@color/progress_foreground</item>
+        <item name="android:dividerHeight">1dp</item>
+    </style>
+
+    <style name="CustomAlertDialogStyle" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
+        <!-- Background del dialog -->
+        <item name="android:background">@color/dark_background</item>
+        <item name="android:windowBackground">@color/dark_background</item>
+        <item name="colorSurface">@color/dark_background</item>
+
+        <!-- Colori del testo -->
+        <item name="android:textColorPrimary">@color/white</item>
+        <item name="android:textColorSecondary">@color/white</item>
+        <item name="android:textColor">@color/white</item>
+
+        <!-- Stile dei bottoni -->
+        <item name="buttonBarPositiveButtonStyle">@style/CustomAlertDialogPositiveButton</item>
+        <item name="buttonBarNegativeButtonStyle">@style/CustomAlertDialogNegativeButton</item>
+        <item name="buttonBarNeutralButtonStyle">@style/CustomAlertDialogNeutralButton</item>
+
+        <!-- Shape del dialog -->
+        <item name="shapeAppearanceOverlay">@style/CustomAlertDialogShape</item>
+
+        <!-- Altri attributi -->
+        <item name="materialAlertDialogTitleTextStyle">@style/CustomAlertDialogTitle</item>
+        <item name="materialAlertDialogBodyTextStyle">@style/CustomAlertDialogBody</item>
+    </style>
+
+    <style name="CustomAlertDialogPositiveButton" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
+        <item name="android:textColor">@color/progress_foreground</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="rippleColor">@color/progress_background</item>
+    </style>
+
+    <style name="CustomAlertDialogNegativeButton" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="rippleColor">@color/progress_background</item>
+    </style>
+
+    <style name="CustomAlertDialogNeutralButton" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="rippleColor">@color/progress_background</item>
+    </style>
+
+    <style name="CustomAlertDialogTitle" parent="MaterialAlertDialog.MaterialComponents.Title.Text">
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="CustomAlertDialogBody" parent="MaterialAlertDialog.MaterialComponents.Body.Text">
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textSize">16sp</item>
+    </style>
+
+    <style name="CustomAlertDialogShape">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">16dp</item>
+    </style>
+
+
 </resources>

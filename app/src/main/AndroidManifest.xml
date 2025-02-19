@@ -16,24 +16,17 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Project_manager"
         tools:targetApi="31">
+
         <activity
             android:name=".UpdateProjectActivity"
             />
-        <activity
-            android:name=".UserProfileActivity"
-             />
+
         <activity
             android:name="com.example.project_manager.ChatActivity"
              />
         <activity
-            android:name=".ChatListActivity"
+            android:name=".HomeItemActivity"
             />
-        <activity
-            android:name=".LoggedActivity"
-             />
-        <activity
-            android:name=".ItemActivity"
-             />
         <activity
             android:name=".SignInActivity"
              />
@@ -44,7 +37,7 @@
             android:name=".NewItemActivity"
              />
         <activity
-            android:name=".StatisticheActivity"
+            android:name=".HomeActivity"
             />
         <activity
             android:name=".MainActivity"

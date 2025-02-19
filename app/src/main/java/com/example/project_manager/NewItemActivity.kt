@@ -7,6 +7,7 @@ import android.util.Log
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -22,6 +23,9 @@ import com.example.project_manager.services.ProjectService
 import com.example.project_manager.services.SubTaskService
 import com.example.project_manager.services.TaskService
 import com.example.project_manager.services.UserService
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.launch
 
 class NewItemActivity : AppCompatActivity() {
@@ -37,11 +41,11 @@ class NewItemActivity : AppCompatActivity() {
     private val userService = UserService()
 
     // UI Elements
-    private lateinit var titleEditText: EditText
-    private lateinit var descriptionEditText: EditText
-    private lateinit var deadlineButton: Button
+    private lateinit var titleEditText: TextInputEditText
+    private lateinit var descriptionEditText: TextInputEditText
+    private lateinit var deadlineButton: MaterialButton
     private lateinit var priorityRadioGroup: RadioGroup
-    private lateinit var assigneeSpinner: Spinner
+    private lateinit var assigneeSpinner: AutoCompleteTextView
     private lateinit var errorTitle: TextView
     private lateinit var errorDate: TextView
     private lateinit var errorDescription: TextView
@@ -71,15 +75,14 @@ class NewItemActivity : AppCompatActivity() {
         descriptionEditText = findViewById(R.id.descrizioneNewProject)
         deadlineButton = findViewById(R.id.pickDate)
         priorityRadioGroup = findViewById(R.id.radioGroupPriority)
-        assigneeSpinner = findViewById(R.id.projectElementSpinner)
+        assigneeSpinner = findViewById(R.id.assignedTo_field)
         errorTitle = findViewById(R.id.errore_titolo)
         errorDate = findViewById(R.id.errore_date)
         errorDescription = findViewById(R.id.errore_descrizione)
         errorPriority = findViewById(R.id.errore_priorita)
         errorSpinner = findViewById(R.id.errore_spinner)
         saveButton = findViewById(R.id.buttonSave)
-        priorityTextLayout = findViewById(R.id.priorityTextLayout)
-        priorityLayout = findViewById(R.id.priorityLayout)
+
     }
 
     private fun setupIntentData() {
@@ -97,44 +100,49 @@ class NewItemActivity : AppCompatActivity() {
     }
 
     private fun updateFormType(role:Role) {
-        priorityLayout.visibility= View.VISIBLE
-        priorityTextLayout.visibility= View.GONE
+        priorityRadioGroup.visibility= View.VISIBLE
         val typeNewTextView = findViewById<TextView>(R.id.typeNew)
-        val spinnerLayout = findViewById<LinearLayout>(R.id.spinnerLinearLayout)
-
+        val assigneeLayout = findViewById<TextInputLayout>(R.id.assignedToLayout)
 
         when (formType) {
             "progetto" -> {
-                typeNewTextView.text = "NEW PROJECT"
+                typeNewTextView.text = getString(R.string.nuovo_progetto)
                 when (role) {
                     Role.Manager -> {
-                        spinnerLayout.visibility = View.VISIBLE
+                        assigneeSpinner.visibility= View.VISIBLE
+                        errorSpinner.visibility= View.INVISIBLE
+                        assigneeLayout.hint="Leader"
                         lifecycleScope.launch {
                             setupSpinner(role)
                         }
                     }
                     else -> {
-                        spinnerLayout.visibility = View.GONE
+                        assigneeSpinner.visibility= View.GONE
+                        errorSpinner.visibility= View.GONE
                     }
                 }
             }
             "task" -> {
-                typeNewTextView.text = "NEW TASK"
+                typeNewTextView.text = getString(R.string.new_task)
                 when (role) {
                     Role.Leader -> {
-                        spinnerLayout.visibility = View.VISIBLE
+                        assigneeSpinner.visibility= View.VISIBLE
+                        assigneeLayout.hint="Developer"
+                        errorSpinner.visibility= View.INVISIBLE
                         lifecycleScope.launch {
                             setupSpinner(role)
                         }
                     }
                     else -> {
-                        spinnerLayout.visibility = View.GONE
+                        assigneeSpinner.visibility= View.GONE
+                        errorSpinner.visibility= View.GONE
                     }
                 }
             }
             "subtask" -> {
-                typeNewTextView.text = "NEW SUBTASK"
-                spinnerLayout.visibility = View.GONE // Subtask non ha spinner
+                typeNewTextView.text = getString(R.string.new_subtask)
+                assigneeSpinner.visibility= View.GONE
+                errorSpinner.visibility= View.GONE // Subtask non ha spinner
             }
         }
     }
@@ -156,15 +164,20 @@ class NewItemActivity : AppCompatActivity() {
             try {
                 val users = userService.getUsersByRole(spinnerRole)
 
-                // Pulisci la mappa esistente
+// Pulisci la mappa esistente
                 userMap.clear()
                 val displayNames = users.map { user ->
                     val displayName = "${user.name} ${user.surname}"
                     userMap[displayName] = user.uid
                     displayName
-                }
+                }.toTypedArray()
 
-                showDataInSpinner(assigneeSpinner, displayNames)
+                val adapter = ArrayAdapter(
+                    this,
+                    R.layout.custom_dropdown_item,
+                    displayNames
+                )
+                assigneeSpinner.setAdapter(adapter)
             } catch (e: Exception) {
                 Log.e(TAG, "Error loading users for spinner", e)
                 Toast.makeText(this, "Error loading users", Toast.LENGTH_SHORT).show()
@@ -178,12 +191,6 @@ class NewItemActivity : AppCompatActivity() {
             DatePickerFragment().newInstance("pickDate")
                 .show(supportFragmentManager, "datePicker")
         }
-    }
-
-    private fun showDataInSpinner(spinner: Spinner, names: List<String>) {
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, names)
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinner.adapter = adapter
     }
 
     private fun setupSaveButton() {
@@ -200,36 +207,36 @@ class NewItemActivity : AppCompatActivity() {
         var isValid = true
 
         // Clear previous errors
-        errorTitle.text = ""
-        errorDate.text = ""
-        errorDescription.text = ""
-        errorPriority.text = ""
-        errorSpinner.text = ""
+        errorTitle.visibility= View.INVISIBLE
+        errorDate.visibility= View.INVISIBLE
+        errorDescription.visibility= View.INVISIBLE
+        errorPriority.visibility= View.INVISIBLE
+        errorSpinner.visibility= View.INVISIBLE
 
         // Validate fields
-        if (titleEditText.text.isEmpty()) {
-            errorTitle.text = "Missing title"
+        if (titleEditText.text?.isEmpty() == true) {
+            errorTitle.visibility= View.VISIBLE
             isValid = false
         }
 
         if (deadlineButton.text.isEmpty()) {
-            errorDate.text = "Missing deadline"
+            errorDate.visibility= View.VISIBLE
             isValid = false
         }
 
-        if (descriptionEditText.text.isEmpty()) {
-            errorDescription.text = "Missing description"
+        if (descriptionEditText.text?.isEmpty() == true) {
+            errorDescription.visibility= View.VISIBLE
             isValid = false
         }
 
         val priority = getSelectedPriority()
         if (priority.isEmpty()) {
-            errorPriority.text = "Please select a priority"
+            errorPriority.visibility= View.VISIBLE
             isValid = false
         }
 
-        if (shouldValidateSpinner() && assigneeSpinner.selectedItemPosition == AdapterView.INVALID_POSITION) {
-            errorSpinner.text = "Please select an assignee"
+        if (shouldValidateSpinner() && assigneeSpinner.toString().isEmpty()) {
+            errorSpinner.visibility=View.VISIBLE
             isValid = false
         }
 
@@ -244,27 +251,27 @@ class NewItemActivity : AppCompatActivity() {
             val priority = getSelectedPriority()
 
             // Ottieni l'ID dell'utente selezionato invece del nome visualizzato
-            val selectedDisplayName = assigneeSpinner.selectedItem?.toString() ?: ""
-            val assigneeId = userMap[selectedDisplayName] ?: ""
+            val selectedDisplayName = assigneeSpinner.text.toString()
+            val assigneeId = userMap[selectedDisplayName]!!
 
             when (formType) {
                 "progetto" -> {
                     val projectId = projectService.uploadNewProject(
                         title, description, deadline, priority, creatorId, assigneeId
                     )
-                    navigateToProject(projectId)
+                    //navigateToProject(projectId)
                 }
                 "task" -> {
                     val taskId = taskService.uploadNewTask(
                         projectId, title, description, deadline, priority, creatorId, assigneeId
                     )
-                    navigateToTask(projectId, taskId)
+                    //navigateToTask(projectId, taskId)
                 }
                 "subtask" -> {
                     val subtaskId = subtaskService.uploadNewSubTask(
                         projectId, taskId, title, description, deadline, priority, creatorId, assigneeId
                     )
-                    navigateToSubtask(projectId, taskId, subtaskId)
+                    //navigateToSubtask(projectId, taskId, subtaskId)
                 }
             }
         } catch (e: Exception) {
@@ -286,7 +293,7 @@ class NewItemActivity : AppCompatActivity() {
         return formType in listOf("progetto", "task")
     }
 
-    private fun navigateToProject(projectId: String) {
+    /*private fun navigateToProject(projectId: String) {
         val intent = Intent(this, ItemActivity::class.java).apply {
             putExtra("projectId", projectId)
             putExtra("role", role.toString())
@@ -314,9 +321,9 @@ class NewItemActivity : AppCompatActivity() {
         }
         startActivity(intent)
         finish()
-    }
+    }*/
 
-    override fun onBackPressed() {
+    /*override fun onBackPressed() {
         super.onBackPressed()
         AlertDialog.Builder(this)
             .setTitle("Confirm Navigation")
@@ -324,9 +331,9 @@ class NewItemActivity : AppCompatActivity() {
             .setPositiveButton("Yes") { _, _ -> handleBackNavigation() }
             .setNegativeButton("No") { dialog, _ -> dialog.dismiss() }
             .show()
-    }
+    }*/
 
-    private fun handleBackNavigation() {
+    /*private fun handleBackNavigation() {
         val intent = Intent(this, ItemActivity::class.java).apply {
             putExtra("projectId", projectId)
             putExtra("taskId", taskId)
@@ -334,5 +341,5 @@ class NewItemActivity : AppCompatActivity() {
         }
         startActivity(intent)
         finish()
-    }
+    }*/
 }

@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.EditText
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -15,6 +16,8 @@ import com.example.project_manager.models.Message
 import com.example.project_manager.repository.FileRepository
 import com.example.project_manager.services.ChatService
 import com.example.project_manager.services.UserService
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.card.MaterialCardView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
@@ -24,7 +27,7 @@ import kotlinx.coroutines.launch
 class ChatActivity : AppCompatActivity() {
     private lateinit var recyclerViewMessages: RecyclerView
     private lateinit var editTextMessage: EditText
-    private lateinit var buttonSendMessage: ImageButton
+    private lateinit var buttonSendMessage:ImageView
     private lateinit var messagesAdapter: MessagesAdapter
     private lateinit var chatPartnerImage: CircleImageView
     private lateinit var chatPartnerName: TextView
@@ -37,7 +40,7 @@ class ChatActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_chat)
+        setContentView(R.layout.chat_activity_2)
 
         intent.getStringExtra("chatId")?.let {
             chatId = it
@@ -164,7 +167,7 @@ class ChatActivity : AppCompatActivity() {
     override fun onBackPressed() {
         super.onBackPressed()
         // Navigate back to ChatListActivity
-        val intent = Intent(this, ChatListActivity::class.java)
+        val intent = Intent(this, HomeActivity::class.java)
         startActivity(intent)
         finish()
     }
