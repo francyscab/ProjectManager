@@ -30,6 +30,10 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
+private const val ARG_PROJECT_ID = "projectId"
+private const val ARG_TASK_ID = "taskId"
+private const val ARG_SUBTASK_ID = "subtaskId"
+
 class DettagliItemFragment : Fragment() {
 
     private lateinit var role: Role
@@ -45,7 +49,6 @@ class DettagliItemFragment : Fragment() {
     private val fileRepository = FileRepository()
 
     private lateinit var progressSeekBar: Slider
-    private lateinit var buttonTask: MaterialButton
     private lateinit var seekbarLayout: MaterialCardView
     private lateinit var progressLabel: TextView
     private lateinit var sollecitaButton: Button
@@ -54,19 +57,36 @@ class DettagliItemFragment : Fragment() {
     private lateinit var feedbackScore: TextView
     private lateinit var feedbackComment: TextView
     private lateinit var assignedCont: MaterialCardView
-    private lateinit var tipo: String
-    private lateinit var fileButton: MaterialButton
     private lateinit var imageCreator: CircleImageView
     private lateinit var imageAssignedTo: CircleImageView
+    private lateinit var menuButton: ImageButton
+    private lateinit var toolbar: androidx.appcompat.widget.Toolbar
+    private lateinit var projectDescription: TextView
+    private lateinit var deadlineDate: TextView
+    private lateinit var assigneeName: TextView
+    private lateinit var creatorName: TextView
+    private lateinit var progressText: TextView
+    private lateinit var progressIndicator: com.google.android.material.progressindicator.CircularProgressIndicator
+    private lateinit var itemType: String
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        arguments?.let {
+            projectId = it.getString(ARG_PROJECT_ID, "")
+            taskId = it.getString(ARG_TASK_ID, "")
+            subtaskId = it.getString(ARG_SUBTASK_ID, "")
+        }
+        itemType = getItemType()
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View {
-        rootView = inflater.inflate(R.layout.activity_item, container, false)
-        return rootView
+    ): View? {
+        return inflater.inflate(R.layout.activity_item, container, false)
     }
+
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -74,22 +94,30 @@ class DettagliItemFragment : Fragment() {
         Log.d(TAG, "Current projectId: $projectId, taskId: $taskId, subtaskId: $subtaskId")
 
         val notificationHelper = NotificationHelper(requireContext(), FirebaseFirestore.getInstance())
-        inizialiseView()
+        initializeViews(view)
 
         getArgumentsData()
 
         Log.d(TAG, "AFTER getArgumentsData - projectId: $projectId, taskId: $taskId, subtaskId: $subtaskId")
 
-        tipo = getItemType(subtaskId, taskId, projectId)
+        itemType = getItemType(subtaskId, taskId, projectId)
 
-        Log.d(TAG, "Determined tipo: $tipo")
+        Log.d(TAG, "Determined tipo: $itemType")
         viewLifecycleOwner.lifecycleScope.launch {
             role = userService.getCurrentUserRole()!!
-            loadDetails(tipo, notificationHelper)
-            menu(tipo)
+            loadDetails(itemType, notificationHelper)
+            menu(itemType)
         }
     }
 
+    private fun getItemType(): String {
+        return when {
+            subtaskId.isNotEmpty() -> "subtask"
+            taskId.isNotEmpty() -> "task"
+            projectId.isNotEmpty() -> "progetto"
+            else -> throw IllegalArgumentException("No valid ID provided")
+        }
+    }
     private fun getArgumentsData() {
         arguments?.let { args ->
             projectId = args.getString("projectId", "")
@@ -99,19 +127,29 @@ class DettagliItemFragment : Fragment() {
         Log.d(TAG, "getArgumentsData - projectId: $projectId, taskId: $taskId, subtaskId: $subtaskId")
     }
 
-    private fun inizialiseView() {
-        assignedCont = requireView().findViewById(R.id.assignedToCard)
-        sollecitaButton = requireView().findViewById(R.id.buttonSollecita)
-        feedbackLayout = requireView().findViewById(R.id.feedbackCard)
-        valuta = requireView().findViewById(R.id.buttonVota)
-        feedbackScore = requireView().findViewById(R.id.ratingNumber)
-        feedbackComment = requireView().findViewById(R.id.ratingComment)
-        seekbarLayout = requireView().findViewById(R.id.progressCard)
-        progressSeekBar = requireView().findViewById(R.id.progressSlider)
-        progressLabel = requireView().findViewById(R.id.progressPercentage)
-        imageCreator = requireView().findViewById(R.id.creatorImage)
-        imageAssignedTo= requireView().findViewById(R.id.assigneeImage)
+    private fun initializeViews(view: View) {
+        progressSeekBar = view.findViewById(R.id.progressSlider)
+        seekbarLayout = view.findViewById(R.id.progressCard)
+        progressLabel = view.findViewById(R.id.progressPercentage)
+        sollecitaButton = view.findViewById(R.id.buttonSollecita)
+        feedbackLayout = view.findViewById(R.id.feedbackCard)
+        valuta = view.findViewById(R.id.buttonVota)
+        feedbackScore = view.findViewById(R.id.ratingNumber)
+        feedbackComment = view.findViewById(R.id.ratingComment)
+        assignedCont = view.findViewById(R.id.assignedToCard)
+        imageCreator = view.findViewById(R.id.creatorImage)
+        imageAssignedTo = view.findViewById(R.id.assigneeImage)
+        menuButton = view.findViewById(R.id.menuButton)
+        toolbar = view.findViewById(R.id.toolbar)
+        projectDescription = view.findViewById(R.id.projectDescription)
+        deadlineDate = view.findViewById(R.id.deadlineDate)
+        assigneeName = view.findViewById(R.id.assigneeName)
+        creatorName = view.findViewById(R.id.creatorName)
+        progressText = view.findViewById(R.id.progressText)
+        progressIndicator = view.findViewById(R.id.progressIndicator)
     }
+
+
 
     private fun getItemType(subtaskId: String, taskId: String, projectId: String): String {
         if (subtaskId.isNotEmpty()) {
@@ -188,15 +226,14 @@ class DettagliItemFragment : Fragment() {
     }
 
     private suspend fun setupLeaderView() {
-        setData(tipo, taskId, projectId, subtaskId)
-        buttonTask.visibility = View.VISIBLE
+        setData(itemType, taskId, projectId, subtaskId)
         seekbarLayout.visibility = View.GONE
         sollecitaButton.visibility= View.GONE
-        fileButton.visibility= View.GONE
+
     }
 
     private suspend fun setupManagerView() {
-        setData(tipo, taskId, projectId, subtaskId)
+        setData(itemType, taskId, projectId, subtaskId)
 
         sollecitaButton.setOnClickListener {
             viewLifecycleOwner.lifecycleScope.launch {
@@ -206,9 +243,7 @@ class DettagliItemFragment : Fragment() {
 
 
         sollecitaButton.visibility=View.VISIBLE
-        buttonTask.visibility = View.GONE
         seekbarLayout.visibility = View.GONE
-        fileButton.visibility= View.GONE
 
 
 
@@ -216,18 +251,16 @@ class DettagliItemFragment : Fragment() {
 
     private suspend fun setupDeveloperSubTaskView() {
         sollecitaButton.visibility=View.GONE
-        buttonTask.visibility = View.GONE
         seekbarLayout.visibility = View.VISIBLE
         assignedCont.visibility = View.GONE
-        fileButton.visibility= View.GONE
 
-        setData(tipo, taskId, projectId, subtaskId)
+        setData(itemType, taskId, projectId, subtaskId)
 
     }
 
     private suspend fun setupLeaderTaskView() {
 
-        setData(tipo, taskId, projectId, subtaskId)
+        setData(itemType, taskId, projectId, subtaskId)
         sollecitaButton.visibility=View.VISIBLE
         sollecitaButton.setOnClickListener {
             viewLifecycleOwner.lifecycleScope.launch {
@@ -236,18 +269,13 @@ class DettagliItemFragment : Fragment() {
             }
         }
         seekbarLayout.visibility = View.GONE
-        buttonTask.visibility = View.GONE
-        fileButton.visibility= View.VISIBLE
 
     }
 
     private suspend fun setupDeveloperTaskView() {
-        setData(tipo, taskId, projectId, subtaskId)
+        setData(itemType, taskId, projectId, subtaskId)
         sollecitaButton.visibility=View.GONE
-        buttonTask.visibility = View.VISIBLE
         seekbarLayout.visibility = View.GONE
-        fileButton.visibility= View.VISIBLE
-        buttonTask.text="Visualizza Sottotask"
     }
 
     private suspend fun setData(
@@ -323,7 +351,7 @@ class DettagliItemFragment : Fragment() {
 
 
     private suspend fun handleFeedback() {
-        val currentItem = when (tipo) {
+        val currentItem = when (itemType) {
             "progetto" -> projectService.getProjectById(projectId)
             "task" -> taskService.getTaskById(projectId, taskId)
             "subtask" -> subtaskService.getSubTaskById(projectId, taskId, subtaskId)
@@ -332,13 +360,13 @@ class DettagliItemFragment : Fragment() {
 
         when {
             // Project opened by leader
-            tipo == "progetto" && role == Role.Leader -> {
+            itemType == "progetto" && role == Role.Leader -> {
                 valuta.visibility = View.GONE
                 feedbackLayout.visibility = View.GONE
             }
 
             // Project opened by manager
-            tipo == "progetto" && role == Role.Manager -> {
+            itemType == "progetto" && role == Role.Manager -> {
                 currentItem?.let { item ->
                     when {
                         item.progress == 100 && !item.valutato -> {
@@ -363,7 +391,7 @@ class DettagliItemFragment : Fragment() {
             }
 
             // Task opened by leader
-            tipo == "task" && role == Role.Leader -> {
+            itemType == "task" && role == Role.Leader -> {
                 currentItem?.let { item ->
                     when {
                         item.progress == 100 && !item.valutato -> {
@@ -647,56 +675,21 @@ class DettagliItemFragment : Fragment() {
     }
 
 
-    /*override fun onBackPressed() {
-        when {
-            // Case 1: Viewing a subtask - go back to task view
-            !subtaskId.isNullOrEmpty() -> {
-                Log.d(TAG, "Navigating back from subtask to task view")
-                navigateToItem(projectId, taskId, null)
-            }
+    companion object {
+        private const val TAG = "DettagliItemFragment"
 
-            // Case 2: Viewing a task
-            !taskId.isNullOrEmpty() -> {
-                when (role) {
-                    Role.Leader -> {
-                        // Leader viewing task - go back to project view
-                        Log.d(TAG, "Leader navigating back from task to project view")
-                        navigateToItem(projectId, null, null)
-                    }
-                    Role.Developer -> {
-                        // Developer viewing task - go back to task list
-                        Log.d(TAG, "Developer navigating back from task to task list")
-                        navigateToLoggedActivity()
-                    }
-                    else -> {
-                        Log.w(TAG, "Unexpected role $role for task view")
-                        super.onBackPressed()
-                    }
-                }
-            }
-
-            // Case 3: Viewing a project
-            !projectId.isNullOrEmpty() -> {
-                when (role) {
-                    Role.Manager, Role.Leader -> {
-                        // Go back to project list
-                        Log.d(TAG, "Navigating back to project list")
-                        navigateToLoggedActivity()
-                    }
-                    else -> {
-                        Log.w(TAG, "Unexpected role $role for project view")
-                        super.onBackPressed()
-                    }
-                }
-            }
-
-            // Default case
-            else -> {
-                Log.d(TAG, "No specific navigation path, using default back behavior")
-                super.onBackPressed()
+        @JvmStatic
+        fun newInstance(
+            projectId: String,
+            taskId: String = "",
+            subtaskId: String = ""
+        ) = DettagliItemFragment().apply {
+            arguments = Bundle().apply {
+                putString(ARG_PROJECT_ID, projectId)
+                putString(ARG_TASK_ID, taskId)
+                putString(ARG_SUBTASK_ID, subtaskId)
             }
         }
-    }*/
-
+    }
 }
 

@@ -2,66 +2,57 @@ package com.example.project_manager
 
 import android.os.Bundle
 import android.util.Log
-import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.viewpager.widget.ViewPager
 import com.example.project_manager.models.Role
 import com.example.project_manager.repository.NotificationHelper
 import com.example.project_manager.services.ChatService
 import com.example.project_manager.services.UserService
-import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.tabs.TabLayout
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 
+class HomeActivity : AppCompatActivity() {
+    private lateinit var viewPager: ViewPager
+    private lateinit var tabLayout: TabLayout
 
-class HomeActivity: AppCompatActivity() {
-
-    private lateinit var bottomNavigationView: BottomNavigationView
-    private lateinit var fragmentContainer: FrameLayout
-
-    val userService = UserService()
-    val chatService = ChatService()
+    private val userService = UserService()
+    private val chatService = ChatService()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.logged_activity_2)
 
-        bottomNavigationView = findViewById(R.id.bottomBar)
-        fragmentContainer = findViewById(R.id.fragment_container)
-
+        initializeViews()
+        setupViewPager()
         setupNotifications()
-
-        bottomNavigationView.setOnNavigationItemSelectedListener { item ->
-            when (item.itemId) {
-                R.id.navigation_projects -> {
-                    replaceFragment(ItemListFragment())
-                    true
-                }
-                R.id.navigation_chat -> {
-                    replaceFragment(ChatListFragment())
-                    true
-                }
-                R.id.navigation_statistics -> {
-                    replaceFragment(StatisticheFragment())
-                    true
-                }
-                R.id.navigation_profile -> {
-                    replaceFragment(ProfileFragment())
-                    true
-                }
-                else -> false
-            }
-        }
-
-        // Mostra il fragment del profilo per impostazione predefinita
-        replaceFragment(ItemListFragment())
     }
 
-    private fun replaceFragment(fragment: Fragment) {
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.fragment_container, fragment)
-            .commit()
+    private fun initializeViews() {
+        viewPager = findViewById(R.id.viewPager)
+        tabLayout = findViewById(R.id.tabLayout)
+    }
+
+    private fun setupViewPager() {
+        viewPager.adapter = HomePageAdapter(this,supportFragmentManager)
+        tabLayout.setupWithViewPager(viewPager)
+
+        // Setup tab icons
+        for (i in 0 until tabLayout.tabCount) {
+            val tab = tabLayout.getTabAt(i)
+            tab?.setIcon(getTabIcon(i))
+        }
+    }
+
+    private fun getTabIcon(position: Int): Int {
+        return when(position) {
+            0 -> R.drawable.icona_progetto_ios
+            1 -> R.drawable.icon_chat
+            2 -> R.drawable.statistiche
+            3 -> R.drawable.icona_user_ios
+            else -> R.drawable.icona_progetto_ios
+        }
     }
 
     private fun setupNotifications() {
@@ -74,14 +65,11 @@ class HomeActivity: AppCompatActivity() {
 
                 if (role != null && userId != null) {
                     val chat = chatService.getCurrentUserChats()
-
-                    // Setup chat notifications for all roles
                     notificationHelper.handleNotification(role, userId, "chat", lifecycleScope, chat)
 
                     when (role) {
                         Role.Manager -> {
                             notificationHelper.handleNotification(role, userId, "progresso", lifecycleScope)
-
                         }
                         Role.Leader -> {
                             notificationHelper.handleNotification(role, userId, "progresso", lifecycleScope)

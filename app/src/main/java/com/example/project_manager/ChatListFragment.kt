@@ -1,13 +1,11 @@
 package com.example.project_manager
 
-
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -21,14 +19,34 @@ import com.example.project_manager.services.UserService
 import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.launch
 
+private const val ARG_USER_ID = "userId"
+private const val ARG_USER_ROLE = "userRole"
+
+
 class ChatListFragment : Fragment() {
+    // Argomenti del fragment
+    private var userId: String? = null
+    private var userRole: Role? = null
+
+    // Views
     private lateinit var recyclerView: RecyclerView
     private lateinit var chatListAdapter: ChatListAdapter
+    private lateinit var startChatButton: MaterialButton
 
+    // Services
     private val chatService = ChatService()
     private val userService = UserService()
 
+    // Data
     private val chats = mutableListOf<Chat>()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        arguments?.let {
+            userId = it.getString(ARG_USER_ID)
+            userRole = it.getString(ARG_USER_ROLE)?.let { role -> Role.valueOf(role) }
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -40,24 +58,22 @@ class ChatListFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        setupViews(view)
+        initializeViews(view)
+        setupRecyclerView()
+        setupClickListeners()
         loadChats()
     }
 
-    private fun setupViews(view: View) {
+    private fun initializeViews(view: View) {
         recyclerView = view.findViewById(R.id.recyclerViewChatList)
+        startChatButton = view.findViewById(R.id.buttonStartNewChat)
+    }
 
-        val startChatButton: MaterialButton = view.findViewById(R.id.buttonStartNewChat)
-        startChatButton.setOnClickListener {
-            showSelectUserDialog()
-        }
-
+    private fun setupRecyclerView() {
         chatListAdapter = ChatListAdapter(
             chats = chats,
             lifecycleScope = lifecycleScope,
-            onChatSelected = { chat ->
-                openChat(chat)
-            }
+            onChatSelected = { chat -> openChat(chat) }
         )
 
         recyclerView.apply {
@@ -66,21 +82,28 @@ class ChatListFragment : Fragment() {
         }
     }
 
+    private fun setupClickListeners() {
+        startChatButton.setOnClickListener {
+            showSelectUserDialog()
+        }
+    }
+
     private fun loadChats() {
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             try {
                 val userChats = chatService.getCurrentUserChats()
                 chats.clear()
                 chats.addAll(userChats)
                 chatListAdapter.notifyDataSetChanged()
             } catch (e: Exception) {
-                Log.e("ChatListFragment", "Error loading chats", e)
+                Log.e(TAG, "Error loading chats", e)
+                showError("Error loading chats")
             }
         }
     }
 
     private fun showSelectUserDialog() {
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             try {
                 val role = userService.getCurrentUserRole()
                 val userId = userService.getCurrentUserId()!!
@@ -92,8 +115,61 @@ class ChatListFragment : Fragment() {
                 }
                 showUserSelectionDialog(users)
             } catch (e: Exception) {
-                Log.e("ChatListFragment", "Error loading users", e)
+                Log.e(TAG, "Error loading users", e)
+                showError("Error loading users")
             }
+        }
+    }
+
+    private fun showUserSelectionDialog(users: List<User>) {
+        if (!isAdded) return
+
+        if (users.isEmpty()) {
+            AlertDialog.Builder(requireContext())
+                .setTitle("No Users Available")
+                .setMessage("No users found to start a chat with.")
+                .setPositiveButton("OK", null)
+                .show()
+            return
+        }
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Select User")
+            .setItems(users.map { "${it.name} ${it.surname}" }.toTypedArray()) { _, which ->
+                startChatWithUser(users[which])
+            }
+            .show()
+    }
+
+    private fun startChatWithUser(user: User) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val chatId = chatService.startChatWithUser(user.uid)
+                chatId?.let { openChat(it) }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error starting chat", e)
+                showError("Failed to start chat")
+            }
+        }
+    }
+
+    private fun openChat(chat: Chat) {
+        openChat(chat.chatId)
+    }
+
+    private fun openChat(chatId: String) {
+        val intent = Intent(requireContext(), ChatActivity::class.java)
+        intent.putExtra("chatId", chatId)
+        startActivity(intent)
+    }
+
+    private fun showError(message: String) {
+        if (isAdded) {
+            AlertDialog.Builder(requireContext())
+                .setTitle("Error")
+                .setMessage(message)
+                .setPositiveButton("OK", null)
+                .show()
         }
     }
 
@@ -147,67 +223,16 @@ class ChatListFragment : Fragment() {
         return userService.getLeaderOfManager(currentUser.uid)
     }
 
-    private fun showUserSelectionDialog(users: List<User>) {
-        if (!isAdded) return  // Check if fragment is attached to activity
-
-        if (users.isEmpty()) {
-            AlertDialog.Builder(requireContext())
-                .setTitle("No Users Available")
-                .setMessage("No users found to start a chat with.")
-                .setPositiveButton("OK", null)
-                .show()
-            return
-        }
-
-        val items = users.map { user ->
-            TextView(requireContext()).apply {
-                text = "${user.name} ${user.surname}"
-                tag = user.uid
-                setPadding(50, 30, 50, 30)
-            }
-        }.toTypedArray()
-
-        AlertDialog.Builder(requireContext())
-            .setTitle("Select User")
-            .setItems(items.map { it.text.toString() }.toTypedArray()) { _, which ->
-                val selectedUserId = items[which].tag as String
-                val selectedUser = users.find { it.uid == selectedUserId }
-                selectedUser?.let { startChatWithUser(it) }
-            }
-            .show()
-    }
-
-    private fun startChatWithUser(user: User) {
-        lifecycleScope.launch {
-            try {
-                val chatId = chatService.startChatWithUser(user.uid)
-                if (chatId != null) {
-                    openChat(chatId)
-                }
-            } catch (e: Exception) {
-                Log.e("ChatListFragment", "Error starting chat", e)
-                if (isAdded) {  // Check if fragment is attached
-                    AlertDialog.Builder(requireContext())
-                        .setTitle("Error")
-                        .setMessage("Failed to start chat. Please try again.")
-                        .setPositiveButton("OK", null)
-                        .show()
-                }
-            }
-        }
-    }
-
-    private fun openChat(chat: Chat) {
-        openChat(chat.chatId)
-    }
-
-    private fun openChat(chatId: String) {
-        val intent = Intent(requireContext(), ChatActivity::class.java)
-        intent.putExtra("chatId", chatId)
-        startActivity(intent)
-    }
-
     companion object {
         private const val TAG = "ChatListFragment"
+
+        @JvmStatic
+        fun newInstance(userId: String? = null, userRole: String? = null) =
+            ChatListFragment().apply {
+                arguments = Bundle().apply {
+                    putString(ARG_USER_ID, userId)
+                    putString(ARG_USER_ROLE, userRole)
+                }
+            }
     }
 }

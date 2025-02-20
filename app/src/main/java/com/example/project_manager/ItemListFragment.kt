@@ -34,7 +34,17 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
+private const val ARG_PROJECT_ID = "projectId"
+private const val ARG_TASK_ID = "taskId"
+private const val ARG_IS_FILE_MODE = "isFileMode"
+
+
 class ItemListFragment : Fragment() {
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var searchView: SearchView
+    private lateinit var newItemButton: MaterialCardView
+    private lateinit var filterButton: MaterialCardView
+
 
     private val projectService = ProjectService()
     private val userService = UserService()
@@ -49,6 +59,7 @@ class ItemListFragment : Fragment() {
     private lateinit var buttonApplyFilters: Button
     private var projectId: String = ""
     private var taskId: String = ""
+    private var isFileMode: Boolean = false
 
     private lateinit var drawerLayout: DrawerLayout
     private var startDate: Long = -1L
@@ -65,15 +76,26 @@ class ItemListFragment : Fragment() {
 
     val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        arguments?.let {
+            projectId = it.getString(ARG_PROJECT_ID, "")
+            taskId = it.getString(ARG_TASK_ID, "")
+            isFileMode = it.getBoolean(ARG_IS_FILE_MODE, false)
+        }
+    }
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         return inflater.inflate(R.layout.itemlist_fragment, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        getArgumentsData()
-
+        initializeViews(view)
         if(projectId.isNotEmpty() || taskId.isNotEmpty()) {
             loadSpecificData()
         } else {
@@ -101,15 +123,28 @@ class ItemListFragment : Fragment() {
 
     }
 
+
+    private fun initializeViews(view: View) {
+        recyclerView = view.findViewById(R.id.recyclerview)
+        drawerLayout = view.findViewById(R.id.drawer_layout_logged)
+        searchView = view.findViewById(R.id.searchView)
+        newItemButton = view.findViewById(R.id.newProjectButton)
+        filterButton = view.findViewById(R.id.icon_logged)
+        startDateText = view.findViewById(R.id.text_start_date)
+        endDateText = view.findViewById(R.id.text_end_date)
+
+        recyclerView.layoutManager = LinearLayoutManager(requireContext())
+    }
+
     //per quando visualizzo i dati
     private fun setupFileView() {
         // Nascondi elementi non necessari per la modalità file
-        requireView().findViewById<MaterialCardView>(R.id.icon_logged).visibility = View.GONE
+        filterButton.visibility = View.GONE
         drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
 
         // Modifica il comportamento del pulsante +
         newProject.visibility = View.VISIBLE
-        requireView().findViewById<MaterialCardView>(R.id.newProjectButton).setOnClickListener {
+        newItemButton.setOnClickListener {
             setupFileUpload()
         }
 
@@ -118,7 +153,7 @@ class ItemListFragment : Fragment() {
     }
 
     private fun setupFileUpload() {
-        requireView().findViewById<MaterialCardView>(R.id.newProjectButton).setOnClickListener {
+        newItemButton.setOnClickListener {
             val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
                 type = "*/*"
                 addCategory(Intent.CATEGORY_OPENABLE)
@@ -131,24 +166,14 @@ class ItemListFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 val files = fileService.getTaskFiles(projectId, taskId)
-                val recyclerview = requireView().findViewById<RecyclerView>(R.id.recyclerview)
-                recyclerview.layoutManager = LinearLayoutManager(requireContext())
-                recyclerview.adapter = FilesAdapter(files)
+                recyclerView.layoutManager = LinearLayoutManager(requireContext())
+                recyclerView.adapter = FilesAdapter(files)
             } catch (e: Exception) {
                 Log.e(TAG, "Error loading files", e)
                 Toast.makeText(requireContext(), "Error loading files", Toast.LENGTH_SHORT).show()
             }
         }
     }
-
-    private fun getArgumentsData() {
-        arguments?.let { args ->
-            projectId = args.getString("projectId", "")
-            taskId = args.getString("taskId", "")
-        }
-        Log.d(TAG, "itemlist ha ricevuto: - projectId: $projectId, taskId: $taskId")
-    }
-
 
 
 
@@ -517,5 +542,23 @@ class ItemListFragment : Fragment() {
 
     private fun developerView(){
         newProject.visibility = View.INVISIBLE
+    }
+
+
+    companion object {
+        private const val TAG = "ItemListFragment"
+
+        @JvmStatic
+        fun newInstance(
+            projectId: String = "",
+            taskId: String = "",
+            isFileMode: Boolean = false
+        ) = ItemListFragment().apply {
+            arguments = Bundle().apply {
+                putString(ARG_PROJECT_ID, projectId)
+                putString(ARG_TASK_ID, taskId)
+                putBoolean(ARG_IS_FILE_MODE, isFileMode)
+            }
+        }
     }
 }

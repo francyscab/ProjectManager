@@ -23,7 +23,15 @@ import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
+
+private const val ARG_USER_ID = "userId"
+private const val ARG_USER_ROLE = "userRole"
+
 class StatisticheFragment : Fragment() {
+
+    private var userId: String? = null
+    private var userRole: Role? = null
+
     private val projectService = ProjectService()
     private val taskService = TaskService()
     private val userService = UserService()
@@ -33,6 +41,15 @@ class StatisticheFragment : Fragment() {
     private lateinit var notStartedCountText: TextView
     private lateinit var avgCompletionTimeText: TextView
     private lateinit var barChart: BarChart
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        arguments?.let {
+            userId = it.getString(ARG_USER_ID)
+            userRole = it.getString(ARG_USER_ROLE)?.let { role -> Role.valueOf(role) }
+        }
+    }
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -187,5 +204,18 @@ class StatisticheFragment : Fragment() {
 
         barChart.data = barData
         barChart.invalidate()
+    }
+
+    companion object {
+        private const val TAG = "StatisticheFragment"
+
+        @JvmStatic
+        fun newInstance(userId: String? = null, userRole: String? = null) =
+            StatisticheFragment().apply {
+                arguments = Bundle().apply {
+                    putString(ARG_USER_ID, userId)
+                    putString(ARG_USER_ROLE, userRole)
+                }
+            }
     }
 }

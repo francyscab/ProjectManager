@@ -20,7 +20,13 @@ import com.google.firebase.auth.FirebaseAuth
 import de.hdodenhof.circleimageview.CircleImageView
 import kotlinx.coroutines.launch
 
+private const val ARG_USER_ID = "userId"
+
+
 class ProfileFragment : Fragment() {
+
+    private var userId: String? = null
+
 
     private val TAG = "ProfileFragment"
     val userService = UserService()
@@ -34,7 +40,18 @@ class ProfileFragment : Fragment() {
     private lateinit var skillsChipGroup: ChipGroup
     private lateinit var logoutButton: MaterialButton
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        arguments?.let {
+            userId = it.getString(ARG_USER_ID)
+        }
+    }
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         return inflater.inflate(R.layout.profile_fragment, container, false)
     }
 
@@ -101,5 +118,16 @@ class ProfileFragment : Fragment() {
         }
         startActivity(intent)
         requireActivity().finish()
+    }
+
+    companion object {
+        private const val TAG = "ProfileFragment"
+        @JvmStatic
+        fun newInstance(userId: String? = null) =
+            ProfileFragment().apply {
+                arguments = Bundle().apply {
+                    putString(ARG_USER_ID, userId)
+                }
+            }
     }
 }

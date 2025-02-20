@@ -99,10 +99,10 @@
     <string name="selezionare_la_data">Selezionare la data</string>
     <string name="selezionare_la_priorit">Selezionare la priorità</string>
     <string name="skills">Competenze</string>
-    <string name="progetti">progetti</string>
-    <string name="chat">chat</string>
-    <string name="profilo">profilo</string>
-    <string name="dettagli">dettagli</string>
-    <string name="sotto_item">sotto item</string>
-    <string name="file">file</string>
+    <string name="progetti">Progetti</string>
+    <string name="chat">Chat</string>
+    <string name="profilo">Profilo</string>
+    <string name="dettagli">Dettagli</string>
+    <string name="sotto_item">Sottoitem</string>
+    <string name="file">File</string>
 </resources>

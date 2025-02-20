@@ -228,19 +228,28 @@ class UpdateProjectActivity : AppCompatActivity() {
                     subtaskService.updateSubTask(projectId!!, taskId!!, subtaskId!!, title,description)
                 }
             }
+            navigateBack()
             Toast.makeText(this, "Update successful", Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
             Toast.makeText(this, "Update failed: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
 
-    /*private fun navigateBack() {
-        val intent = Intent(this, ItemActivity::class.java).apply {
+    private fun navigateBack() {
+        // Clear the back stack and start a new HomeItemActivity
+        val intent = Intent(this, HomeItemActivity::class.java).apply {
             putExtra("projectId", projectId)
             putExtra("taskId", taskId)
             putExtra("subtaskId", subtaskId)
+            // Add flags to clear the back stack
+            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
         }
         startActivity(intent)
         finish()
-    }*/
+    }
+
+    override fun onBackPressed() {
+        super.onBackPressed()
+        navigateBack()
+    }
 }

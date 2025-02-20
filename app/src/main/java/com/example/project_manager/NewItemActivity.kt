@@ -259,21 +259,19 @@ class NewItemActivity : AppCompatActivity() {
                     val projectId = projectService.uploadNewProject(
                         title, description, deadline, priority, creatorId, assigneeId
                     )
-                    //navigateToProject(projectId)
                 }
                 "task" -> {
                     val taskId = taskService.uploadNewTask(
                         projectId, title, description, deadline, priority, creatorId, assigneeId
                     )
-                    //navigateToTask(projectId, taskId)
                 }
                 "subtask" -> {
                     val subtaskId = subtaskService.uploadNewSubTask(
                         projectId, taskId, title, description, deadline, priority, creatorId, assigneeId
                     )
-                    //navigateToSubtask(projectId, taskId, subtaskId)
                 }
             }
+            navigateToHome()
         } catch (e: Exception) {
             Log.e(TAG, "Error saving item", e)
             Toast.makeText(this, "Error saving item", Toast.LENGTH_SHORT).show()
@@ -293,37 +291,15 @@ class NewItemActivity : AppCompatActivity() {
         return formType in listOf("progetto", "task")
     }
 
-    /*private fun navigateToProject(projectId: String) {
-        val intent = Intent(this, ItemActivity::class.java).apply {
-            putExtra("projectId", projectId)
-            putExtra("role", role.toString())
+    private fun navigateToHome() {
+        val intent = Intent(this, HomeActivity::class.java).apply {
         }
         startActivity(intent)
         finish()
     }
 
-    private fun navigateToTask(projectId: String, taskId: String) {
-        val intent = Intent(this, ItemActivity::class.java).apply {
-            putExtra("projectId", projectId)
-            putExtra("taskId", taskId)
-            putExtra("role", role.toString())
-        }
-        startActivity(intent)
-        finish()
-    }
 
-    private fun navigateToSubtask(projectId: String, taskId: String, subtaskId: String) {
-        val intent = Intent(this, ItemActivity::class.java).apply {
-            putExtra("projectId", projectId)
-            putExtra("taskId", taskId)
-            putExtra("subtaskId", subtaskId)
-            putExtra("role", role.toString())
-        }
-        startActivity(intent)
-        finish()
-    }*/
-
-    /*override fun onBackPressed() {
+    override fun onBackPressed() {
         super.onBackPressed()
         AlertDialog.Builder(this)
             .setTitle("Confirm Navigation")
@@ -331,15 +307,17 @@ class NewItemActivity : AppCompatActivity() {
             .setPositiveButton("Yes") { _, _ -> handleBackNavigation() }
             .setNegativeButton("No") { dialog, _ -> dialog.dismiss() }
             .show()
-    }*/
+    }
 
-    /*private fun handleBackNavigation() {
-        val intent = Intent(this, ItemActivity::class.java).apply {
+    private fun handleBackNavigation() {
+        val intent = Intent(this, HomeActivity::class.java).apply {
             putExtra("projectId", projectId)
             putExtra("taskId", taskId)
             putExtra("role", role.toString())
         }
         startActivity(intent)
         finish()
-    }*/
+    }
+
+
 }
