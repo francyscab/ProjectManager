@@ -24,8 +24,8 @@ class HomeItemAdapter(
     override fun getItem(position: Int): Fragment {
         return when(position) {
             0 -> DettagliItemFragment.newInstance(projectId, taskId, subtaskId)
-            1 -> ItemListFragment.newInstance(projectId, taskId)
-            2 -> ItemListFragment.newInstance(projectId, taskId, isFileMode = true)
+            1 -> ItemListFragment.newInstance(projectId, taskId,subtaskId)
+            2 -> ItemListFragment.newInstance(projectId, taskId,subtaskId, isFileMode = true)
             else -> DettagliItemFragment.newInstance(projectId, taskId, subtaskId)
         }
     }

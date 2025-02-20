@@ -17,6 +17,7 @@ import com.example.project_manager.models.User
 import com.example.project_manager.services.ChatService
 import com.example.project_manager.services.UserService
 import com.google.android.material.button.MaterialButton
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 
 private const val ARG_USER_ID = "userId"
@@ -61,7 +62,10 @@ class ChatListFragment : Fragment() {
         initializeViews(view)
         setupRecyclerView()
         setupClickListeners()
-        loadChats()
+        lifecycleScope.launch {
+            observeDataChanges()
+        }
+
     }
 
     private fun initializeViews(view: View) {
@@ -100,6 +104,24 @@ class ChatListFragment : Fragment() {
                 showError("Error loading chats")
             }
         }
+    }
+
+    private suspend fun observeDataChanges() {
+        loadChats()
+        val db = FirebaseFirestore.getInstance()
+        db.collection("chat")  // Cambia il nome della collezione se necessario
+            .addSnapshotListener { snapshots, error ->
+                if (error != null) {
+                    Log.e(ChatListFragment.TAG, "Errore durante l'ascolto delle modifiche", error)
+                    return@addSnapshotListener
+                }
+
+                if (snapshots != null && !snapshots.isEmpty) {
+                    lifecycleScope.launch {
+                        loadChats()  // Ricarica i dati ogni volta che ci sono modifiche
+                    }
+                }
+            }
     }
 
     private fun showSelectUserDialog() {

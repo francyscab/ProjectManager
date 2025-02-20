@@ -29,6 +29,7 @@ import com.example.project_manager.services.SubTaskService
 import com.example.project_manager.services.TaskService
 import com.example.project_manager.services.UserService
 import com.google.android.material.card.MaterialCardView
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -36,6 +37,7 @@ import java.util.Locale
 
 private const val ARG_PROJECT_ID = "projectId"
 private const val ARG_TASK_ID = "taskId"
+private const val ARG_SUBTASK_ID = "subtaskId"
 private const val ARG_IS_FILE_MODE = "isFileMode"
 
 
@@ -59,6 +61,8 @@ class ItemListFragment : Fragment() {
     private lateinit var buttonApplyFilters: Button
     private var projectId: String = ""
     private var taskId: String = ""
+    private var subtaskId: String = ""
+
     private var isFileMode: Boolean = false
 
     private lateinit var drawerLayout: DrawerLayout
@@ -81,6 +85,7 @@ class ItemListFragment : Fragment() {
         arguments?.let {
             projectId = it.getString(ARG_PROJECT_ID, "")
             taskId = it.getString(ARG_TASK_ID, "")
+            subtaskId = it.getString(ARG_SUBTASK_ID, "")
             isFileMode = it.getBoolean(ARG_IS_FILE_MODE, false)
         }
     }
@@ -96,14 +101,16 @@ class ItemListFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         initializeViews(view)
-        if(projectId.isNotEmpty() || taskId.isNotEmpty()) {
-            loadSpecificData()
-        } else {
-            lifecycleScope.launch {
-                loadData()
-                deadlineFilterHandler()
-            }
+        lifecycleScope.launch {
+            if(projectId.isNotEmpty() || taskId.isNotEmpty()) {
+                observeDataChanges{loadSpecificData()}
+            } else {
+                    observeDataChanges{loadData()}
+                    deadlineFilterHandler()
+                }
         }
+
+
 
         //barra laterale per filtri
         drawerLayout = view.findViewById(R.id.drawer_layout_logged)
@@ -175,25 +182,44 @@ class ItemListFragment : Fragment() {
         }
     }
 
+    private fun getItemType(): String {
+        return when {
+            subtaskId.isNotEmpty() -> "subtask"
+            taskId.isNotEmpty() -> "task"
+            projectId.isNotEmpty() -> "progetto"
+            else -> throw IllegalArgumentException("No valid ID provided")
+        }
+    }
 
 
     private fun loadSpecificData() {
         val recyclerview = requireView().findViewById<RecyclerView>(R.id.recyclerview)
         recyclerview.layoutManager = LinearLayoutManager(requireContext())
 
+        newItemButton.setOnClickListener {
+            val tipoForm = when (getItemType()) {
+                "progetto" -> "task"
+                "task" -> "subtask"
+                else -> null
+            }
+            tipoForm?.let {
+                val intent = Intent(requireActivity(), NewItemActivity::class.java)
+                intent.putExtra("tipoForm", it)
+                intent.putExtra("projectId", projectId)
+                intent.putExtra("taskId", taskId)
+                intent.putExtra("subtaskId", subtaskId)
+                intent.putExtra("subitem","true")
+                startActivity(intent)
+            }
+        }
+
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 role = userService.getCurrentUserRole()!!
-                data = when {
-                    taskId.isNotEmpty() -> {
-                        // Se abbiamo taskId, carica i subtask
-                        subtaskService.getAllSubTaskByTaskId(projectId, taskId)
-                    }
-                    projectId.isNotEmpty() -> {
-                        // Se abbiamo solo projectId, carica i task
-                        taskService.getAllTaskByProjectId(projectId)
-                    }
-                    else -> ArrayList()
+                data = when (getItemType()) {
+                    "task" -> subtaskService.getAllSubTaskByTaskId(projectId, taskId)
+                    "progetto" -> taskService.getAllTaskByProjectId(projectId)
+                    else -> throw IllegalArgumentException("Tipo non valido")
                 }
 
                 // Aggiorna la UI
@@ -441,9 +467,27 @@ class ItemListFragment : Fragment() {
         }
     }
 
+    private suspend fun observeDataChanges(onDataChanged: suspend () -> Unit) {
+        onDataChanged()  // Initial load
+
+        val db = FirebaseFirestore.getInstance()
+        db.collection("progetti")
+            .addSnapshotListener { snapshots, error ->
+                if (error != null) {
+                    Log.e(TAG, "Errore durante l'ascolto delle modifiche", error)
+                    return@addSnapshotListener
+                }
+
+                if (snapshots != null && !snapshots.isEmpty) {
+                    lifecycleScope.launch {
+                        onDataChanged()  // Reload data when changes occur
+                    }
+                }
+            }
+    }
     private suspend fun loadData() {
         val view = view ?: return
-        role = userService.getCurrentUserRole()!!
+
 
         val recyclerview: RecyclerView = view.findViewById(R.id.recyclerview) ?: return
         recyclerview.layoutManager = LinearLayoutManager(requireActivity())
@@ -452,7 +496,7 @@ class ItemListFragment : Fragment() {
 
         lifecycleScope.launch {
             try {
-                role = userService.getCurrentUserRole() ?: return@launch
+                role = userService.getCurrentUserRole()!!
                 loadUsersFilter(role)
 
                 val userId = userService.getCurrentUserId() ?: return@launch
@@ -499,10 +543,6 @@ class ItemListFragment : Fragment() {
         }
     }
 
-
-
-
-
     //visualizza l'array nella reciclerView
     private fun visualizza(recyclerView: RecyclerView, data: ArrayList<ItemsViewModel>) {
         Log.d(TAG, "visualizza con data= $data")
@@ -525,9 +565,12 @@ class ItemListFragment : Fragment() {
     }
 
     private fun newProjectButtonHandler(){
-        requireView().findViewById<MaterialCardView>(R.id.newProjectButton).setOnClickListener {
+        newItemButton.setOnClickListener {
             val intent = Intent(requireActivity(), NewItemActivity::class.java)
             intent.putExtra("tipoForm", "progetto")
+            intent.putExtra("projectId", projectId)
+            intent.putExtra("taskId", taskId)
+            intent.putExtra("subtaskId", subtaskId)
             startActivity(intent)
         }
     }
@@ -545,6 +588,7 @@ class ItemListFragment : Fragment() {
     }
 
 
+
     companion object {
         private const val TAG = "ItemListFragment"
 
@@ -552,11 +596,13 @@ class ItemListFragment : Fragment() {
         fun newInstance(
             projectId: String = "",
             taskId: String = "",
+            subtaskId: String = "",
             isFileMode: Boolean = false
         ) = ItemListFragment().apply {
             arguments = Bundle().apply {
                 putString(ARG_PROJECT_ID, projectId)
                 putString(ARG_TASK_ID, taskId)
+                putString(ARG_SUBTASK_ID, subtaskId)
                 putBoolean(ARG_IS_FILE_MODE, isFileMode)
             }
         }

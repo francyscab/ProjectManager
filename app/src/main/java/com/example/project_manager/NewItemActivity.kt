@@ -33,6 +33,8 @@ class NewItemActivity : AppCompatActivity() {
     private lateinit var creatorId: String
     private lateinit var projectId: String
     private lateinit var taskId: String
+    private lateinit var subtaskId: String
+    private lateinit var subitem: String
     private lateinit var formType: String
 
     private val projectService = ProjectService()
@@ -88,7 +90,10 @@ class NewItemActivity : AppCompatActivity() {
     private fun setupIntentData() {
         projectId = intent.getStringExtra("projectId") ?: ""
         taskId = intent.getStringExtra("taskId") ?: ""
+        subtaskId = intent.getStringExtra("subtaskId") ?: ""
+        subitem = intent.getStringExtra("subitem") ?: ""
         formType = intent.getStringExtra("tipoForm") ?: ""
+
 
         lifecycleScope.launch {
             creatorId = userService.getCurrentUserId() ?: ""
@@ -256,17 +261,17 @@ class NewItemActivity : AppCompatActivity() {
 
             when (formType) {
                 "progetto" -> {
-                    val projectId = projectService.uploadNewProject(
+                    projectId = projectService.uploadNewProject(
                         title, description, deadline, priority, creatorId, assigneeId
                     )
                 }
                 "task" -> {
-                    val taskId = taskService.uploadNewTask(
+                    taskId = taskService.uploadNewTask(
                         projectId, title, description, deadline, priority, creatorId, assigneeId
                     )
                 }
                 "subtask" -> {
-                    val subtaskId = subtaskService.uploadNewSubTask(
+                    subtaskId = subtaskService.uploadNewSubTask(
                         projectId, taskId, title, description, deadline, priority, creatorId, assigneeId
                     )
                 }
@@ -292,10 +297,24 @@ class NewItemActivity : AppCompatActivity() {
     }
 
     private fun navigateToHome() {
-        val intent = Intent(this, HomeActivity::class.java).apply {
+        if(subitem=="true"){
+            val intent = Intent(this, HomeItemActivity::class.java).apply {
+                putExtra("projectId", projectId)
+                putExtra("taskId", taskId)
+                putExtra("subtaskId", subtaskId)
+                putExtra("subitem","true")
+
+            }
+
+            startActivity(intent)
+            finish()
         }
-        startActivity(intent)
-        finish()
+        else {
+            val intent = Intent(this, HomeActivity::class.java).apply {
+            }
+            startActivity(intent)
+            finish()
+        }
     }
 
 

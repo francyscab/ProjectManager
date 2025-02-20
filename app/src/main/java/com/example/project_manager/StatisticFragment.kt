@@ -10,6 +10,7 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import com.example.project_manager.ItemListFragment.Companion
 import com.example.project_manager.models.ItemsViewModel
 import com.example.project_manager.models.Role
 import com.example.project_manager.services.ProjectService
@@ -20,6 +21,7 @@ import com.github.mikephil.charting.data.BarData
 import com.github.mikephil.charting.data.BarDataSet
 import com.github.mikephil.charting.data.BarEntry
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
@@ -62,9 +64,28 @@ class StatisticheFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         initializeViews(view)
-        loadStatistics()
+        lifecycleScope.launch {
+            observeDataChanges()
+        }
     }
 
+    private suspend fun observeDataChanges() {
+        loadStatistics()
+        val db = FirebaseFirestore.getInstance()
+        db.collection("progetti")  // Cambia il nome della collezione se necessario
+            .addSnapshotListener { snapshots, error ->
+                if (error != null) {
+                    Log.e(StatisticheFragment.TAG, "Errore durante l'ascolto delle modifiche", error)
+                    return@addSnapshotListener
+                }
+
+                if (snapshots != null && !snapshots.isEmpty) {
+                    lifecycleScope.launch {
+                        loadStatistics()  // Ricarica i dati ogni volta che ci sono modifiche
+                    }
+                }
+            }
+    }
 
     private fun initializeViews(view: View) {
         completedCountText = view.findViewById(R.id.completedCountText)

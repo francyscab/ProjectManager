@@ -1,5 +1,6 @@
 package com.example.project_manager;
 
+import android.content.ContentValues.TAG
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -45,7 +46,7 @@ class ChatActivity : AppCompatActivity() {
         intent.getStringExtra("chatId")?.let {
             chatId = it
             setupViews(chatId!!)
-            loadMessages()
+            observeDataChanges()
 
             // Reset unread counter when chat is opened
             lifecycleScope.launch {
@@ -116,6 +117,23 @@ class ChatActivity : AppCompatActivity() {
         }
     }
 
+    private fun observeDataChanges() {
+        loadMessages()  // Carica i messaggi inizialmente
+
+        val db = FirebaseFirestore.getInstance()
+        db.collection("chat").document(chatId!!) // Cambia il nome della collezione se necessario
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.e(TAG, "Errore durante l'ascolto delle modifiche", error)
+                    return@addSnapshotListener
+                }
+
+                if (snapshot != null && snapshot.exists()) {
+                    loadMessages()  // Ricarica i dati ogni volta che il documento cambia
+                }
+            }
+    }
+
     private fun loadMessages() {
         lifecycleScope.launch {
             try {
@@ -145,7 +163,7 @@ class ChatActivity : AppCompatActivity() {
                 val success = chatService.sendMessage(chatId!!, messageText)
                 if (success) {
                     editTextMessage.text.clear()
-                    loadMessages() // Reload messages to show the new one
+                    observeDataChanges() // Reload messages to show the new one
                 } else {
                     Toast.makeText(
                         this@ChatActivity,

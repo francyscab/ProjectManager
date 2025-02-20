@@ -1,5 +1,6 @@
 package com.example.project_manager
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
@@ -18,8 +19,10 @@ class HomeItemActivity : AppCompatActivity() {
     private var taskId: String = ""
     private var subtaskId: String = ""
     private lateinit var role: Role
+    private var isSubitem: String =""
 
     private val userService = UserService()
+    private var startingTab: Int = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,6 +33,7 @@ class HomeItemActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             setupViewPagerWithRole()
+            viewPager.currentItem = startingTab
         }
     }
 
@@ -37,9 +41,12 @@ class HomeItemActivity : AppCompatActivity() {
         projectId = intent.getStringExtra("projectId") ?: ""
         taskId = intent.getStringExtra("taskId") ?: ""
         subtaskId = intent.getStringExtra("subtaskId") ?: ""
+        isSubitem = intent.getStringExtra("subitem")?:"false"
+        startingTab = intent.getIntExtra("startingTab", 0)
 
         Log.d(TAG, "Received - projectId: $projectId, taskId: $taskId, subtaskId: $subtaskId")
     }
+
 
     private fun initializeViews() {
         viewPager = findViewById(R.id.viewPager)
@@ -91,6 +98,46 @@ class HomeItemActivity : AppCompatActivity() {
             role == Role.Leader && taskId.isNotEmpty() -> true
             else -> false
         }
+    }
+
+    override fun onBackPressed() {
+        super.onBackPressed()
+        if (isSubitem=="true") {
+            handleSubitemBackNavigation()
+        } else {
+            val intent = Intent(this, HomeActivity::class.java)
+            startActivity(intent)
+            finish()
+        }
+    }
+
+    private fun handleSubitemBackNavigation() {
+        val intent = Intent(this, HomeItemActivity::class.java).apply {
+            when {
+                // If we have all three IDs, go back to task view
+                subtaskId.isNotEmpty() -> {
+                    putExtra("projectId", projectId)
+                    putExtra("taskId", taskId)
+                    putExtra("subtaskId", "")
+                    putExtra("startingTab", 1)
+                }
+                // If we have project and task IDs, go back to project view
+                taskId.isNotEmpty() -> {
+                    putExtra("projectId", projectId)
+                    putExtra("taskId", "")
+                    putExtra("subtaskId", "")
+                    putExtra("startingTab", 1)
+
+                }
+                // If we only have project ID, just finish()
+                else -> {
+                    finish()
+                    return
+                }
+            }
+        }
+        startActivity(intent)
+        finish()
     }
 
     private fun setupTabIcons() {
