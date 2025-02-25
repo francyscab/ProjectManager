@@ -309,6 +309,9 @@ class ItemListFragment : Fragment() {
             override fun onQueryTextChange(newText: String?): Boolean {
                 // Filtro la RecyclerView in base al testo inserito
                 filterFiles(newText,files)
+
+
+
                 return true
             }
         })
