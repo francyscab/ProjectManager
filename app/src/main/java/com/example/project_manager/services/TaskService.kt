@@ -108,7 +108,7 @@ class TaskService {
             "title" to title.capitalizeFirstLetter(),
             "description" to description
         )
-        developer?.let { updates["developer"] = it }
+        developer?.let { updates["assignedTo"] = it }
 
         taskRepository.updateTask(projectId, taskId, updates)
     }

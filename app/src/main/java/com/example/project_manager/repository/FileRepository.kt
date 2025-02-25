@@ -23,11 +23,11 @@ class FileRepository {
     private val db= FirebaseFirestore.getInstance()
     var auth = FirebaseAuth.getInstance()
 
-    public fun uploadProfileImage(imageUri: Uri, onSuccess: (String) -> Unit, onFailure: (Exception) -> Unit) {
+    fun uploadProfileImage(imageUri: Uri, onSuccess: (String) -> Unit, onFailure: (Exception) -> Unit) {
         uploadFile("profile_images", imageUri, getTodayDate(), onSuccess, onFailure)
     }
 
-    public fun uploadProjectDocument(imageUri: Uri, onSuccess: (String) -> Unit, onFailure: (Exception) -> Unit) {
+    fun uploadProjectDocument(imageUri: Uri, onSuccess: (String) -> Unit, onFailure: (Exception) -> Unit) {
         val fileName = getFileName(imageUri) + getTodayDate()
 
         uploadFile("project_documents", imageUri, fileName, onSuccess, onFailure)
@@ -93,8 +93,9 @@ class FileRepository {
         return uri.path?.substring(uri.path!!.lastIndexOf('/') + 1) ?: ""
     }
 
-    suspend fun getTaskFiles(projectId: String, taskId: String): List<FileModel> {
-        val files = mutableListOf<FileModel>()
+    suspend fun getTaskFiles(projectId: String, taskId: String): ArrayList<FileModel> {
+        //Log.d("FileRepository", "Getting task files for project $projectId and task $taskId")
+        val files = ArrayList<FileModel>()
         try {
             val storageRef = storage.reference
                 .child("projects/$projectId/tasks/$taskId/files")
@@ -119,6 +120,29 @@ class FileRepository {
             throw e
         }
         return files
+    }
+
+    suspend fun saveFileMetadata(projectId: String, taskId: String, fileName: String, path: String): Boolean {
+        return try {
+            val fileData = hashMapOf(
+                "name" to fileName,
+                "uploadedAt" to System.currentTimeMillis(),
+                "path" to "projects/$projectId/tasks/$taskId/files/$fileName"
+            )
+
+            db.collection("progetti")
+                .document(projectId)
+                .collection("task")
+                .document(taskId)
+                .collection("files")
+                .add(fileData)
+                .await()
+
+            true
+        } catch (e: Exception) {
+            Log.e("FileRepository", "Error saving file metadata to database", e)
+            false
+        }
     }
 
 }

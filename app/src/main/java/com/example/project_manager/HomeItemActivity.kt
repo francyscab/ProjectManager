@@ -66,7 +66,8 @@ class HomeItemActivity : AppCompatActivity() {
                 taskId,
                 subtaskId,
                 showSubitems,
-                showFiles
+                showFiles,
+                isSubitem
             )
 
             viewPager.adapter = adapter
@@ -93,7 +94,7 @@ class HomeItemActivity : AppCompatActivity() {
     private fun shouldShowFiles(role: Role): Boolean {
         return when {
             // Developer can see files for tasks
-            role == Role.Developer && taskId.isNotEmpty() -> true
+            role == Role.Developer && taskId.isNotEmpty() &&subtaskId.isEmpty() -> true
             // Leader can see files for tasks
             role == Role.Leader && taskId.isNotEmpty() -> true
             else -> false

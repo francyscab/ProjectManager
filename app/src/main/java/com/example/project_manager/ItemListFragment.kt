@@ -1,8 +1,9 @@
 package com.example.project_manager
 
 import android.app.DatePickerDialog
-import android.content.ContentValues.TAG
+import android.app.ProgressDialog
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -13,6 +14,7 @@ import android.widget.CheckBox
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.widget.SearchView
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
@@ -20,6 +22,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.project_manager.models.FileModel
 import com.example.project_manager.models.ItemsViewModel
 import com.example.project_manager.models.Role
 import com.example.project_manager.services.ChatService
@@ -33,6 +36,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
 import java.util.Locale
 
 private const val ARG_PROJECT_ID = "projectId"
@@ -56,6 +60,7 @@ class ItemListFragment : Fragment() {
     private val fileService = FileService()
 
     private lateinit var data: ArrayList<ItemsViewModel>
+    private lateinit var files: ArrayList<FileModel>
     private lateinit var role: Role
     private lateinit var filteredDataByStatus: ArrayList<ItemsViewModel>
     private lateinit var buttonApplyFilters: Button
@@ -102,7 +107,11 @@ class ItemListFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         initializeViews(view)
         lifecycleScope.launch {
-            if(projectId.isNotEmpty() || taskId.isNotEmpty()) {
+            if(isFileMode){
+                files=ArrayList<FileModel>()
+                observeFileChanges { loadFiles() }
+            }
+            else if(projectId.isNotEmpty() || taskId.isNotEmpty()) {
                 observeDataChanges{loadSpecificData()}
             } else {
                     observeDataChanges{loadData()}
@@ -143,38 +152,13 @@ class ItemListFragment : Fragment() {
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
     }
 
-    //per quando visualizzo i dati
-    private fun setupFileView() {
-        // Nascondi elementi non necessari per la modalità file
-        filterButton.visibility = View.GONE
-        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
-
-        // Modifica il comportamento del pulsante +
-        newProject.visibility = View.VISIBLE
-        newItemButton.setOnClickListener {
-            setupFileUpload()
-        }
-
-        // Carica i file
-        loadFiles()
-    }
-
-    private fun setupFileUpload() {
-        newItemButton.setOnClickListener {
-            val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
-                type = "*/*"
-                addCategory(Intent.CATEGORY_OPENABLE)
-            }
-            startActivityForResult(intent, PICK_FILE_REQUEST_CODE)
-        }
-    }
-
     private fun loadFiles() {
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                val files = fileService.getTaskFiles(projectId, taskId)
+                files = fileService.getTaskFiles(projectId, taskId)
                 recyclerView.layoutManager = LinearLayoutManager(requireContext())
                 recyclerView.adapter = FilesAdapter(files)
+                setupFileView()
             } catch (e: Exception) {
                 Log.e(TAG, "Error loading files", e)
                 Toast.makeText(requireContext(), "Error loading files", Toast.LENGTH_SHORT).show()
@@ -182,7 +166,61 @@ class ItemListFragment : Fragment() {
         }
     }
 
-    private fun getItemType(): String {
+    //per quando visualizzo i dati
+    private fun setupFileView() {
+        //Nascondi elementi non necessari per la modalità file
+        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
+
+        setupFileUpload()
+        handleFileSearchBar(files)
+    }
+
+    private fun setupFileUpload() {
+        newItemButton.setOnClickListener {
+            newItemButton.setOnClickListener {
+                filePickerLauncher.launch("*/*")
+            }
+        }
+    }
+
+    private fun uploadFile(fileUri: Uri, customFileName: String) {
+        val progressDialog = ProgressDialog(requireContext()).apply {
+            setTitle("Uploading File")
+            setMessage("Please wait...")
+            setCancelable(false)
+            show()
+        }
+
+        // Aggiungi timestamp al nome del file per evitare conflitti
+        val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+        val fileName = "${customFileName}_${timeStamp}"
+
+        fileService.uploadTaskFile(
+            projectId,
+            taskId,
+            fileUri = fileUri,
+            fileName = fileName,
+            onSuccess = { downloadUrl ->
+                progressDialog.dismiss()
+                Toast.makeText(requireContext(), "File caricato con successo", Toast.LENGTH_SHORT)
+                    .show()
+                viewLifecycleOwner.lifecycleScope.launch {
+                    loadFiles() // Ricarica la lista dei file
+                }
+            },
+            onFailure = { exception ->
+                progressDialog.dismiss()
+                Log.e(TAG, "Error uploading file", exception)
+                Toast.makeText(
+                    requireContext(),
+                    "Errore durante il caricamento del file",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        )
+    }
+
+   private fun getItemType(): String {
         return when {
             subtaskId.isNotEmpty() -> "subtask"
             taskId.isNotEmpty() -> "task"
@@ -244,9 +282,11 @@ class ItemListFragment : Fragment() {
     private fun handleSeaarchBar(data: ArrayList<ItemsViewModel>){
         //barra di ricerca
         val searchView = requireView().findViewById<SearchView>(R.id.searchView)
+
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 //cosa fare quando l'utente preme invio.
+                filterProjects(query,data)
                 return false
             }
             override fun onQueryTextChange(newText: String?): Boolean {
@@ -256,10 +296,34 @@ class ItemListFragment : Fragment() {
             }
         })
     }
+
+    private fun handleFileSearchBar(files: ArrayList<FileModel>){
+        val searchView = requireView().findViewById<SearchView>(R.id.searchView)
+
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                filterFiles(query,files)
+                //cosa fare quando l'utente preme invio.
+                return false
+            }
+            override fun onQueryTextChange(newText: String?): Boolean {
+                // Filtro la RecyclerView in base al testo inserito
+                filterFiles(newText,files)
+                return true
+            }
+        })
+    }
+
     //barra di ricerca
     private fun filterProjects(query: String?,data: ArrayList<ItemsViewModel>) {
         val filteredData= projectService.filterProjects(query,data)
         visualizza(requireView().findViewById(R.id.recyclerview), filteredData)
+    }
+
+
+    private fun filterFiles(query: String?,data: ArrayList<FileModel>) {
+        val filteredData= fileService.filterFiles(query,files)
+        visualizzaFile(requireView().findViewById(R.id.recyclerview), filteredData)
     }
 
 
@@ -485,7 +549,66 @@ class ItemListFragment : Fragment() {
                 }
             }
     }
-    private suspend fun loadData() {
+
+    private suspend fun observeFileChanges(onDataChanged: suspend () -> Unit) {
+        onDataChanged()  // Initial load
+
+        // Set up a listener on the Firestore collection that tracks file metadata
+        val db = FirebaseFirestore.getInstance()
+        db.collection("progetti")
+            .document(projectId)
+            .collection("task")
+            .document(taskId)
+            .collection("files")
+            .addSnapshotListener { snapshots, error ->
+                if (error != null) {
+                    Log.e(TAG, "Error listening for file changes", error)
+                    return@addSnapshotListener
+                }
+
+                if (snapshots != null) {
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        onDataChanged()  // Reload files when the collection changes
+                    }
+                }
+            }
+    }
+
+    private val filePickerLauncher = registerForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { fileUri ->
+            showFileNameDialog(fileUri)
+        }
+    }
+
+    private fun showFileNameDialog(fileUri: Uri) {
+        val originalFileName = fileUri.lastPathSegment ?: "file"
+
+        val builder = android.app.AlertDialog.Builder(requireContext())
+        val input = android.widget.EditText(requireContext())
+        input.setText(originalFileName)
+
+        builder.setTitle("Nome File")
+            .setMessage("Inserisci il nome del file:")
+            .setView(input)
+            .setPositiveButton("Upload") { dialog, _ ->
+                val fileName = input.text.toString()
+                if (fileName.isNotEmpty()) {
+                    uploadFile(fileUri, fileName)
+                } else {
+                    Toast.makeText(requireContext(), "Il nome del file non può essere vuoto", Toast.LENGTH_SHORT).show()
+                }
+                dialog.dismiss()
+            }
+            .setNegativeButton("Annulla") { dialog, _ ->
+                dialog.cancel()
+            }
+
+        builder.show()
+    }
+
+    private fun loadData() {
         val view = view ?: return
 
 
@@ -559,9 +682,18 @@ class ItemListFragment : Fragment() {
                 intent.putExtra("projectId", clickedItem.projectId)
                 intent.putExtra("taskId", clickedItem.taskId)
                 intent.putExtra("subtaskId", clickedItem.subtaskId)
+                if (!clickedItem.subtaskId.isNullOrEmpty()) {
+                    intent.putExtra("subitem","true")
+                }
                 startActivity(intent)
             }
         })
+    }
+
+    private fun visualizzaFile(recyclerView: RecyclerView, data: ArrayList<FileModel>) {
+        Log.d(TAG, "visualizza con data= $data")
+        val adapter = FilesAdapter(data)
+        recyclerView.adapter = adapter
     }
 
     private fun newProjectButtonHandler(){

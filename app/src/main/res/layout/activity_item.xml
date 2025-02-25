@@ -94,8 +94,8 @@
                             android:progress="49"
                             app:indicatorSize="90dp"
                             app:trackThickness="8dp"
-                            app:trackColor="@color/progress_foreground"
-                            app:indicatorColor="@color/progress_background"/>
+                            app:trackColor="@color/progress_background"
+                            app:indicatorColor="@color/progress_foreground"/>
 
                         <TextView
                             android:id="@+id/progressText"

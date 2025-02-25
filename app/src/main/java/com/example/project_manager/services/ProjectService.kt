@@ -54,11 +54,11 @@ class ProjectService {
         }
     }
 
-    suspend fun updateProject(projectId: String, title: String, description: String, assignedTo: String) {
+    suspend fun updateProject(projectId: String, title: String, description: String) {
         val updates = mutableMapOf<String, Any>(
             "title" to title.capitalizeFirstLetter(),
             "description" to description,
-            "assignedTo" to assignedTo
+
         )
         projectRepository.updateProject(projectId, updates)
     }

@@ -105,4 +105,7 @@
     <string name="dettagli">Dettagli</string>
     <string name="sotto_item">Sottoitem</string>
     <string name="file">File</string>
+    <string name="modifica_progetto">Modifica Progetto</string>
+    <string name="modifica_task">Modifica Task</string>
+    <string name="modifica_subtask">Modifica Subtask</string>
 </resources>

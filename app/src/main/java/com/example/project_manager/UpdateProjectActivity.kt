@@ -27,6 +27,7 @@ class UpdateProjectActivity : AppCompatActivity() {
     private lateinit var buttonSave: Button
     private lateinit var erroreDescrizione: TextView
     private lateinit var erroreTitolo: TextView
+    private lateinit var typeNewTextView: TextView
 
     private var selectedUserId: String? = null
 
@@ -50,6 +51,7 @@ class UpdateProjectActivity : AppCompatActivity() {
         lifecycleScope.launch {
             role = userService.getCurrentUserRole() ?: throw IllegalStateException("Role not found")
             val type = getItemType()
+            updateTypeTitle(type)
             loadAndDisplayItem(type)
             setupSaveButton(type)
         }
@@ -65,12 +67,22 @@ class UpdateProjectActivity : AppCompatActivity() {
         buttonSave = findViewById(R.id.buttonSave)
         erroreDescrizione = findViewById(R.id.errore_descrizione)
         erroreTitolo = findViewById(R.id.errore_titolo)
+        typeNewTextView = findViewById(R.id.typeNew)  // Inizializzare il TextView del titolo
+
     }
 
     private fun loadIntentData() {
         taskId = intent.getStringExtra("taskId")
         projectId = intent.getStringExtra("projectId")
         subtaskId = intent.getStringExtra("subtaskId")
+    }
+
+    private fun updateTypeTitle(type: String) {
+        when(type) {
+            "progetto" -> typeNewTextView.text = getString(R.string.modifica_progetto)
+            "task" -> typeNewTextView.text = getString(R.string.modifica_task)
+            "subtask" -> typeNewTextView.text = getString(R.string.modifica_subtask)
+        }
     }
 
     private fun getItemType(): String {
@@ -130,7 +142,7 @@ class UpdateProjectActivity : AppCompatActivity() {
                 showDataInSpinner(projectElementSpinner, users, item.assignedTo, role)
             }
             Role.Developer -> {
-                findViewById<LinearLayout>(R.id.assignedTo_field).visibility = View.GONE
+                findViewById<LinearLayout>(R.id.assignedToLayout).visibility = View.GONE
             }
         }
     }
@@ -148,18 +160,7 @@ class UpdateProjectActivity : AppCompatActivity() {
             displayName
         }.toTypedArray()
 
-        val adapter = ArrayAdapter(
-            this,
-            R.layout.custom_dropdown_item,
-            displayNames
-        )
-        autoComplete.setAdapter(adapter)
-
-        autoComplete.setOnItemClickListener { parent, _, position, _ ->
-            val selectedName = parent.getItemAtPosition(position).toString()
-            selectedUserId = userMap[selectedName]
-        }
-
+        // If we have a selected value, find and display it
         selectedValue?.let { value ->
             val selectedUser = users.find { it.uid == value }
             selectedUser?.let {
@@ -169,7 +170,27 @@ class UpdateProjectActivity : AppCompatActivity() {
             }
         }
 
-        autoComplete.isEnabled = role == Role.Manager
+        if (role == Role.Leader) {
+            // Solo per Leader: configura l'adapter e abilita l'interazione
+            val adapter = ArrayAdapter(
+                this,
+                R.layout.custom_dropdown_item,
+                displayNames
+            )
+            autoComplete.setAdapter(adapter)
+            autoComplete.setOnItemClickListener { parent, _, position, _ ->
+                val selectedName = parent.getItemAtPosition(position).toString()
+                selectedUserId = userMap[selectedName]
+            }
+        } else {
+            // Per Manager: trasforma l'AutoCompleteTextView in un display non interattivo
+            autoComplete.setAdapter(null)
+            autoComplete.isEnabled = false
+            autoComplete.isFocusable = false
+            autoComplete.isFocusableInTouchMode = false
+            autoComplete.inputType = android.text.InputType.TYPE_NULL
+            autoComplete.setOnClickListener(null)
+        }
     }
 
     private suspend fun loadSpinnerData(role: Role): ArrayList<User> {
@@ -219,10 +240,10 @@ class UpdateProjectActivity : AppCompatActivity() {
         try {
             when (tipo) {
                 "progetto" -> {
-                    projectService.updateProject(projectId!!, title, description, selectedUserId!!)
+                    projectService.updateProject(projectId!!, title, description)
                 }
                 "task" -> {
-                    taskService.updateTask(projectId!!, taskId!!, title, description)
+                    taskService.updateTask(projectId!!, taskId!!, title, description,selectedUserId)
                 }
                 "subtask" -> {
                     subtaskService.updateSubTask(projectId!!, taskId!!, subtaskId!!, title,description)

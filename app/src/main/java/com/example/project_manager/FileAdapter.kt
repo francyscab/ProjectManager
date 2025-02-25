@@ -13,7 +13,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class FilesAdapter(private val files: List<FileModel>) :
+class FilesAdapter(private val files: ArrayList<FileModel>) :
     RecyclerView.Adapter<FilesAdapter.FileViewHolder>() {
 
     class FileViewHolder(view: View) : RecyclerView.ViewHolder(view) {

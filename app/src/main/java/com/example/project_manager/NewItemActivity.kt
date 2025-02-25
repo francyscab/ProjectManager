@@ -169,7 +169,7 @@ class NewItemActivity : AppCompatActivity() {
             try {
                 val users = userService.getUsersByRole(spinnerRole)
 
-// Pulisci la mappa esistente
+                // Pulisci la mappa esistente
                 userMap.clear()
                 val displayNames = users.map { user ->
                     val displayName = "${user.name} ${user.surname}"
@@ -255,24 +255,28 @@ class NewItemActivity : AppCompatActivity() {
             val deadline = deadlineButton.text.toString()
             val priority = getSelectedPriority()
 
-            // Ottieni l'ID dell'utente selezionato invece del nome visualizzato
-            val selectedDisplayName = assigneeSpinner.text.toString()
-            val assigneeId = userMap[selectedDisplayName]!!
+
 
             when (formType) {
                 "progetto" -> {
+                    // Ottieni l'ID dell'utente selezionato invece del nome visualizzato
+                    val selectedDisplayName = assigneeSpinner.text.toString()
+                    val assigneeId = userMap[selectedDisplayName]!!
                     projectId = projectService.uploadNewProject(
                         title, description, deadline, priority, creatorId, assigneeId
                     )
                 }
                 "task" -> {
+                    // Ottieni l'ID dell'utente selezionato invece del nome visualizzato
+                    val selectedDisplayName = assigneeSpinner.text.toString()
+                    val assigneeId = userMap[selectedDisplayName]!!
                     taskId = taskService.uploadNewTask(
                         projectId, title, description, deadline, priority, creatorId, assigneeId
                     )
                 }
                 "subtask" -> {
                     subtaskId = subtaskService.uploadNewSubTask(
-                        projectId, taskId, title, description, deadline, priority, creatorId, assigneeId
+                        projectId, taskId, title, description, deadline, priority, creatorId,creatorId
                     )
                 }
             }
@@ -310,7 +314,8 @@ class NewItemActivity : AppCompatActivity() {
             finish()
         }
         else {
-            val intent = Intent(this, HomeActivity::class.java).apply {
+            val intent = Intent(this, HomeItemActivity::class.java).apply {
+                putExtra("projectId", projectId)
             }
             startActivity(intent)
             finish()

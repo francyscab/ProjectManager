@@ -11,31 +11,45 @@ class HomeItemAdapter(
     private val taskId: String,
     private val subtaskId: String,
     private val showSubitems: Boolean,
-    private val showFiles: Boolean
+    private val showFiles: Boolean,
+    private val isSubitem: String
 ) : FragmentPagerAdapter(fm) {
 
-    override fun getCount(): Int {
-        var count = 1 // Always show details
-        if (showSubitems) count++
-        if (showFiles) count++
-        return count
-    }
 
     override fun getItem(position: Int): Fragment {
-        return when(position) {
-            0 -> DettagliItemFragment.newInstance(projectId, taskId, subtaskId)
-            1 -> ItemListFragment.newInstance(projectId, taskId,subtaskId)
-            2 -> ItemListFragment.newInstance(projectId, taskId,subtaskId, isFileMode = true)
+        return when {
+            position == 0 -> DettagliItemFragment.newInstance(projectId, taskId, subtaskId)
+
+            showSubitems && position == 1 -> ItemListFragment.newInstance(projectId, taskId, subtaskId) // Subitems
+
+            showSubitems && showFiles && position == 2 -> ItemListFragment.newInstance(projectId, taskId, subtaskId, true) // Files
+
+            !showSubitems && showFiles && position == 1 -> ItemListFragment.newInstance(projectId, taskId, subtaskId, true) // Files quando non ci sono Subitems
+
             else -> DettagliItemFragment.newInstance(projectId, taskId, subtaskId)
         }
     }
 
     override fun getPageTitle(position: Int): CharSequence? {
-        return when(position) {
-            0 -> "Details"
-            1 -> if (showSubitems) "Subitems" else "Files"
-            2 -> "Files"
+        return when {
+            position == 0 -> "Details"
+
+            showSubitems && position == 1 -> "Subitems"
+
+            showSubitems && showFiles && position == 2 -> "Files"
+
+            !showSubitems && showFiles && position == 1 -> "Files"
+
             else -> null
+        }
+    }
+
+    override fun getCount(): Int {
+        return when {
+            showSubitems && showFiles -> 3  // Dettagli + Subitems + Files
+            showSubitems -> 2              // Dettagli + Subitems
+            showFiles -> 2                 // Dettagli + Files
+            else -> 1                      // Solo Dettagli
         }
     }
 }

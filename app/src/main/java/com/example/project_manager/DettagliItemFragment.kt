@@ -96,6 +96,8 @@ class DettagliItemFragment : Fragment() {
         val notificationHelper = NotificationHelper(requireContext(), FirebaseFirestore.getInstance())
         initializeViews(view)
 
+        hideAllOptionalElements()
+
         getArgumentsData()
 
         Log.d(TAG, "AFTER getArgumentsData - projectId: $projectId, taskId: $taskId, subtaskId: $subtaskId")
@@ -108,6 +110,15 @@ class DettagliItemFragment : Fragment() {
             loadDetails(itemType, notificationHelper)
             menu(itemType)
         }
+    }
+
+    private fun hideAllOptionalElements() {
+        seekbarLayout.visibility = View.GONE
+        sollecitaButton.visibility = View.GONE
+        feedbackLayout.visibility = View.GONE
+        valuta.visibility = View.GONE
+        assignedCont.visibility = View.GONE
+        menuButton.visibility = View.GONE
     }
 
     private fun getItemType(): String {
@@ -225,12 +236,15 @@ class DettagliItemFragment : Fragment() {
         }
     }
 
+    //leader che vede progetto
     private suspend fun setupLeaderView() {
         setData(itemType, taskId, projectId, subtaskId)
         seekbarLayout.visibility = View.GONE
         sollecitaButton.visibility= View.GONE
-
+        assignedCont.visibility = View.VISIBLE
+        menuButton.visibility = View.GONE
     }
+
 
     private suspend fun setupManagerView() {
         setData(itemType, taskId, projectId, subtaskId)
@@ -242,6 +256,8 @@ class DettagliItemFragment : Fragment() {
         }
 
 
+        assignedCont.visibility = View.VISIBLE
+        menuButton.visibility = View.VISIBLE
         sollecitaButton.visibility=View.VISIBLE
         seekbarLayout.visibility = View.GONE
 
@@ -250,17 +266,19 @@ class DettagliItemFragment : Fragment() {
     }
 
     private suspend fun setupDeveloperSubTaskView() {
+        setData(itemType, taskId, projectId, subtaskId)
         sollecitaButton.visibility=View.GONE
         seekbarLayout.visibility = View.VISIBLE
         assignedCont.visibility = View.GONE
+        menuButton.visibility = View.VISIBLE
 
-        setData(itemType, taskId, projectId, subtaskId)
 
     }
 
     private suspend fun setupLeaderTaskView() {
 
         setData(itemType, taskId, projectId, subtaskId)
+
         sollecitaButton.visibility=View.VISIBLE
         sollecitaButton.setOnClickListener {
             viewLifecycleOwner.lifecycleScope.launch {
@@ -269,13 +287,16 @@ class DettagliItemFragment : Fragment() {
             }
         }
         seekbarLayout.visibility = View.GONE
-
+        assignedCont.visibility = View.VISIBLE
+        menuButton.visibility = View.VISIBLE
     }
 
     private suspend fun setupDeveloperTaskView() {
         setData(itemType, taskId, projectId, subtaskId)
         sollecitaButton.visibility=View.GONE
         seekbarLayout.visibility = View.GONE
+        assignedCont.visibility = View.VISIBLE
+        menuButton.visibility = View.GONE
     }
 
     private suspend fun setData(
@@ -554,7 +575,7 @@ class DettagliItemFragment : Fragment() {
                                                     Toast.LENGTH_SHORT
                                                 ).show()
 
-                                                //navigateToLoggedActivity()
+                                                navigateBack()
                                             } else {
                                                 Toast.makeText(
                                                     requireContext(),
@@ -652,8 +673,7 @@ class DettagliItemFragment : Fragment() {
                 if (success) {
                     progressLabel.text = "$currentProgress%"
 
-                    val progressInfo = rootView.findViewById<TextView>(R.id.progressText)
-                    progressInfo.text = "${currentProgress}%"
+                    progressText.text = "${currentProgress}%"
 
                     Toast.makeText(
                         requireContext(),
@@ -674,6 +694,42 @@ class DettagliItemFragment : Fragment() {
         }
     }
 
+    private fun navigateBack() {
+        val subItem = when (role) {
+            Role.Leader -> projectId.isNotEmpty() && taskId.isNotEmpty() && subtaskId.isEmpty() // Leader con project e task
+            Role.Developer -> projectId.isNotEmpty() && taskId.isNotEmpty() && subtaskId.isNotEmpty()  // Developer con project, task e subtask
+            else -> false
+        }
+
+        if (subItem) {
+            val intent = Intent(requireContext(), HomeItemActivity::class.java).apply {
+                when (role) {
+                    Role.Leader -> {
+                        // Leader torna indietro di un livello
+                        putExtra("projectId", projectId)
+                        putExtra("taskId", "")
+                        putExtra("subtaskId", "")
+                        putExtra("startingTab", 1)
+                    }
+                    Role.Developer -> {
+                        // Developer torna indietro di un livello
+                        putExtra("projectId", projectId)
+                        putExtra("taskId", taskId)
+                        putExtra("subtaskId", "")
+                        putExtra("startingTab", 1)
+                    }
+                    else -> {
+                    }
+                }
+            }
+            startActivity(intent)
+        } else {
+            // vai alla HomeActivity
+            val intent = Intent(requireContext(), HomeActivity::class.java)
+            startActivity(intent)
+        }
+        requireActivity().finish()
+    }
 
     companion object {
         private const val TAG = "DettagliItemFragment"
