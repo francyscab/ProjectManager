@@ -267,6 +267,7 @@ class NewItemActivity : AppCompatActivity() {
                     projectId = projectService.uploadNewProject(
                         title, description, deadline, priority, creatorId, assigneeId
                     )
+
                 }
                 "task" -> {
                     // Ottieni l'ID dell'utente selezionato invece del nome visualizzato

@@ -23,10 +23,8 @@ import kotlinx.coroutines.launch
 class NotificationHelper(private val context: Context, private val db: FirebaseFirestore,
     ) {
 
-    private var chatListener: ListenerRegistration? = null
-    private var sollecitoLeaderListener: ListenerRegistration? = null
-    private var sollecitoDeveloperListener: ListenerRegistration? = null
-    private var progressoListener: ListenerRegistration? = null
+    private val sollecitoListeners = mutableMapOf<String, ListenerRegistration>()
+
     private var userChatCollectionListener: ListenerRegistration? = null
 
     private val activeListeners = mutableListOf<ListenerRegistration>()
@@ -57,7 +55,7 @@ class NotificationHelper(private val context: Context, private val db: FirebaseF
     suspend fun handleNotification(role: Role, userUid: String, type: String, coroutineScope: CoroutineScope, data: List<Chat>? = null) {
         when (type) {
             "sollecito" -> when (role) {
-                Role.Leader -> setupLeaderSollecitoListeners(userUid,coroutineScope)
+                Role.Leader -> setupNewProjectSollecitoListener(userUid,coroutineScope)
                 Role.Developer -> setupDeveloperSollecitoListeners(userUid,coroutineScope)
                 else -> {} // Manager doesn't need sollecito notifications
             }
@@ -66,15 +64,96 @@ class NotificationHelper(private val context: Context, private val db: FirebaseF
         }
     }
 
-    private suspend fun setupLeaderSollecitoListeners(leaderId: String,coroutineScope: CoroutineScope) {
-        val projects = projectService.loadProjectByLeader(leaderId)
-        Log.d("SollecitoListener", "Projects found: $projects")
-        projects.forEach { project ->
-            sollecitoLeaderListener=db.collection("progetti")
-                .document(project.projectId)
+    suspend fun setupNewProjectSollecitoListener(leaderId: String, coroutineScope: CoroutineScope) {
+        val newProjectListener = db.collection("progetti")
+            .whereEqualTo("assignedTo", leaderId)
+            .addSnapshotListener { snapshots, e ->
+                if (e != null) {
+                    Log.e("NewProjectSollecitoListener", "Error listening to new projects", e)
+                    return@addSnapshotListener
+                }
+
+                snapshots?.documentChanges?.forEach { documentChange ->
+                    if (documentChange.type == DocumentChange.Type.ADDED) {
+                        val newProjectId = documentChange.document.id
+                        val sollecitato = documentChange.document.getBoolean("sollecitato") ?: false
+
+                        // If the new project is already sollecitato, send notification
+                        if (sollecitato) {
+                            coroutineScope.launch {
+                                val creatorId = documentChange.document.getString("creator") ?: ""
+                                val creatorName = userService.getUserById(creatorId)?.name ?: "Manager"
+                                val projectTitle = documentChange.document.getString("title") ?: "progetto"
+
+                                sendNotification(
+                                    type = "sollecito",
+                                    title = "Sollecito Progetto",
+                                    text = "Il manager $creatorName richiede aggiornamenti sul progetto $projectTitle",
+                                    role = Role.Leader,
+                                    recipientId = leaderId,
+                                    projectId = newProjectId,
+                                    taskId = null
+                                )
+                            }
+                        }
+
+                        // Attach a continuous listener to this project's sollecito field
+                        val projectSollecitoListener = db.collection("progetti")
+                            .document(newProjectId)
+                            .addSnapshotListener { snapshot, listenerError ->
+                                if (listenerError != null) {
+                                    Log.e("ProjectSollecitoListener", "Error listening to project $newProjectId", listenerError)
+                                    return@addSnapshotListener
+                                }
+
+                                if (snapshot != null && snapshot.exists()) {
+                                    val currentSollecitato = snapshot.getBoolean("sollecitato") ?: false
+                                    if (currentSollecitato) {
+                                        coroutineScope.launch {
+                                            val creatorId = snapshot.getString("creator") ?: ""
+                                            val creatorName = userService.getUserById(creatorId)?.name ?: "Manager"
+                                            val projectTitle = snapshot.getString("title") ?: "progetto"
+
+                                            sendNotification(
+                                                type = "sollecito",
+                                                title = "Sollecito Progetto",
+                                                text = "Il manager $creatorName richiede aggiornamenti sul progetto $projectTitle",
+                                                role = Role.Leader,
+                                                recipientId = leaderId,
+                                                projectId = newProjectId,
+                                                taskId = null
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                        // Store and track this listener
+                        sollecitoListeners["project_$newProjectId"] = projectSollecitoListener
+                        addListener(projectSollecitoListener)
+                    }
+                }
+            }
+
+        // Add the new project listener to active listeners
+        addListener(newProjectListener)
+    }
+
+
+    suspend fun setupDeveloperSollecitoListeners(developerId: String, coroutineScope: CoroutineScope) {
+        // Pulizia dei listener esistenti
+        sollecitoListeners.forEach { (_, listener) -> listener.remove() }
+        sollecitoListeners.clear()
+
+        val tasks = taskService.filterTaskByDeveloper(developerId)
+        tasks.forEach { task ->
+            val listener = db.collection("progetti")
+                .document(task.projectId)
+                .collection("task")
+                .document(task.taskId!!)
                 .addSnapshotListener { snapshot, e ->
                     if (e != null) {
-                        Log.e("SollecitoListener", "Error listening to project ${project.projectId}", e)
+                        Log.e("SollecitoListener", "Error listening to developer tasks", e)
                         return@addSnapshotListener
                     }
 
@@ -85,56 +164,20 @@ class NotificationHelper(private val context: Context, private val db: FirebaseF
                                 sendNotification(
                                     type = "sollecito",
                                     title = "Sollecito Progetto",
-                                    text = "Il manager ${snapshot.getString("creator")
-                                        ?.let { userService.getUserById(it)?.name }} richiede aggiornamenti sul progetto ${snapshot.getString("title")}",
-                                    role = Role.Leader,
-                                    recipientId = leaderId,
-                                    projectId = project.projectId,
-                                    taskId = null
-                                )
-                            }
-
-                        }
-                    }
-                }
-            addListener(sollecitoLeaderListener!!)
-
-        }
-    }
-
-    private suspend fun setupDeveloperSollecitoListeners(developerId: String,coroutineScope: CoroutineScope) {
-        val tasks=taskService.filterTaskByDeveloper(developerId)
-        tasks.forEach { task ->
-            sollecitoDeveloperListener = db.collection("progetti")
-                .document(task.projectId)
-                .collection("task")
-                .document(task.taskId!!)
-                .addSnapshotListener { snapshot, e ->
-                        if (e != null) {
-                            Log.e("SollecitoListener", "Error listening to developer tasks", e)
-                            return@addSnapshotListener
-                        }
-
-                    if (snapshot != null && snapshot.exists()) {
-                        val sollecitato = snapshot.getBoolean("sollecitato") ?: false
-                        if (sollecitato) {
-                            coroutineScope.launch {
-                                sendNotification(
-                                    type = "sollecito",
-                                    title = "Sollecito Progetto",
-                                    text = "Il leader ${snapshot.getString("creator")
-                                        ?.let { userService.getUserById(it)?.name }} richiede aggiornamenti sul progetto ${snapshot.getString("title")}",
+                                    text = "Il leader ${snapshot.getString("creator")?.let { userService.getUserById(it)?.name }} richiede aggiornamenti sul progetto ${snapshot.getString("title")}",
                                     role = Role.Developer,
                                     recipientId = developerId,
                                     projectId = task.projectId,
                                     taskId = task.taskId
                                 )
                             }
-
                         }
                     }
-            }
-            addListener(sollecitoDeveloperListener!!)
+                }
+
+            // Memorizzazione di ogni listener con una chiave unica
+            sollecitoListeners["task_${task.projectId}_${task.taskId}"] = listener
+            addListener(listener)
         }
     }
 
@@ -225,86 +268,160 @@ class NotificationHelper(private val context: Context, private val db: FirebaseF
     }
 
 
-    private fun handleProgressNotifications(role: Role, userId: String,coroutineScope: CoroutineScope) {
+    private suspend fun handleProgressNotifications(role: Role, userId: String, coroutineScope: CoroutineScope) {
         Log.d("ProgressNotifications", "Entrato nella funzione handleProgressNotifications con ruolo: $role, nome: $userId")
 
         if (role == Role.Manager) {
-            val query = db.collection("progetti").whereEqualTo("creator", userId)
-            query.get().addOnSuccessListener { documents ->
-                if (documents.isEmpty) {
-                    Log.d("ProgressNotifications", "Nessun progetto trovato per il Manager: $userId")
-                } else {
-                    Log.d("ProgressNotifications", "Trovati ${documents.size()} progetti per il Manager: $userId")
-                }
+            // Sostituzione della query una tantum con un listener persistente
+            val listener = db.collection("progetti")
+                .whereEqualTo("creator", userId)
+                .addSnapshotListener { snapshots, e ->
+                    if (e != null) {
+                        Log.e("ProgressNotifications", "Error listening to manager projects", e)
+                        return@addSnapshotListener
+                    }
 
-                documents.forEach { document ->
-                    val projectId = document.id
-                    val progress = document.getLong("progress")
-                    Log.d("ProgressNotifications", "Progresso del progetto $projectId: $progress")
-                    if (progress?.toInt() == 100 && !isNotificationShown("progresso_$projectId")) {
-                        Log.d("ProgressNotifications", "Progetto $projectId completato al 100%")
-                        coroutineScope.launch {
-                            sendNotification(
-                                type = "progresso",
-                                title = "Progetto completato",
-                                text = "Il progetto ${document.get("title")} è stato completato.",
-                                role = role,
-                                recipientId = userId,
-                                projectId = projectId,
-                                taskId = null
-                            )
+                    if (snapshots == null) return@addSnapshotListener
+
+                    for (document in snapshots.documents) {
+                        val projectId = document.id
+                        val progress = document.getLong("progress")
+                        Log.d("ProgressNotifications", "Progresso del progetto $projectId: $progress")
+                        if (progress?.toInt() == 100 && !isNotificationShown("progresso_$projectId")) {
+                            Log.d("ProgressNotifications", "Progetto $projectId completato al 100%")
+                            coroutineScope.launch {
+                                sendNotification(
+                                    type = "progresso",
+                                    title = "Progetto completato",
+                                    text = "Il progetto ${document.getString("title")} è stato completato.",
+                                    role = role,
+                                    recipientId = userId,
+                                    projectId = projectId,
+                                    taskId = null
+                                )
+                            }
+                            setNotificationShown("progresso_$projectId")
                         }
-                        //setNotificationShown("progresso_$projectId")
                     }
                 }
-            }.addOnFailureListener { exception ->
-                Log.e("ProgressNotifications", "Errore durante il recupero dei progetti per il Manager: $userId", exception)
-            }
+
+            addListener(listener)
         } else if (role == Role.Leader) {
-            val query = db.collection("progetti").whereEqualTo("assignedTo", userId)
-            query.get().addOnSuccessListener { documents ->
-                if (documents.isEmpty) {
-                    Log.d("ProgressNotifications", "Nessun progetto trovato per il Leader: $userId")
-                } else {
-                    Log.d("ProgressNotifications", "Trovati ${documents.size()} progetti per il Leader: $userId")
+            // Per i Leader, dobbiamo monitorare i progetti a cui sono assegnati
+            val listenerForLeaderProjects = db.collection("progetti")
+                .whereEqualTo("assignedTo", userId)
+                .addSnapshotListener { snapshots, e ->
+                    if (e != null) {
+                        Log.e("ProgressNotifications", "Error listening to leader's projects", e)
+                        return@addSnapshotListener
+                    }
+
+                    if (snapshots == null) return@addSnapshotListener
+
+                    for (projectDoc in snapshots.documents) {
+                        val projectId = projectDoc.id
+
+                        // Per ogni progetto, monitorare i suoi task
+                        val taskListener = db.collection("progetti")
+                            .document(projectId)
+                            .collection("task")
+                            .addSnapshotListener { taskSnapshots, taskError ->
+                                if (taskError != null) {
+                                    Log.e("ProgressNotifications", "Error listening to tasks for project $projectId", taskError)
+                                    return@addSnapshotListener
+                                }
+
+                                if (taskSnapshots == null) return@addSnapshotListener
+
+                                for (taskChange in taskSnapshots.documentChanges) {
+                                    // Interessati solo alle modifiche dei task esistenti
+                                    if (taskChange.type == DocumentChange.Type.MODIFIED) {
+                                        val taskDoc = taskChange.document
+                                        val taskId = taskDoc.id
+                                        val taskProgress = taskDoc.getLong("progress")
+
+                                        // Se il task è completato (100%) e non abbiamo già mostrato la notifica
+                                        if (taskProgress?.toInt() == 100 && !isNotificationShown("progresso_task_${taskId}")) {
+                                            Log.d("ProgressNotifications", "Task $taskId completato al 100% nel progetto $projectId")
+
+                                            coroutineScope.launch {
+                                                sendNotification(
+                                                    type = "progresso",
+                                                    title = "Task completato",
+                                                    text = "Il task ${taskDoc.getString("title")} è stato completato.",
+                                                    role = role,
+                                                    recipientId = userId,
+                                                    projectId = projectId,
+                                                    taskId = taskId
+                                                )
+                                            }
+
+                                            setNotificationShown("progresso_task_${taskId}")
+                                        }
+                                    }
+                                }
+                            }
+
+                        // Aggiungi anche il listener dei task alla lista dei listener attivi
+                        addListener(taskListener)
+                    }
                 }
 
-                documents.forEach { document ->
-                    val projectId = document.id
-                    Log.d("ProgressNotifications", "Trovato progetto con ID: $projectId")
+            // Aggiungi il listener dei progetti del leader alla lista dei listener attivi
+            addListener(listenerForLeaderProjects)
+        } else if (role == Role.Developer) {
+            // Per i Developer, dobbiamo monitorare i subtask a cui sono assegnati
+            val tasks = taskService.filterTaskByDeveloper(userId)
 
-                    db.collection("progetti").document(projectId).collection("task")
-                        .addSnapshotListener { snapshots, e ->
-                            if (e != null) {
-                                Log.e("TaskListener", "Errore durante l'ascolto dei task per il progetto $projectId.", e)
+            tasks.forEach { task ->
+                if (task.taskId != null && task.projectId.isNotEmpty()) {
+                    // Monitorare i subtask di ogni task assegnato al developer
+                    val subtaskListener = db.collection("progetti")
+                        .document(task.projectId)
+                        .collection("task")
+                        .document(task.taskId)
+                        .collection("subtask")
+                        .whereEqualTo("assignedTo", userId)
+                        .addSnapshotListener { subtaskSnapshots, subtaskError ->
+                            if (subtaskError != null) {
+                                Log.e("ProgressNotifications", "Error listening to subtasks for task ${task.taskId}", subtaskError)
                                 return@addSnapshotListener
                             }
 
-                            snapshots?.documentChanges?.forEach { change ->
-                                if (change.type == DocumentChange.Type.MODIFIED) {
-                                    val progress = change.document.getLong("progress")
-                                    if (progress?.toInt() == 100) {
-                                        Log.d("ProgressNotifications", "Task ${change.document.id} completato al 100% nel progetto $projectId")
+                            if (subtaskSnapshots == null) return@addSnapshotListener
+
+                            for (subtaskChange in subtaskSnapshots.documentChanges) {
+                                // Interessati solo alle modifiche dei subtask esistenti
+                                if (subtaskChange.type == DocumentChange.Type.MODIFIED) {
+                                    val subtaskDoc = subtaskChange.document
+                                    val subtaskId = subtaskDoc.id
+                                    val subtaskProgress = subtaskDoc.getLong("progress")
+
+                                    // Se il subtask è completato (100%) e non abbiamo già mostrato la notifica
+                                    if (subtaskProgress?.toInt() == 100 && !isNotificationShown("progresso_subtask_${subtaskId}")) {
+                                        Log.d("ProgressNotifications", "Subtask $subtaskId completato al 100%")
+
                                         coroutineScope.launch {
                                             sendNotification(
                                                 type = "progresso",
-                                                title = "Task completato",
-                                                text = "Il task ${document.get("title")} è stato completato.",
-                                                role= role,
+                                                title = "Subtask completato",
+                                                text = "Il subtask ${subtaskDoc.getString("title")} è stato completato.",
+                                                role = role,
                                                 recipientId = userId,
-                                                projectId = projectId,
-                                                taskId = change.document.id
+                                                projectId = task.projectId,
+                                                taskId = task.taskId
                                             )
                                         }
 
-                                        //setNotificationShown("progresso_${change.document.id}")
+                                        setNotificationShown("progresso_subtask_${subtaskId}")
                                     }
                                 }
                             }
                         }
+
+                    // Aggiungi il listener dei subtask alla lista dei listener attivi
+                    addListener(subtaskListener)
                 }
-            }.addOnFailureListener { exception ->
-                Log.e("ProgressNotifications", "Errore durante il recupero dei progetti per il Leader: $userId", exception)
             }
         }
     }
