@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.project_manager.models.Chat
 import com.example.project_manager.models.Role
 import com.example.project_manager.models.User
+import com.example.project_manager.repository.UserRepository
 import com.example.project_manager.services.ChatService
 import com.example.project_manager.services.UserService
 import com.google.android.material.button.MaterialButton
@@ -38,6 +39,7 @@ class ChatListFragment : Fragment() {
     // Services
     private val chatService = ChatService()
     private val userService = UserService()
+    private val userRepository= UserRepository()
 
     // Data
     private val chats = mutableListOf<Chat>()
@@ -187,8 +189,31 @@ class ChatListFragment : Fragment() {
     private fun startChatWithUser(user: User) {
         viewLifecycleOwner.lifecycleScope.launch {
             try {
+                // Ottieni l'ID dell'utente corrente
+                val currentUserId = userService.getCurrentUserId() ?: return@launch
+
+                // Crea una nuova chat
                 val chatId = chatService.startChatWithUser(user.uid)
-                chatId?.let { openChat(it) }
+
+                if (chatId != null) {
+                    // Aggiungi la chat alla collezione dell'utente corrente
+                    val success1 = userRepository.addChatToUser(currentUserId, chatId, user.uid)
+
+                    // Aggiungi la chat alla collezione dell'altro utente
+                    val success2 = userRepository.addChatToUser(user.uid, chatId, currentUserId)
+
+                    if (success1 && success2) {
+                        // Apri direttamente la ChatActivity con l'ID della chat
+                        val intent = Intent(requireContext(), ChatActivity::class.java)
+                        intent.putExtra("chatId", chatId)
+                        startActivity(intent)
+                    } else {
+                        Log.e(TAG, "Errore nell'aggiungere la chat alle collezioni degli utenti")
+                        showError("Failed to setup chat")
+                    }
+                } else {
+                    showError("Failed to start chat")
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Error starting chat", e)
                 showError("Failed to start chat")

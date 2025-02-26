@@ -27,8 +27,10 @@ class NotificationHelper(private val context: Context, private val db: FirebaseF
     private var sollecitoLeaderListener: ListenerRegistration? = null
     private var sollecitoDeveloperListener: ListenerRegistration? = null
     private var progressoListener: ListenerRegistration? = null
+    private var userChatCollectionListener: ListenerRegistration? = null
 
     private val activeListeners = mutableListOf<ListenerRegistration>()
+    private val activeChatListeners = mutableMapOf<String, ListenerRegistration>()
 
     private val projectService = ProjectService()
     private val taskService= TaskService()
@@ -59,7 +61,7 @@ class NotificationHelper(private val context: Context, private val db: FirebaseF
                 Role.Developer -> setupDeveloperSollecitoListeners(userUid,coroutineScope)
                 else -> {} // Manager doesn't need sollecito notifications
             }
-            "chat" -> data?.let { handleChatNotifications(role, userUid,coroutineScope, it) }
+            "chat" -> data?.let { handleChatNotifications(role, userUid,coroutineScope) }
             "progresso" -> handleProgressNotifications(role, userUid,coroutineScope)
         }
     }
@@ -136,38 +138,92 @@ class NotificationHelper(private val context: Context, private val db: FirebaseF
         }
     }
 
-    private fun handleChatNotifications(role: Role, userId: String,coroutineScope: CoroutineScope, chatIds: List<Chat>) {
-        chatIds.forEach { chatId ->
-            chatListener=db.collection("chat").document(chatId.chatId)
-                .addSnapshotListener { snapshot, e ->
+    private fun handleChatNotifications(role: Role, userId: String, coroutineScope: CoroutineScope) {
+
+        userChatCollectionListener = db.collection("utenti")
+            .document(userId)
+            .collection("chat")
+            .addSnapshotListener { snapshots, e ->
                 if (e != null) {
-                    Log.e("ChatListener", "Errore durante l'ascolto della chat ${chatId.chatId}.", e)
+                    Log.e("UserChatListener", "Error listening for user chat changes", e)
                     return@addSnapshotListener
                 }
 
-                snapshot?.get("lastMessage")?.let { message ->
-                    val timestamp = snapshot.get("timestamp").toString()
-                    if(snapshot.get("senderId").toString() !== userId.toString()) {
-                        coroutineScope.launch {
-                            sendNotification(
-                                type = "chat",
-                                title = "Nuovo messaggio",
-                                text = "Hai ricevuto un nuovo messaggio: $message da ${
-                                    userService.getUserById(
-                                        snapshot.get("senderId").toString())?.name
-                                }",
-                                role = role,
-                                recipientId = userId,
-                                projectId = chatId.chatId,
-                                taskId = timestamp
-                            )
+                if (snapshots == null) return@addSnapshotListener
+
+                for (dc in snapshots.documentChanges) {
+
+                    val chatId = dc.document.id
+                    Log.d("UserChatListener modifica", "Chat ID: $chatId")
+                    when (dc.type) {
+                        DocumentChange.Type.ADDED, DocumentChange.Type.MODIFIED -> {
+                            if (!activeChatListeners.containsKey(chatId)) {
+                                setupChatListener(chatId, userId, role, coroutineScope)
+                            }
+                        }
+                        DocumentChange.Type.REMOVED -> {
+                            // Remove listener for this chat
+                            activeChatListeners[chatId]?.remove()
+                            activeChatListeners.remove(chatId)
                         }
                     }
                 }
             }
-            addListener(chatListener!!)
-        }
+
+         addListener(userChatCollectionListener!!)
     }
+
+    private fun setupChatListener(chatId: String, userId: String, role: Role, coroutineScope: CoroutineScope) {
+      //inseridci ultimo timestamp per evitare duplicati
+        var lastSeenTimestamp: Long = 0
+
+        val chatListener = db.collection("chat")
+            .document(chatId)
+            .addSnapshotListener { snapshot, e ->
+                if (e != null) {
+                    Log.e("ChatListener", "Error listening to chat $chatId", e)
+                    return@addSnapshotListener
+                }
+
+                if (snapshot == null || !snapshot.exists()) return@addSnapshotListener
+
+
+                val lastMessage = snapshot.getString("lastMessage") ?: return@addSnapshotListener
+                val currentTimestamp = snapshot.getLong("timestamp") ?: return@addSnapshotListener
+                val senderId = snapshot.getString("senderId") ?: return@addSnapshotListener
+
+                // solo se:
+                // 1. è un nuovo messaggio (timestamp maggiore dell'ultimo)
+                // 2. il sender non è l'utente
+                // 3. il messaggio non è vuoto
+                if (currentTimestamp > lastSeenTimestamp &&
+                    senderId != userId &&
+                    lastMessage.isNotEmpty()) {
+
+                    coroutineScope.launch {
+                        sendNotification(
+                            type = "chat",
+                            title = "Nuovo messaggio",
+                            text = "Hai ricevuto un nuovo messaggio: $lastMessage da ${
+                                userService.getUserById(senderId)?.name
+                            }",
+                            role = role,
+                            recipientId = userId,
+                            projectId = chatId,
+                            taskId = currentTimestamp.toString()
+                        )
+                    }
+
+                    // aggiorna l'ultimo timestamp
+                    lastSeenTimestamp = currentTimestamp
+                }
+            }
+
+
+        activeChatListeners[chatId] = chatListener
+        addListener(chatListener)
+    }
+
 
     private fun handleProgressNotifications(role: Role, userId: String,coroutineScope: CoroutineScope) {
         Log.d("ProgressNotifications", "Entrato nella funzione handleProgressNotifications con ruolo: $role, nome: $userId")

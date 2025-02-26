@@ -19,6 +19,27 @@ class UserRepository {
 
     val taskService= TaskService()
 
+    suspend fun addChatToUser(userId: String, chatId: String, otherUserId: String): Boolean {
+        return try {
+            // Aggiungi un documento nella sottocollezione "chat" dell'utente
+            db.collection("utenti")
+                .document(userId)
+                .collection("chat")
+                .document(chatId)
+                .set(mapOf(
+                    "chatId" to chatId,
+                    "otherUserId" to otherUserId,
+                    "timestamp" to System.currentTimeMillis()
+                ))
+                .await()
+
+            Log.d(TAG, "Chat $chatId aggiunta con successo all'utente $userId")
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Errore nell'aggiungere la chat $chatId all'utente $userId", e)
+            false
+        }
+    }
 
     public fun sign_in (email:String,pw:String,onSuccess: (Boolean) -> Unit, onFailure: (Exception) -> Unit) {
         FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, pw)
@@ -30,7 +51,7 @@ class UserRepository {
             }
     }
 
-    public fun createUser(name:String,surname:String,role:Role,email:String,filepath:Uri,profile_image_url:String, onSuccess: (Boolean) -> Unit, onFailure: (Exception) -> Unit){
+     fun createUser(name:String,surname:String,role:Role,email:String,filepath:Uri,profile_image_url:String, onSuccess: (Boolean) -> Unit, onFailure: (Exception) -> Unit){
         val currentUser = FirebaseAuth.getInstance().currentUser
         if(currentUser!==null){
             val newUser= User(name=name,surname=surname,role=role,email=email,uid=currentUser.uid,profile_image_url=profile_image_url)
@@ -96,6 +117,7 @@ class UserRepository {
             }
         }
     }
+
 
     fun getCurrentUserId(): String? {
         return auth.currentUser?.uid
