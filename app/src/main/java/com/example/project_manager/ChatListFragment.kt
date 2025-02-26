@@ -18,13 +18,13 @@ import com.example.project_manager.repository.UserRepository
 import com.example.project_manager.services.ChatService
 import com.example.project_manager.services.UserService
 import com.google.android.material.button.MaterialButton
+import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.launch
 
 private const val ARG_USER_ID = "userId"
 private const val ARG_USER_ROLE = "userRole"
-
 
 class ChatListFragment : Fragment() {
     // Argomenti del fragment
@@ -39,10 +39,15 @@ class ChatListFragment : Fragment() {
     // Services
     private val chatService = ChatService()
     private val userService = UserService()
-    private val userRepository= UserRepository()
+    private val userRepository = UserRepository()
+    private val db = FirebaseFirestore.getInstance()
 
     // Data
     private val chats = mutableListOf<Chat>()
+
+    // Listeners
+    private var userChatsListener: ListenerRegistration? = null
+    private val chatListeners = mutableMapOf<String, ListenerRegistration>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -70,26 +75,31 @@ class ChatListFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         lifecycleScope.launch {
-            observeDataChanges()
+            setupListeners()
         }
     }
 
     override fun onPause() {
         super.onPause()
-        removeListener()
+        removeAllListeners()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        removeListener()
+        removeAllListeners()
     }
 
-    private fun removeListener() {
-        chatListener?.remove()
-        chatListener = null
-    }
+    private fun removeAllListeners() {
+        // Rimuove il listener della collezione chat dell'utente
+        userChatsListener?.remove()
+        userChatsListener = null
 
-    private var chatListener: ListenerRegistration? = null
+        // Rimuove tutti i listener delle singole chat
+        chatListeners.forEach { (_, listener) ->
+            listener.remove()
+        }
+        chatListeners.clear()
+    }
 
     private fun initializeViews(view: View) {
         recyclerView = view.findViewById(R.id.recyclerViewChatList)
@@ -115,36 +125,94 @@ class ChatListFragment : Fragment() {
         }
     }
 
-    private fun loadChats() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                val userChats = chatService.getCurrentUserChats()
-                chats.clear()
-                chats.addAll(userChats)
-                chatListAdapter.notifyDataSetChanged()
-            } catch (e: Exception) {
-                Log.e(TAG, "Error loading chats", e)
-                showError("Error loading chats")
-            }
-        }
-    }
+    private suspend fun setupListeners() {
+        val currentUserId = userService.getCurrentUserId() ?: return
 
-    private fun observeDataChanges() {
+        // Inizializza la lista con le chat attuali
         loadChats()
-        val db = FirebaseFirestore.getInstance()
-        chatListener =db.collection("chat")  // Cambia il nome della collezione se necessario
+
+        // Ascolta i cambiamenti nella collezione "chat" dell'utente
+        userChatsListener = db.collection("utenti")
+            .document(currentUserId)
+            .collection("chat")
             .addSnapshotListener { snapshots, error ->
                 if (error != null) {
-                    Log.e(ChatListFragment.TAG, "Errore durante l'ascolto delle modifiche", error)
+                    Log.e(TAG, "Errore durante l'ascolto delle chat dell'utente", error)
                     return@addSnapshotListener
                 }
 
-                if (snapshots != null && !snapshots.isEmpty) {
-                    lifecycleScope.launch {
-                        loadChats()  // Ricarica i dati ogni volta che ci sono modifiche
+                if (snapshots == null) return@addSnapshotListener
+
+                // Processa i cambiamenti ai documenti (aggiunti, modificati, rimossi)
+                for (dc in snapshots.documentChanges) {
+                    val chatId = dc.document.id
+
+                    when (dc.type) {
+                        DocumentChange.Type.ADDED -> {
+                            // Configura un nuovo listener per questa chat se non esiste già
+                            if (!chatListeners.containsKey(chatId)) {
+                                setupChatListener(chatId)
+                            }
+                        }
+                        DocumentChange.Type.REMOVED -> {
+                            // Rimuove il listener per questa chat
+                            chatListeners[chatId]?.remove()
+                            chatListeners.remove(chatId)
+
+                            // Rimuove la chat dalla lista
+                            val chatToRemove = chats.find { it.chatId == chatId }
+                            if (chatToRemove != null) {
+                                chats.remove(chatToRemove)
+                                chatListAdapter.notifyDataSetChanged()
+                            }
+                        }
+                        else -> { /* Ignora modifiche */ }
                     }
                 }
             }
+    }
+
+    private fun setupChatListener(chatId: String) {
+        val chatListener = db.collection("chat")
+            .document(chatId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.e(TAG, "Errore durante l'ascolto della chat $chatId", error)
+                    return@addSnapshotListener
+                }
+
+                if (snapshot == null || !snapshot.exists()) return@addSnapshotListener
+
+                lifecycleScope.launch {
+                    // Ricarica tutte le chat per assicurarsi che siano sincronizzate
+                    loadChats()
+                }
+            }
+
+        chatListeners[chatId] = chatListener
+    }
+
+    private suspend fun loadChats() {
+        try {
+            val userChats = chatService.getCurrentUserChats()
+
+            // Aggiorna la lista mantenendo l'ordine
+            chats.clear()
+            chats.addAll(userChats)
+            chatListAdapter.notifyDataSetChanged()
+
+            // Assicurati che ci sia un listener per ogni chat
+            userChats.forEach { chat ->
+                if (!chatListeners.containsKey(chat.chatId)) {
+                    setupChatListener(chat.chatId)
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error loading chats", e)
+            if (isAdded) {
+                showError("Error loading chats")
+            }
+        }
     }
 
     private fun showSelectUserDialog() {
