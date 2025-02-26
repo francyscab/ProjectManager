@@ -8,6 +8,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.project_manager.ChatActivity
 import com.example.project_manager.HomeActivity
+import com.example.project_manager.HomeItemActivity
 //ProjectActivity
 import com.example.project_manager.R
 import com.example.project_manager.models.Chat
@@ -262,7 +263,9 @@ class NotificationHelper(private val context: Context, private val db: FirebaseF
         taskId: String?
     ) {
         // Create a default intent that points to HomeActivity
-        val intent = Intent(context, HomeActivity::class.java).apply {
+        val intent = Intent(context, HomeItemActivity::class.java).apply {
+            putExtra("projectId", projectId)
+            putExtra("taskId", taskId)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
 
@@ -275,7 +278,15 @@ class NotificationHelper(private val context: Context, private val db: FirebaseF
                 }
                 "it.sollecito"
             }
-            "progresso" -> "it.newprogress"
+
+            "progresso" -> {
+                if (role == Role.Leader) {
+                        intent.putExtra("isSubitem", true)
+
+                    }
+                    "it.newprogress"
+            }
+
             "chat" -> {
                 // Override default intent for chat notifications
                 intent.setClass(context, ChatActivity::class.java)

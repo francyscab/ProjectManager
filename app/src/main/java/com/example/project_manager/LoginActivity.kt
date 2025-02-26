@@ -6,6 +6,7 @@ import android.graphics.Paint
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
@@ -29,6 +30,7 @@ class LoginActivity : AppCompatActivity() {
     private val userRepository = UserRepository()
     private val userService = UserService()
     private val chatService= ChatService()
+    private lateinit var errorText: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -82,17 +84,21 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun setupLoginButton() {
+        errorText = findViewById<TextView>(R.id.error)
         val loginButton = findViewById<MaterialButton>(R.id.loginButton)
         val emailField = findViewById<TextInputEditText>(R.id.emailInput)
         val passwordField = findViewById<TextInputEditText>(R.id.passwordInput)
-        val errorText = findViewById<TextView>(R.id.error)
+
+
 
         loginButton.setOnClickListener {
-            val email = emailField.text.toString()
-            val password = passwordField.text.toString()
-            errorText.text = ""
+                val email = emailField.text.toString()
+                val password = passwordField.text.toString()
+                errorText.visibility = View.INVISIBLE // Nascondi l'errore all'inizio
+                errorText.text = ""
 
-            when {
+
+                when {
                 email.isEmpty() -> {
                     errorText.text = getString(R.string.inserisci_la_mail)
                 }
@@ -100,20 +106,34 @@ class LoginActivity : AppCompatActivity() {
                     errorText.text = getString(R.string.inserisci_la_password)
                 }
                 else -> {
+                    Log.d(TAG, "Login button clicked")
+                    loginButton.isEnabled = false
+
+                    Log.d(TAG, "Attempting to login with email: $email")
                     userRepository.login(
                         email,
                         password,
                         onSuccess = {
+                            Log.d(TAG, "Login success callback called")
+                            loginButton.isEnabled = true
                             navigateToHome()
                         },
                         onFailure = { exception ->
+                            Toast.makeText(
+                                this@LoginActivity,
+                                getString(R.string.password_o_email_non_corretti),
+                                Toast.LENGTH_LONG
+                            ).show()
                             Log.e(TAG, "Login failed", exception)
+                            loginButton.isEnabled = true
                             errorText.text = getString(R.string.password_o_email_non_corretti)
+                            errorText.visibility = View.VISIBLE
                         }
                     )
                 }
             }
         }
+
     }
 
     private suspend fun setupNotifications() {

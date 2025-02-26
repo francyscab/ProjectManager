@@ -6,7 +6,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.viewpager.widget.ViewPager
 import com.example.project_manager.models.Role
-import com.example.project_manager.repository.NotificationHelper
 import com.example.project_manager.services.ChatService
 import com.example.project_manager.services.UserService
 import com.google.android.material.tabs.TabLayout

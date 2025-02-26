@@ -60,18 +60,41 @@ class UserRepository {
         }
     }
 
-    public fun login(email: String, pw: String, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
-        logger.info("Login", "Tentativo di login con email: $email")
+    fun login(email: String, pw: String, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
+        Log.d("Login", "Tentativo di login con email: $email")
 
-        auth.signInWithEmailAndPassword(email, pw)
-            .addOnSuccessListener {
-                Log.d("Login", "Accesso riuscito")
-                onSuccess()
-            }
-            .addOnFailureListener { e ->
-                logger.error("Login", "Errore durante il login", e)
+        try {
+            auth.signInWithEmailAndPassword(email, pw)
+                .addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        Log.d("Login", "Accesso riuscito")
+                        onSuccess()
+                    } else {
+                        val exception = task.exception ?: Exception("Unknown error occurred")
+                        Log.e("Login", "Errore durante il login", exception)
+
+                        // Aggiungi un log specifico prima di chiamare onFailure
+                        Log.e("Login", "Chiamando onFailure...")
+
+                        try {
+                            onFailure(exception)
+
+                            // Aggiungi un log dopo per verificare che onFailure è stata eseguita completamente
+                            Log.e("Login", "onFailure eseguita con successo")
+                        } catch (e: Exception) {
+                            // Cattura eventuali eccezioni che si verificano durante l'esecuzione di onFailure
+                            Log.e("Login", "Errore durante l'esecuzione di onFailure", e)
+                        }
+                    }
+                }
+        } catch (e: Exception) {
+            Log.e("Login", "Eccezione non gestita", e)
+            try {
                 onFailure(e)
+            } catch (e2: Exception) {
+                Log.e("Login", "Errore chiamando onFailure per eccezione non gestita", e2)
             }
+        }
     }
 
     fun getCurrentUserId(): String? {

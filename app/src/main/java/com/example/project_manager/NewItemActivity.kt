@@ -224,10 +224,12 @@ class NewItemActivity : AppCompatActivity() {
             isValid = false
         }
 
-        if (deadlineButton.text.isEmpty()) {
-            errorDate.visibility= View.VISIBLE
+        if (deadlineButton.text.toString().isEmpty() ||
+            deadlineButton.text.toString() == "Seleziona data") {
+            errorDate.visibility = View.VISIBLE
             isValid = false
         }
+
 
         if (descriptionEditText.text?.isEmpty() == true) {
             errorDescription.visibility= View.VISIBLE
