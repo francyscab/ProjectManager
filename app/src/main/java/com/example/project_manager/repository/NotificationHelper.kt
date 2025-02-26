@@ -22,6 +22,13 @@ import kotlinx.coroutines.launch
 class NotificationHelper(private val context: Context, private val db: FirebaseFirestore,
     ) {
 
+    private var chatListener: ListenerRegistration? = null
+    private var sollecitoLeaderListener: ListenerRegistration? = null
+    private var sollecitoDeveloperListener: ListenerRegistration? = null
+    private var progressoListener: ListenerRegistration? = null
+
+    private val activeListeners = mutableListOf<ListenerRegistration>()
+
     private val projectService = ProjectService()
     private val taskService= TaskService()
     private val userService= UserService()
@@ -34,6 +41,14 @@ class NotificationHelper(private val context: Context, private val db: FirebaseF
             createNotificationChannel("it.newprogress", "Progress Notification", "Notifiche per il completamento dei progetti")
             createNotificationChannel("it.newmessage", "Chat Notification", "Notifiche per nuove chat e messaggi")
         }
+    }
+
+    fun getActiveListeners(): List<ListenerRegistration> {
+        return activeListeners.toList()
+    }
+
+    private fun addListener(listener: ListenerRegistration) {
+        activeListeners.add(listener)
     }
 
     suspend fun handleNotification(role: Role, userUid: String, type: String, coroutineScope: CoroutineScope, data: List<Chat>? = null) {
@@ -50,9 +65,9 @@ class NotificationHelper(private val context: Context, private val db: FirebaseF
 
     private suspend fun setupLeaderSollecitoListeners(leaderId: String,coroutineScope: CoroutineScope) {
         val projects = projectService.loadProjectByLeader(leaderId)
-
+        Log.d("SollecitoListener", "Projects found: $projects")
         projects.forEach { project ->
-            db.collection("progetti")
+            sollecitoLeaderListener=db.collection("progetti")
                 .document(project.projectId)
                 .addSnapshotListener { snapshot, e ->
                     if (e != null) {
@@ -69,7 +84,7 @@ class NotificationHelper(private val context: Context, private val db: FirebaseF
                                     title = "Sollecito Progetto",
                                     text = "Il manager ${snapshot.getString("creator")
                                         ?.let { userService.getUserById(it)?.name }} richiede aggiornamenti sul progetto ${snapshot.getString("title")}",
-                                    role = Role.Manager,
+                                    role = Role.Leader,
                                     recipientId = leaderId,
                                     projectId = project.projectId,
                                     taskId = null
@@ -79,13 +94,15 @@ class NotificationHelper(private val context: Context, private val db: FirebaseF
                         }
                     }
                 }
+            addListener(sollecitoLeaderListener!!)
+
         }
     }
 
     private suspend fun setupDeveloperSollecitoListeners(developerId: String,coroutineScope: CoroutineScope) {
         val tasks=taskService.filterTaskByDeveloper(developerId)
         tasks.forEach { task ->
-            db.collection("progetti")
+            sollecitoDeveloperListener = db.collection("progetti")
                 .document(task.projectId)
                 .collection("task")
                 .document(task.taskId!!)
@@ -114,12 +131,14 @@ class NotificationHelper(private val context: Context, private val db: FirebaseF
                         }
                     }
             }
+            addListener(sollecitoDeveloperListener!!)
         }
     }
 
     private fun handleChatNotifications(role: Role, userId: String,coroutineScope: CoroutineScope, chatIds: List<Chat>) {
         chatIds.forEach { chatId ->
-            db.collection("chat").document(chatId.chatId).addSnapshotListener { snapshot, e ->
+            chatListener=db.collection("chat").document(chatId.chatId)
+                .addSnapshotListener { snapshot, e ->
                 if (e != null) {
                     Log.e("ChatListener", "Errore durante l'ascolto della chat ${chatId.chatId}.", e)
                     return@addSnapshotListener
@@ -145,6 +164,7 @@ class NotificationHelper(private val context: Context, private val db: FirebaseF
                     }
                 }
             }
+            addListener(chatListener!!)
         }
     }
 
@@ -248,9 +268,9 @@ class NotificationHelper(private val context: Context, private val db: FirebaseF
 
         var channelId = when (type) {
             "sollecito" -> {
-                if (type == "sollecito" && role == Role.Developer) {
+                if (role == Role.Developer) {
                     taskService.elimina_sollecita(projectId!!, taskId!!)
-                } else if (type == "progresso" && role == Role.Leader) {
+                } else if (role == Role.Leader) {
                     projectService.elimina_sollecita(projectId!!)
                 }
                 "it.sollecito"
@@ -300,4 +320,5 @@ class NotificationHelper(private val context: Context, private val db: FirebaseF
     private fun setNotificationShown(key: String) {
         sharedPreferences.edit().putBoolean(key, true).apply()
     }
+
 }

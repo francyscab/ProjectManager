@@ -26,7 +26,6 @@ class HomeActivity : AppCompatActivity() {
 
         initializeViews()
         setupViewPager()
-        setupNotifications()
     }
 
     private fun initializeViews() {
@@ -55,35 +54,5 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupNotifications() {
-        val notificationHelper = NotificationHelper(this, FirebaseFirestore.getInstance())
 
-        lifecycleScope.launch {
-            try {
-                val role = userService.getCurrentUserRole()
-                val userId = userService.getCurrentUserId()
-
-                if (role != null && userId != null) {
-                    val chat = chatService.getCurrentUserChats()
-                    notificationHelper.handleNotification(role, userId, "chat", lifecycleScope, chat)
-
-                    when (role) {
-                        Role.Manager -> {
-                            notificationHelper.handleNotification(role, userId, "progresso", lifecycleScope)
-                        }
-                        Role.Leader -> {
-                            notificationHelper.handleNotification(role, userId, "progresso", lifecycleScope)
-                            notificationHelper.handleNotification(role, userId, "sollecito", lifecycleScope)
-                        }
-                        Role.Developer -> {
-                            notificationHelper.handleNotification(role, userId, "progresso", lifecycleScope)
-                            notificationHelper.handleNotification(role, userId, "sollecito", lifecycleScope)
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e("HomeActivity", "Error setting up notifications", e)
-            }
-        }
-    }
 }

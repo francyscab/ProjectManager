@@ -108,6 +108,10 @@ class ProfileFragment : Fragment() {
     }
 
     private fun logoutUser() {
+        // Rimuovi tutti i listener prima del logout
+        NotificationManager.getInstance(requireContext()).removeAllListeners()
+
+        // Procedi con il logout come fai ora
         FirebaseAuth.getInstance().signOut()
 
         val preferences = requireContext().getSharedPreferences("user_session", Context.MODE_PRIVATE)

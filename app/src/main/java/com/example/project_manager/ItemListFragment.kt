@@ -33,6 +33,7 @@ import com.example.project_manager.services.TaskService
 import com.example.project_manager.services.UserService
 import com.google.android.material.card.MaterialCardView
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -50,6 +51,9 @@ class ItemListFragment : Fragment() {
     private lateinit var searchView: SearchView
     private lateinit var newItemButton: MaterialCardView
     private lateinit var filterButton: MaterialCardView
+
+    private var dataListener: ListenerRegistration? = null
+    private var fileListener: ListenerRegistration? = null
 
 
     private val projectService = ProjectService()
@@ -120,7 +124,6 @@ class ItemListFragment : Fragment() {
         }
 
 
-
         //barra laterale per filtri
         drawerLayout = view.findViewById(R.id.drawer_layout_logged)
 
@@ -139,6 +142,43 @@ class ItemListFragment : Fragment() {
 
     }
 
+    override fun onResume() {
+        super.onResume()
+        setupListeners()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        removeListeners()
+    }
+
+    private fun setupListeners() {
+        lifecycleScope.launch {
+            if(isFileMode){
+                files = ArrayList()
+                observeFileChanges { loadFiles() }
+            }
+            else if(projectId.isNotEmpty() || taskId.isNotEmpty()) {
+                observeDataChanges { loadSpecificData() }
+            } else {
+                observeDataChanges { loadData() }
+                deadlineFilterHandler()
+            }
+        }
+    }
+
+    private fun removeListeners() {
+        dataListener?.remove()
+        fileListener?.remove()
+        dataListener = null
+        fileListener = null
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        removeListeners()
+    }
+
 
     private fun initializeViews(view: View) {
         recyclerView = view.findViewById(R.id.recyclerview)
@@ -155,10 +195,11 @@ class ItemListFragment : Fragment() {
     private fun loadFiles() {
         viewLifecycleOwner.lifecycleScope.launch {
             try {
+                role=userService.getCurrentUserRole()!!
                 files = fileService.getTaskFiles(projectId, taskId)
                 recyclerView.layoutManager = LinearLayoutManager(requireContext())
                 recyclerView.adapter = FilesAdapter(files)
-                setupFileView()
+                setupFileView(role)
             } catch (e: Exception) {
                 Log.e(TAG, "Error loading files", e)
                 Toast.makeText(requireContext(), "Error loading files", Toast.LENGTH_SHORT).show()
@@ -167,11 +208,18 @@ class ItemListFragment : Fragment() {
     }
 
     //per quando visualizzo i dati
-    private fun setupFileView() {
+    private fun setupFileView(role: Role) {
         //Nascondi elementi non necessari per la modalità file
         drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
 
-        setupFileUpload()
+        if (role == Role.Developer) {
+            // Nascondi il pulsante per aggiungere nuovi file per i Developer
+            newItemButton.visibility = View.GONE
+        } else {
+            newItemButton.visibility = View.VISIBLE
+            setupFileUpload()
+        }
+
         handleFileSearchBar(files)
     }
 
@@ -538,7 +586,7 @@ class ItemListFragment : Fragment() {
         onDataChanged()  // Initial load
 
         val db = FirebaseFirestore.getInstance()
-        db.collection("progetti")
+        dataListener=db.collection("progetti")
             .addSnapshotListener { snapshots, error ->
                 if (error != null) {
                     Log.e(TAG, "Errore durante l'ascolto delle modifiche", error)
@@ -558,7 +606,7 @@ class ItemListFragment : Fragment() {
 
         // Set up a listener on the Firestore collection that tracks file metadata
         val db = FirebaseFirestore.getInstance()
-        db.collection("progetti")
+        fileListener=db.collection("progetti")
             .document(projectId)
             .collection("task")
             .document(taskId)
@@ -715,11 +763,11 @@ class ItemListFragment : Fragment() {
         newProject.visibility = View.VISIBLE
     }
     private fun leaderView(){
-        newProject.visibility = View.INVISIBLE
+        newProject.visibility = View.GONE
     }
 
     private fun developerView(){
-        newProject.visibility = View.INVISIBLE
+        newProject.visibility = View.GONE
     }
 
 

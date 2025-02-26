@@ -18,6 +18,7 @@ import com.example.project_manager.services.ChatService
 import com.example.project_manager.services.UserService
 import com.google.android.material.button.MaterialButton
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.launch
 
 private const val ARG_USER_ID = "userId"
@@ -62,11 +63,31 @@ class ChatListFragment : Fragment() {
         initializeViews(view)
         setupRecyclerView()
         setupClickListeners()
+    }
+
+    override fun onResume() {
+        super.onResume()
         lifecycleScope.launch {
             observeDataChanges()
         }
-
     }
+
+    override fun onPause() {
+        super.onPause()
+        removeListener()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        removeListener()
+    }
+
+    private fun removeListener() {
+        chatListener?.remove()
+        chatListener = null
+    }
+
+    private var chatListener: ListenerRegistration? = null
 
     private fun initializeViews(view: View) {
         recyclerView = view.findViewById(R.id.recyclerViewChatList)
@@ -106,10 +127,10 @@ class ChatListFragment : Fragment() {
         }
     }
 
-    private suspend fun observeDataChanges() {
+    private fun observeDataChanges() {
         loadChats()
         val db = FirebaseFirestore.getInstance()
-        db.collection("chat")  // Cambia il nome della collezione se necessario
+        chatListener =db.collection("chat")  // Cambia il nome della collezione se necessario
             .addSnapshotListener { snapshots, error ->
                 if (error != null) {
                     Log.e(ChatListFragment.TAG, "Errore durante l'ascolto delle modifiche", error)

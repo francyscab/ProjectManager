@@ -170,12 +170,14 @@ class DettagliItemFragment : Fragment() {
         } else if (projectId.isNotEmpty()) {
             return "progetto"
         }
-        Log.e(TAG, "Nessun ID del progetto o del task fornito.")
+        else{
+            Log.e(TAG, "Nessun ID del progetto o del task fornito.")
 
-        throw IllegalArgumentException("Nessun ID del progetto o del task fornito.")
+            throw IllegalArgumentException("Nessun ID del progetto o del task fornito.")
+        }
     }
 
-    private suspend fun loadDetails(tipo: String, notificationHelper: NotificationHelper) {
+    private fun loadDetails(tipo: String, notificationHelper: NotificationHelper) {
         when (tipo) {
             "progetto" -> {
                 viewLifecycleOwner.lifecycleScope.launch {
@@ -671,8 +673,8 @@ class DettagliItemFragment : Fragment() {
                 )
 
                 if (success) {
+                    progressIndicator.progress = currentProgress
                     progressLabel.text = "$currentProgress%"
-
                     progressText.text = "${currentProgress}%"
 
                     Toast.makeText(
@@ -730,6 +732,8 @@ class DettagliItemFragment : Fragment() {
         }
         requireActivity().finish()
     }
+
+
 
     companion object {
         private const val TAG = "DettagliItemFragment"

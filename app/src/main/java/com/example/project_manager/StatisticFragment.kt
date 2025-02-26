@@ -22,6 +22,7 @@ import com.github.mikephil.charting.data.BarDataSet
 import com.github.mikephil.charting.data.BarEntry
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
@@ -33,6 +34,9 @@ class StatisticheFragment : Fragment() {
 
     private var userId: String? = null
     private var userRole: Role? = null
+
+    private var firestoreListener: ListenerRegistration? = null
+
 
     private val projectService = ProjectService()
     private val taskService = TaskService()
@@ -64,15 +68,30 @@ class StatisticheFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         initializeViews(view)
-        lifecycleScope.launch {
-            observeDataChanges()
-        }
+        // Carica i dati iniziali ma non impostare ancora il listener
+            loadStatistics()
     }
 
-    private suspend fun observeDataChanges() {
+    override fun onResume() {
+        super.onResume()
+        // Imposta il listener quando il fragment diventa visibile
+        observeDataChanges()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        removeFirestoreListener()
+    }
+
+    private fun removeFirestoreListener() {
+        firestoreListener?.remove()
+        firestoreListener = null
+    }
+
+    private fun observeDataChanges() {
         loadStatistics()
         val db = FirebaseFirestore.getInstance()
-        db.collection("progetti")  // Cambia il nome della collezione se necessario
+        firestoreListener =db.collection("progetti")  // Cambia il nome della collezione se necessario
             .addSnapshotListener { snapshots, error ->
                 if (error != null) {
                     Log.e(StatisticheFragment.TAG, "Errore durante l'ascolto delle modifiche", error)
