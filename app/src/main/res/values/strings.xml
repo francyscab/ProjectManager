@@ -108,4 +108,15 @@
     <string name="modifica_progetto">Modifica Progetto</string>
     <string name="modifica_task">Modifica Task</string>
     <string name="modifica_subtask">Modifica Subtask</string>
+    <string name="pessimo">Pessimo</string>
+    <string name="molto_scarso">Molto scarso</string>
+    <string name="scarso">Scarso</string>
+    <string name="mediocre">Mediocre</string>
+    <string name="sufficiente">Sufficiente</string>
+    <string name="discreto">Discreto</string>
+    <string name="buono">Buono</string>
+    <string name="molto_buono">Molto buono</string>
+    <string name="ottimo">Ottimo</string>
+    <string name="eccellente">Eccellente</string>
+    <string name="non_valutato">Non valutato</string>
 </resources>

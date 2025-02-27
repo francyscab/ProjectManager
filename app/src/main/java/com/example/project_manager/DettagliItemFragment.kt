@@ -68,6 +68,7 @@ class DettagliItemFragment : Fragment() {
     private lateinit var progressText: TextView
     private lateinit var progressIndicator: com.google.android.material.progressindicator.CircularProgressIndicator
     private lateinit var itemType: String
+    private lateinit var ratingText: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -139,6 +140,7 @@ class DettagliItemFragment : Fragment() {
     }
 
     private fun initializeViews(view: View) {
+        ratingText = view.findViewById(R.id.ratingText)
         progressSeekBar = view.findViewById(R.id.progressSlider)
         seekbarLayout = view.findViewById(R.id.progressCard)
         progressLabel = view.findViewById(R.id.progressPercentage)
@@ -161,6 +163,21 @@ class DettagliItemFragment : Fragment() {
     }
 
 
+    private fun getRatingText(rating: Int): String {
+        return when (rating) {
+            1 -> getString(R.string.pessimo)
+            2 -> getString(R.string.molto_scarso)
+            3 -> getString(R.string.scarso)
+            4 -> getString(R.string.mediocre)
+            5 -> getString(R.string.sufficiente)
+            6 -> getString(R.string.discreto)
+            7 -> getString(R.string.buono)
+            8 -> getString(R.string.molto_buono)
+            9 -> getString(R.string.ottimo)
+            10 -> getString(R.string.eccellente)
+            else -> getString(R.string.non_valutato)
+        }
+    }
 
     private fun getItemType(subtaskId: String, taskId: String, projectId: String): String {
         if (subtaskId.isNotEmpty()) {
@@ -382,13 +399,27 @@ class DettagliItemFragment : Fragment() {
         }
 
         when {
-            // Project opened by leader
+            //progetto aperto da leader
             itemType == "progetto" && role == Role.Leader -> {
                 valuta.visibility = View.GONE
                 feedbackLayout.visibility = View.GONE
+                currentItem?.let { item ->
+                    if (item.valutato) {
+                    // Progetto già valutato, mostra il feedback esistente
+                    valuta.visibility = View.GONE
+                    feedbackLayout.visibility = View.VISIBLE
+                    displayFeedback(item.rating, item.comment)
+                    }
+                    else {
+                    // Progetto non completato
+                    valuta.visibility = View.GONE
+                    feedbackLayout.visibility = View.GONE
+                }
+                }
+
             }
 
-            // Project opened by manager
+            // progetto aperto da manager
             itemType == "progetto" && role == Role.Manager -> {
                 currentItem?.let { item ->
                     when {
@@ -413,7 +444,7 @@ class DettagliItemFragment : Fragment() {
                 }
             }
 
-            // Task opened by leader
+            // task aperto da leader
             itemType == "task" && role == Role.Leader -> {
                 currentItem?.let { item ->
                     when {
@@ -491,8 +522,11 @@ class DettagliItemFragment : Fragment() {
         }
     }
 
+
     private fun displayFeedback(rating: Int, comment: String) {
-        feedbackScore.text = rating.toString()
+        val text = getRatingText(rating)
+        ratingText.text = text
+        feedbackScore.text = "$rating"
         feedbackComment.text = comment
     }
 
@@ -635,23 +669,29 @@ class DettagliItemFragment : Fragment() {
                 var currentProgress = subtaskService.getSubTaskProgress(projectId, taskId, subtaskId)
                 slider.value= currentProgress.toFloat()
                 progressLabel.text = "$currentProgress%"
+                if (currentProgress == 100) {
+                    slider.isEnabled = false
+                    // Opzionalmente, puoi cambiare anche l'aspetto visivo per indicare che è disabilitato
+                    slider.alpha = 0.6f
+                } else {
+                    slider.addOnSliderTouchListener(object : Slider.OnSliderTouchListener {
+                        override fun onStartTrackingTouch(slider: Slider) {
+                            currentProgress = slider.value.toInt()
+                            progressLabel.text = "$currentProgress%"
+                        }
 
-                slider.addOnSliderTouchListener(object : Slider.OnSliderTouchListener {
-                    override fun onStartTrackingTouch(slider: Slider) {
-                        currentProgress= slider.value.toInt()
-                        progressLabel.text="$currentProgress%"
-                    }
-
-                    override fun onStopTrackingTouch(slider: Slider) {
-                        saveProgress(projectId, taskId, subtaskId, slider, progressLabel)
-                    }
-                })
+                        override fun onStopTrackingTouch(slider: Slider) {
+                            saveProgress(projectId, taskId, subtaskId, slider, progressLabel)
+                        }
+                    })
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Error setting up progress management", e)
                 Toast.makeText(requireContext(), "Error loading progress", Toast.LENGTH_SHORT)
                     .show()
             }
         }
+
     }
 
     private fun saveProgress(
