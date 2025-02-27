@@ -142,69 +142,121 @@ class NotificationHelper(private val context: Context, private val db: FirebaseF
     }
 
 
-    fun setupDeveloperSollecitoListeners(developerId: String, coroutineScope: CoroutineScope) {
+    suspend fun setupDeveloperSollecitoListeners(developerId: String, coroutineScope: CoroutineScope) {
+        // Clear existing listeners to avoid duplicates
+        sollecitoListeners.forEach { (_, listener) -> listener.remove() }
+        sollecitoListeners.clear()
 
+        // 1. First, set up listeners for existing tasks assigned to the developer
+        val existingTasks = taskService.filterTaskByDeveloper(developerId)
+        existingTasks.forEach { task ->
+            if (!task.taskId.isNullOrEmpty() && task.projectId.isNotEmpty()) {
+                setupTaskSollecitoListener(task.projectId, task.taskId!!, developerId, coroutineScope)
+            }
+        }
 
-        // Listener for tracking new tasks assigned to the developer
-        val newTaskListener = db.collection("progetti")
-            .whereArrayContains("developersIds", developerId)
+        // 2. Top-level listener for new projects in the database
+        val projectsListener = db.collection("progetti")
             .addSnapshotListener { snapshots, e ->
                 if (e != null) {
-                    Log.e("DeveloperNewTaskListener", "Error listening to new tasks", e)
+                    Log.e("SollecitoListener", "Error listening to projects collection", e)
                     return@addSnapshotListener
                 }
 
-                snapshots?.documentChanges?.forEach { projectDocumentChange ->
-                    if (projectDocumentChange.type == DocumentChange.Type.ADDED ||
-                        projectDocumentChange.type == DocumentChange.Type.MODIFIED) {
+                snapshots?.documentChanges?.forEach { change ->
+                    if (change.type == DocumentChange.Type.ADDED || change.type == DocumentChange.Type.MODIFIED) {
+                        val projectId = change.document.id
 
-                        val projectId = projectDocumentChange.document.id
+                        // 3. For each project, listen to its tasks collection
+                        if (!sollecitoListeners.containsKey("project_tasks_$projectId")) {
+                            val tasksListener = db.collection("progetti")
+                                .document(projectId)
+                                .collection("task")
+                                .addSnapshotListener { taskSnapshots, taskError ->
+                                    if (taskError != null) {
+                                        Log.e("SollecitoListener", "Error listening to tasks in project $projectId", taskError)
+                                        return@addSnapshotListener
+                                    }
 
-                        // Listener for tasks in this project
-                        val taskListener = db.collection("progetti")
-                            .document(projectId)
-                            .collection("task")
-                            .whereEqualTo("assignedTo", developerId)
-                            .addSnapshotListener { taskSnapshots, taskError ->
-                                if (taskError != null) {
-                                    Log.e("DeveloperTaskListener", "Error listening to tasks", taskError)
-                                    return@addSnapshotListener
-                                }
-
-                                taskSnapshots?.documentChanges?.forEach { taskDocumentChange ->
-                                    if (taskDocumentChange.type == DocumentChange.Type.ADDED ||
-                                        taskDocumentChange.type == DocumentChange.Type.MODIFIED) {
-
-                                        val taskDoc = taskDocumentChange.document
+                                    taskSnapshots?.documentChanges?.forEach { taskChange ->
+                                        val taskDoc = taskChange.document
                                         val taskId = taskDoc.id
-                                        val sollecitato = taskDoc.getBoolean("sollecitato") ?: false
+                                        val assignedTo = taskDoc.getString("assignedTo") ?: ""
 
-                                        if (sollecitato) {
-                                            coroutineScope.launch {
-                                                sendNotification(
-                                                    type = "sollecito",
-                                                    title = "Sollecito Progetto",
-                                                    text = "Il leader ${taskDoc.getString("creator")?.let { userService.getUserById(it)?.name }} richiede aggiornamenti sul progetto ${taskDoc.getString("title")}",
-                                                    role = Role.Developer,
-                                                    recipientId = developerId,
-                                                    projectId = projectId,
-                                                    taskId = taskId
-                                                )
+                                        // 4. If the task is assigned to our developer, setup a listener for it
+                                        if (assignedTo == developerId &&
+                                            (taskChange.type == DocumentChange.Type.ADDED || taskChange.type == DocumentChange.Type.MODIFIED)) {
+                                            if (!sollecitoListeners.containsKey("task_$projectId$taskId")) {
+                                                setupTaskSollecitoListener(projectId, taskId, developerId, coroutineScope)
                                             }
                                         }
                                     }
                                 }
-                            }
 
-                        // Store and track this listener
-                        sollecitoListeners["task_$projectId"] = taskListener
-                        addListener(taskListener)
+                            sollecitoListeners["project_tasks_$projectId"] = tasksListener
+                            addListener(tasksListener)
+                        }
                     }
                 }
             }
 
-        // Add the new task listener to active listeners
-        addListener(newTaskListener)
+        sollecitoListeners["all_projects"] = projectsListener
+        addListener(projectsListener)
+    }
+
+    // Helper function to set up a listener for a specific task's sollecitato field
+    private fun setupTaskSollecitoListener(projectId: String, taskId: String, developerId: String, coroutineScope: CoroutineScope) {
+        val taskSollecitoListener = db.collection("progetti")
+            .document(projectId)
+            .collection("task")
+            .document(taskId)
+            .addSnapshotListener { snapshot, e ->
+                if (e != null) {
+                    Log.e("SollecitoListener", "Error listening to task $taskId sollecitato field", e)
+                    return@addSnapshotListener
+                }
+
+                if (snapshot != null && snapshot.exists()) {
+                    val sollecitato = snapshot.getBoolean("sollecitato") ?: false
+                    val previouslySollecitato = sharedPreferences.getBoolean("sollecitato_${projectId}_${taskId}", false)
+
+                    // Only send notification if this is a new sollecitato (changed from false to true)
+                    if (sollecitato && !previouslySollecitato) {
+                        coroutineScope.launch {
+                            val creatorId = snapshot.getString("creator") ?: ""
+                            val taskTitle = snapshot.getString("title") ?: "task"
+
+                            try {
+                                val creator = userService.getUserById(creatorId)
+                                val creatorName = creator?.name ?: "Leader"
+
+                                sendNotification(
+                                    type = "sollecito",
+                                    title = "Sollecito Task",
+                                    text = "Il leader $creatorName richiede aggiornamenti sul task $taskTitle",
+                                    role = Role.Developer,
+                                    recipientId = developerId,
+                                    projectId = projectId,
+                                    taskId = taskId
+                                )
+
+                                // Save state to avoid duplicate notifications
+                                sharedPreferences.edit().putBoolean("sollecitato_${projectId}_${taskId}", true).apply()
+
+                                Log.d("SollecitoListener", "Notification sent for task $taskId sollecitato")
+                            } catch (ex: Exception) {
+                                Log.e("SollecitoListener", "Error sending notification for task $taskId", ex)
+                            }
+                        }
+                    } else if (!sollecitato && previouslySollecitato) {
+                        // Reset the flag when sollecitato is set back to false
+                        sharedPreferences.edit().putBoolean("sollecitato_${projectId}_${taskId}", false).apply()
+                    }
+                }
+            }
+
+        sollecitoListeners["task_$projectId$taskId"] = taskSollecitoListener
+        addListener(taskSollecitoListener)
     }
 
     private fun handleChatNotifications(role: Role, userId: String, coroutineScope: CoroutineScope) {
