@@ -44,6 +44,8 @@ class NotificationHelper(private val context: Context, private val db: FirebaseF
         }
     }
 
+
+
     fun getActiveListeners(): List<ListenerRegistration> {
         return activeListeners.toList()
     }
